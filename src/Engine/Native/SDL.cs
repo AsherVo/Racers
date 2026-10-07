@@ -21,9 +21,14 @@ internal static unsafe partial class SDL
 
     // SDL_video.h
     public const ulong WINDOW_FULLSCREEN = 0x1;
+    public const ulong WINDOW_OPENGL = 0x2;
     public const ulong WINDOW_RESIZABLE = 0x20;
     public const ulong WINDOW_HIGH_PIXEL_DENSITY = 0x2000;
     public const ulong WINDOW_FILL_DOCUMENT = 0x200000; // Emscripten only
+    public const int GL_CONTEXT_MAJOR_VERSION = 17;      // SDL_GLAttr
+    public const int GL_CONTEXT_MINOR_VERSION = 18;
+    public const int GL_CONTEXT_PROFILE_MASK = 20;
+    public const int GL_CONTEXT_PROFILE_ES = 0x4;
 
     // SDL_keycode.h / SDL_scancode.h
     public const ushort KMOD_ALT = 0x0300; // either Alt (Option on macOS)
@@ -41,6 +46,7 @@ internal static unsafe partial class SDL
     public const string PROP_TEXTURE_CREATE_WIDTH_NUMBER = "SDL.texture.create.width";
     public const string PROP_TEXTURE_CREATE_HEIGHT_NUMBER = "SDL.texture.create.height";
     public const string PROP_TEXTURE_CREATE_METAL_PIXELBUFFER_POINTER = "SDL.texture.create.metal.pixelbuffer";
+    public const string PROP_TEXTURE_OPENGLES2_TEXTURE_NUMBER = "SDL.texture.opengles2.texture";
 
     // SDL_blendmode.h
     public const uint BLENDMODE_BLEND = 0x1;
@@ -162,6 +168,10 @@ internal static unsafe partial class SDL
     public static partial void SDL_DestroyWindow(nint window);
 
     [LibraryImport(Lib)]
+    [return: MarshalAs(UnmanagedType.U1)]
+    public static partial bool SDL_GL_SetAttribute(int attr, int value);
+
+    [LibraryImport(Lib)]
     public static partial ulong SDL_GetWindowFlags(nint window);
 
     [LibraryImport(Lib)]
@@ -208,6 +218,10 @@ internal static unsafe partial class SDL
     [LibraryImport(Lib)]
     public static partial nint SDL_GetRenderMetalLayer(nint renderer);
 
+    [LibraryImport(Lib)]
+    [return: MarshalAs(UnmanagedType.U1)]
+    public static partial bool SDL_FlushRenderer(nint renderer);
+
     // Textures and surfaces
     [LibraryImport(Lib)]
     public static partial nint SDL_CreateTexture(nint renderer, uint format, int access, int w, int h);
@@ -221,6 +235,9 @@ internal static unsafe partial class SDL
     [LibraryImport(Lib)]
     [return: MarshalAs(UnmanagedType.U1)]
     public static partial bool SDL_SetTextureBlendMode(nint texture, uint blendMode);
+
+    [LibraryImport(Lib)]
+    public static partial uint SDL_GetTextureProperties(nint texture);
 
     [LibraryImport(Lib)]
     [return: MarshalAs(UnmanagedType.U1)]
@@ -261,6 +278,9 @@ internal static unsafe partial class SDL
     [LibraryImport(Lib, StringMarshalling = StringMarshalling.Utf8)]
     [return: MarshalAs(UnmanagedType.U1)]
     public static partial bool SDL_SetNumberProperty(uint props, string name, long value);
+
+    [LibraryImport(Lib, StringMarshalling = StringMarshalling.Utf8)]
+    public static partial long SDL_GetNumberProperty(uint props, string name, long defaultValue);
 
     // Files and memory
     [LibraryImport(Lib, StringMarshalling = StringMarshalling.Utf8)]

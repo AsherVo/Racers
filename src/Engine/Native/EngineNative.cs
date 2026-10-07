@@ -4,7 +4,7 @@ namespace Engine.Native;
 
 /// <summary>
 /// Binding for libEngineNative (native/include/engine_native.h): font baking and Rive. Built by
-/// tools/build-native-macos.sh; other platforms don't have it yet.
+/// tools/build-native-macos.sh (Metal) and tools/build-native-wasm.sh (WebGL 2).
 /// </summary>
 internal static unsafe partial class EngineNative
 {
@@ -25,8 +25,10 @@ internal static unsafe partial class EngineNative
     public static partial int en_font_bake(byte* ttf, int ttfLength, float pixelHeight, int firstCodepoint, int count,
         byte* atlas, int width, int height, Glyph* glyphs, float* kerning, FontMetrics* metrics);
 
+    public const int RiveMetal = 1, RiveWebGL = 2;
+
     [LibraryImport(Lib)]
-    public static partial int en_rive_supported();
+    public static partial int en_rive_backend();
 
     [LibraryImport(Lib)]
     public static partial nint en_rive_context_create(nint metalLayer);
@@ -65,7 +67,7 @@ internal static unsafe partial class EngineNative
     public static partial int en_rive_instance_pointer(nint instance, int action, float x, float y);
 
     [LibraryImport(Lib)]
-    public static partial nint en_rive_target_create(nint context, int width, int height, out nint pixelBuffer);
+    public static partial nint en_rive_target_create(nint context, int width, int height, uint glTexture, out nint pixelBuffer);
 
     [LibraryImport(Lib)]
     public static partial void en_rive_target_destroy(nint target);

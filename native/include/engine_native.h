@@ -1,7 +1,7 @@
 /*
  * EngineNative: the engine's native helpers beyond SDL, behind a flat C API that [LibraryImport]
  * can bind directly. Fonts (stb_truetype) are plain C and build anywhere. Rive is the C++ runtime
- * plus its GPU renderer; only the Metal backend (macOS) is implemented so far.
+ * plus its GPU renderer, with a Metal backend (macOS) and a WebGL 2 backend (browser).
  */
 #pragma once
 
@@ -50,10 +50,26 @@ typedef struct EnRiveFile EnRiveFile;
 typedef struct EnRiveInstance EnRiveInstance;
 typedef struct EnRiveTarget EnRiveTarget;
 
-/* Returns 1 if this build of the library has a Rive renderer for the current platform. */
-EN_API int en_rive_supported(void);
+enum
+{
+    EN_RIVE_NONE = 0,
+    /* Targets are IOSurface pixel buffers; Rive renders on its own queue (call en_rive_finish). */
+    EN_RIVE_METAL = 1,
+    /*
+     * Targets are textures SDL created; Rive renders on SDL's WebGL 2 context. Call
+     * SDL_FlushRenderer before the first en_rive_render and after en_rive_finish, which leaves the
+     * GL state the way SDL's GLES2 renderer expects it.
+     */
+    EN_RIVE_WEBGL = 2,
+};
 
-/* `metalLayer` is the renderer's CAMetalLayer (SDL_GetRenderMetalLayer); Rive renders on its device. */
+/* Which Rive backend this build of the library has (EN_RIVE_*). */
+EN_API int en_rive_backend(void);
+
+/*
+ * Metal: `metalLayer` is the renderer's CAMetalLayer (SDL_GetRenderMetalLayer); Rive renders on
+ * its device. WebGL: pass null; Rive uses the current context, which must be SDL's WebGL 2 one.
+ */
 EN_API EnRiveContext* en_rive_context_create(void* metalLayer);
 EN_API void en_rive_context_destroy(EnRiveContext*);
 
@@ -82,17 +98,23 @@ EN_API int en_rive_instance_set_text(EnRiveInstance*, const char* run, const cha
 EN_API int en_rive_instance_pointer(EnRiveInstance*, int action, float x, float y);
 
 /*
- * A width x height BGRA render target. `pixelBuffer` receives the CVPixelBufferRef that backs it
- * (IOSurface), for SDL_PROP_TEXTURE_CREATE_METAL_PIXELBUFFER_POINTER: SDL samples the same memory
- * Rive draws into, with no copy. The target owns the pixel buffer.
+ * A width x height render target, with rows top-down like SDL textures.
+ * Metal: `pixelBuffer` receives the CVPixelBufferRef (BGRA, IOSurface) that backs it, for
+ * SDL_PROP_TEXTURE_CREATE_METAL_PIXELBUFFER_POINTER, so SDL samples the memory Rive draws into
+ * with no copy. The target owns the pixel buffer. `glTexture` is ignored.
+ * WebGL: `glTexture` is an RGBA texture SDL created (SDL_PROP_TEXTURE_OPENGLES2_TEXTURE_NUMBER),
+ * which Rive draws into. SDL keeps owning it. `pixelBuffer` receives null.
  */
-EN_API EnRiveTarget* en_rive_target_create(EnRiveContext*, int width, int height, void** pixelBuffer);
+EN_API EnRiveTarget* en_rive_target_create(EnRiveContext*, int width, int height, uint32_t glTexture, void** pixelBuffer);
 EN_API void en_rive_target_destroy(EnRiveTarget*);
 
 /* Clears the target to transparent and draws the instance scaled to fill it (premultiplied alpha). */
 EN_API void en_rive_render(EnRiveContext*, EnRiveInstance*, EnRiveTarget*);
 
-/* Blocks until every render submitted since the last call has finished on the GPU. */
+/*
+ * Ends a run of en_rive_render calls. Metal: blocks until they've finished on the GPU, since SDL
+ * samples the targets from another queue. WebGL: hands the GL context back to SDL.
+ */
 EN_API void en_rive_finish(EnRiveContext*);
 
 #ifdef __cplusplus

@@ -17,7 +17,7 @@ src/Engine/            Platform-agnostic engine (net10.0, AOT-compatible)
   Graphics/Font.cs       TrueType → glyph atlas (stb_truetype in EngineNative)
   Graphics/Rive.cs       Rive files/instances; each instance renders into its own texture
 src/HelloSprite/       Sample game: Rive background, cars, text, a translucent Rive inset; click to add cars
-native/                EngineNative: flat C API over stb_truetype and the Rive runtime (Metal)
+native/                EngineNative: flat C API over stb_truetype and the Rive runtime (Metal, WebGL 2)
 hosts/Desktop/         Windows/macOS/Linux: plain net10.0 exe, NativeAOT
 hosts/Browser/         .NET WebAssembly + SDL3 compiled with Emscripten
 hosts/iOS/             net10.0-ios, SDL linked statically; NativeAOT in Release
@@ -51,15 +51,18 @@ tools/package-macos.sh                                    # universal, ad-hoc si
 SIGN_IDENTITY="Developer ID Application: …" tools/package-macos.sh   # hardened runtime, for notarization
 ```
 
-**Fonts and Rive** need `libEngineNative`, built so far for macOS only (universal, verified with
-`dotnet run` and the NativeAOT `.app`). Other hosts still build, but `LoadFont`/`LoadRive` fail there:
+**Fonts and Rive** need EngineNative, built so far for macOS (universal, verified with `dotnet run`
+and the NativeAOT `.app`) and the browser (verified in Chromium on SwiftShader and on the GPU).
+iOS and Android still build, but `LoadFont`/`LoadRive` fail there:
 ```sh
 tools/build-native-macos.sh   # once: pinned rive-runtime + premake/ninja → artifacts/native/osx/
+tools/build-native-wasm.sh    # once, after build-sdl-wasm.sh → artifacts/native/wasm/
 ```
 
 **Browser** (verified in headless Chromium):
 ```sh
 tools/build-sdl-wasm.sh                 # once: emsdk 3.1.56 + SDL → artifacts/sdl-wasm/SDL3.a
+tools/build-native-wasm.sh              # once: fonts + Rive → artifacts/native/wasm/
 dotnet publish hosts/Browser -c Release -o artifacts/browser
 python3 -m http.server -d artifacts/browser/wwwroot 8000
 node tools/browser-smoke.mjs "/Applications/Chromium.app/Contents/MacOS/Chromium" http://127.0.0.1:8000/ /tmp
@@ -132,6 +135,19 @@ These cost real time. Each one is handled in the code, with a comment at the fix
 14. **Rive's archives are LTO bitcode and its feature defines change class layouts.** The bridge is
    compiled with the exact `-D` flags Rive was built with, and linked with `-flto` (plus ImageIO,
    which Rive uses to decode images on Apple platforms).
+15. **`EmccExtraLDFlags` is a property, not an item.** Declared as an item it's silently ignored,
+   which left the browser build on WebGL 1 (`-sMAX_WEBGL_VERSION=2` never reached the linker).
+16. **SDL's GLES2 renderer asks for WebGL 1 unless the window is already an OpenGL window.** The
+   engine creates the browser window with `SDL_WINDOW_OPENGL` and GLES 3.0 attributes, so SDL keeps
+   them and Emscripten creates a WebGL 2 context, which Rive needs.
+17. **Rive's wasm libraries must not be LTO bitcode.** .NET links with its own LLVM 19.1, which
+   lowers `setjmp` (libpng, libjpeg) to `__wasm_setjmp`, but its Emscripten 3.1.56 runtime only has
+   the older `saveSetjmp`. `build-native-wasm.sh` compiles Rive with emsdk 3.1.56, `--no-lto`,
+   `-fwasm-exceptions -sSUPPORT_LONGJMP=wasm`.
+18. **In the browser, Rive and SDL share one WebGL context.** Rive draws into textures SDL created
+   (`TextureRenderTargetGL`, top-down rows). Around each run of Rive renders the engine calls
+   `SDL_FlushRenderer` (which also drops SDL's cached GL state), tells Rive to re-read GL state, and
+   afterwards restores what SDL set once at startup and assumes (`rive_webgl.cpp`).
 
 ## Sizes (Release)
 
@@ -139,5 +155,5 @@ These cost real time. Each one is handled in the code, with a comment at the fix
 |---|---|
 | macOS arm64 executable (NativeAOT) | 1.0 MB + libSDL3.dylib 2.9 MB |
 | libEngineNative.dylib (Rive + fonts, universal) | 9.9 MB (~5 MB per architecture) |
-| Browser download (brotli) | 1.9 MB |
+| Browser download (brotli) | 2.6 MB (Rive + fonts add 0.7 MB) |
 | iOS simulator app (NativeAOT) | 8.2 MB |

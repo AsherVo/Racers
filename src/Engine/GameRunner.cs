@@ -41,7 +41,14 @@ public sealed unsafe class GameRunner(Game game, GameOptions options)
 
         ulong flags = SDL.WINDOW_RESIZABLE | SDL.WINDOW_HIGH_PIXEL_DENSITY;
         if (OperatingSystem.IsBrowser())
-            flags |= SDL.WINDOW_FILL_DOCUMENT;
+        {
+            // Ask for WebGL 2 (GLES 3.0), which Rive needs. SDL's GLES2 renderer keeps these
+            // attributes only if the window is already an OpenGL one; otherwise it asks for WebGL 1.
+            flags |= SDL.WINDOW_FILL_DOCUMENT | SDL.WINDOW_OPENGL;
+            SDL.SDL_GL_SetAttribute(SDL.GL_CONTEXT_PROFILE_MASK, SDL.GL_CONTEXT_PROFILE_ES);
+            SDL.SDL_GL_SetAttribute(SDL.GL_CONTEXT_MAJOR_VERSION, 3);
+            SDL.SDL_GL_SetAttribute(SDL.GL_CONTEXT_MINOR_VERSION, 0);
+        }
         else if (mobile)
             flags |= SDL.WINDOW_FULLSCREEN; // hides the status and navigation bars
 

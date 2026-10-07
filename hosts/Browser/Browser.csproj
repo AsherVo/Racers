@@ -2,7 +2,8 @@
 
   <!--
     Browser host: .NET WebAssembly (Mono runtime) with SDL3 statically linked via Emscripten.
-    Requires the wasm-tools workload and artifacts/sdl-wasm/SDL3.a from tools/build-sdl-wasm.sh.
+    Requires the wasm-tools workload, artifacts/sdl-wasm/SDL3.a from tools/build-sdl-wasm.sh and
+    artifacts/native/wasm/ (fonts and Rive) from tools/build-native-wasm.sh.
   -->
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -14,6 +15,9 @@
     <WasmEnableThreads>false</WasmEnableThreads>
     <RunAOTCompilation Condition="'$(Configuration)' == 'Release'">true</RunAOTCompilation>
     <SdlWasmLibrary>$(MSBuildThisFileDirectory)../../artifacts/sdl-wasm/SDL3.a</SdlWasmLibrary>
+    <NativeWasmDir>$(MSBuildThisFileDirectory)../../artifacts/native/wasm/</NativeWasmDir>
+    <!-- SDL's renderer and Rive talk to WebGL 2 through Emscripten's GL library. (A property: the SDK ignores an item of this name.) -->
+    <EmccExtraLDFlags>-lGL;-sMAX_WEBGL_VERSION=2;-sSUPPORT_LONGJMP=wasm</EmccExtraLDFlags>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,8 +27,8 @@
   <ItemGroup>
     <!-- Linking SDL3.a also makes the build generate P/Invoke stubs for the engine's "SDL3" imports. -->
     <NativeFileReference Include="$(SdlWasmLibrary)" />
-    <!-- SDL's renderer talks to WebGL through Emscripten's GL library. -->
-    <EmccExtraLDFlags Include="-lGL;-sMAX_WEBGL_VERSION=2" />
+    <!-- EngineNative.a does the same for "EngineNative"; the rest are the Rive libraries it uses. -->
+    <NativeFileReference Include="$(NativeWasmDir)*.a" />
   </ItemGroup>
 
   <!--
@@ -53,6 +57,7 @@
 
   <Target Name="CheckSdlWasmLibrary" BeforeTargets="Build">
     <Error Condition="!Exists('$(SdlWasmLibrary)')" Text="Missing $(SdlWasmLibrary). Run tools/build-sdl-wasm.sh first." />
+    <Error Condition="!Exists('$(NativeWasmDir)EngineNative.a')" Text="Missing $(NativeWasmDir)EngineNative.a. Run tools/build-native-wasm.sh first." />
   </Target>
 
 </Project>
