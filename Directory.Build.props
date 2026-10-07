@@ -6,6 +6,6 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <!-- Assets every host packages in its platform-specific way. -->
-    <GameContentDir>$(MSBuildThisFileDirectory)src/HelloSprite/Content/</GameContentDir>
+    <GameContentDir>$(MSBuildThisFileDirectory)src/Racers/Content/</GameContentDir>
   </PropertyGroup>
 </Project>

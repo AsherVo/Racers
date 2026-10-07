@@ -1,13 +1,13 @@
 #!/bin/sh
-# Builds a universal (arm64 + x86_64) HelloSprite.app from the NativeAOT desktop host.
+# Builds a universal (arm64 + x86_64) Racers.app from the NativeAOT desktop host.
 # No Catalyst and no macOS workload: just a NativeAOT executable, libSDL3, libEngineNative and an
 # Info.plist. Run tools/build-native-macos.sh first.
 # The result is ad-hoc signed; use a Developer ID identity and notarize it for distribution.
 set -eu
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
-NAME=HelloSprite
-BUNDLE_ID=${BUNDLE_ID:-com.example.hellosprite}
+NAME=Racers
+BUNDLE_ID=${BUNDLE_ID:-com.example.racers}
 VERSION=${VERSION:-0.1.0}
 SIGN_IDENTITY=${SIGN_IDENTITY:--}
 OUT="$ROOT/artifacts/macos"
