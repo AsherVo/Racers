@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Developer command-line tools. Run with tools/cli.sh, or dotnet run on this project. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>cli</AssemblyName>
+    <RootNamespace>Cli</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Engine\Engine.csproj" />
+    <ProjectReference Include="..\..\src\Racers\Racers.Game.csproj" />
+  </ItemGroup>
+
+</Project>

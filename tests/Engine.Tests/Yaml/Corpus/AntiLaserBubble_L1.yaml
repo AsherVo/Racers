@@ -1,0 +1,20 @@
+meta:
+  name: AntiLaserBubble
+  type: Skill
+  author: Asher Vollmer
+
+type: Party
+
+components:
+- type: Knob0
+  name: X
+  value: 1
+  display: Add
+  units: BubbleShields
+
+onAttackedByLaser:
+  type: Sequence
+  children:
+  - type: GainBubbleShield
+    amount: Knob.X
+  - type: PulseItem

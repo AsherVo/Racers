@@ -1,0 +1,45 @@
+meta:
+  name: Basic Brain
+  type: BrainOld
+  author: Asher Vollmer
+
+variables:
+  - TARGET
+
+rootNode:
+  type: Selector
+  children:
+  - name: Melee Attack
+    type: Sequence
+    children:
+    - type: FindClosestEnemy 
+      save_entity: TARGET
+    - type: MoveTo
+      entity: TARGET
+      accel: 200
+      maxSpeed: 50
+      distance: 50
+  - type: Sequence
+    name: Wander
+    children:
+    - type: SetAnimation
+      anim: Walk  # Set animation to walking when wandering
+    - type: Wander
+      accel: 200
+      maxSpeed: 50
+      stopDist: 10
+      minSpeed: 50
+    # - type: Timer  # Wait for 3-5 seconds before attacking
+    #   min: 3
+    #   max: 5
+    # - type: Sequence
+    #   children:
+    #   - type: StopMovement # Stop in his tracks
+    #   - type: SetAnimation
+    #     anim: Attack  # Set animation to attack 
+    #   - type: Pause
+    #     time: 0.25
+    #   - type: SetAnimation
+    #     anim: Idle  # Reset animation after attack
+    #   - type: Pause 
+    #     time: 0.25 # Hold in idle  

@@ -1,0 +1,12 @@
+meta:
+  name: Test Item
+  type: Skill
+  author: Asher Vollmer
+
+type: Party
+
+onEnter:
+  type: Sequence
+  children:
+  - type: DebugLog
+    log: "Test!"

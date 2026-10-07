@@ -8,5 +8,6 @@
     <PackageVersion Include="SDL3-CS.Linux" Version="$(SDL3CSVersion)" />
     <PackageVersion Include="SDL3-CS.iOS" Version="$(SDL3CSVersion)" />
     <PackageVersion Include="SDL3-CS.Android" Version="$(SDL3CSVersion)" />
+    <PackageVersion Include="xunit.v3" Version="4.0.1" />
   </ItemGroup>
 </Project>

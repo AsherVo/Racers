@@ -1,0 +1,41 @@
+<Project>
+
+  <!--
+    YAML maps game data with reflection (src/Engine/Yaml), so trimmed builds must keep every member of the
+    assemblies that hold data types, and NativeAOT must pre-generate the collections reflection will create.
+  -->
+  <PropertyGroup>
+    <YamlDataAssemblies Condition="'$(YamlDataAssemblies)' == ''">Engine;Racers.Game</YamlDataAssemblies>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <TrimmerRootAssembly Include="$(YamlDataAssemblies)" />
+  </ItemGroup>
+
+  <!--
+    NativeAOT only: list every List/HashSet/Dictionary used by a field or property in the data assemblies as rd.xml
+    directives (tools/Cli `yaml aot-directives`). Without them, reflection can't create those collections.
+  -->
+  <Target Name="GenerateYamlAotDirectives" BeforeTargets="WriteIlcRspFileForCompilation" Condition="'$(PublishAot)' == 'true'">
+    <ItemGroup>
+      <_YamlDataAssemblyPath Include="@(IlcReference)" Condition="$([System.String]::Copy(';$(YamlDataAssemblies);').Contains(';%(Filename);'))" />
+    </ItemGroup>
+
+    <MSBuild Projects="$(MSBuildThisFileDirectory)../tools/Cli/Cli.csproj" Targets="Build"
+             Properties="Configuration=$(Configuration)"
+             RemoveProperties="RuntimeIdentifier;SelfContained;PublishAot;_IsPublishing;TargetFramework;Platform">
+      <Output TaskParameter="TargetOutputs" ItemName="_YamlCliAssembly" />
+    </MSBuild>
+
+    <PropertyGroup>
+      <_YamlRdXml>$(IntermediateOutputPath)yaml.rd.xml</_YamlRdXml>
+    </PropertyGroup>
+
+    <Exec Command="&quot;$(DOTNET_HOST_PATH)&quot; &quot;@(_YamlCliAssembly)&quot; yaml aot-directives --out &quot;$(_YamlRdXml)&quot; @(_YamlDataAssemblyPath->'&quot;%(FullPath)&quot;', ' ')" />
+
+    <ItemGroup>
+      <RdXmlFile Include="$(_YamlRdXml)" />
+    </ItemGroup>
+  </Target>
+
+</Project>

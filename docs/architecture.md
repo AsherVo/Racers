@@ -148,6 +148,72 @@ The browser needs one extra step. `Microsoft.NET.Sdk.WebAssembly` ignores
 usual way. Instead, the build serves `Content/` as static files with a generated `manifest.json`,
 and `main.js` fetches each file into `/Content` before calling `Init()`.
 
+## Game data (YAML)
+
+Game data is YAML, read and written by `src/Engine/Yaml`. There are two layers:
+
+- **Nodes.** `Yaml.Parse` turns text into `YamlMap` / `YamlList` / `YamlScalar` nodes, and `Yaml.Write` turns them
+  back into text. Use nodes directly for arbitrary data.
+- **Objects.** `Yaml.Deserialize<T>` / `Yaml.Serialize` map YAML to C# objects with reflection.
+  `ContentManager.LoadYaml<T>(path)` loads a file from `Content/` the same way on every platform.
+
+The parser is hand-written YAML 1.2. It covers block and flow collections, every scalar style, anchors and
+aliases, tags, directives and multi-document streams. It passes the official
+[yaml-test-suite](https://github.com/yaml/yaml-test-suite) except one case: it rejects duplicate keys, even two
+empty ones. Comments are skipped, so writing a parsed file drops them. The writer quotes a string only when it
+would otherwise read back as something else (`"true"`, `"123"`, `"yes"`), and writes multi-line strings as
+literal blocks.
+
+### Mapping objects
+
+Public fields and public get/set properties (including `init`) map to keys of the same name, base class members
+first. Classes need a parameterless constructor, which can be private.
+
+| Attribute | Effect |
+|---|---|
+| `[YamlIgnore]` | Never read or written. `Condition = WhenNull / WhenDefault` only omits it from output. |
+| `[YamlMember("key")]` | Renames a member, or includes a non-public one. |
+| `[YamlRequired]` | A missing key is an error. Otherwise missing members keep their initial value. |
+| `[YamlPolymorphic("type")]` | On a base class or interface: the `type` key chooses a concrete subclass, by class name or `[YamlTypeName]`. Subclasses are found in the base's assembly, plus any listed with `[YamlDerivedType]`. |
+| `[YamlConverter(typeof(X))]` | On a type or member: an `IYamlConverter` reads and writes it instead (e.g. a color as `"#FF8800"`). |
+
+Supported member types:
+- `string`, `char`, `bool`, all integer types, `float`, `double`, `decimal`.
+- Enums by name. `[Flags]` enums as `A, B` or `[A, B]`.
+- `Nullable<T>`.
+- `T[]`, `List<T>`, `HashSet<T>`, `Dictionary<TKey, TValue>`.
+- Nested classes and structs.
+- `object` (arbitrary data as `bool`/`long`/`double`/`string`/`List<object?>`/`Dictionary<string, object?>`).
+- `YamlNode` (raw YAML).
+
+Interface collections (`IReadOnlyList<T>`) aren't supported, because creating one needs runtime code generation.
+Unsupported members throw `InvalidOperationException` naming the member.
+
+Reading doesn't stop at the first problem. Every error is collected with its file, line, column and key path, then
+thrown together in one `YamlException` (or returned by `TryDeserialize`):
+
+```
+items/sword.yaml:12:3: components[0].valeu: Unknown key 'valeu' for Knob0.
+items/sword.yaml:18:11: onHit.children[0].type: Unknown BehaviorNode type 'GainSheild'. Expected one of: ...
+```
+
+Unknown keys are errors by default, which catches typos. `YamlReadOptions.AllowUnknownKeys` turns that off.
+
+### Reflection under AOT
+
+Trimming and NativeAOT remove members nothing references statically, and reflection is the only thing that
+reads data classes' setters. `hosts/Directory.Build.targets` handles this in two steps:
+
+1. **Rooting.** It roots the data assemblies (`YamlDataAssemblies`: `Engine;Racers.Game`), so ILLink and ILC
+   keep every type and member in them. A new assembly that holds data types must be added there.
+2. **Collections (NativeAOT only).** NativeAOT can't create generic collections such as
+   `Dictionary<string, Stats>` through reflection unless their code was generated ahead of time. Rooting doesn't
+   cover these, because the collection types live in the framework. Before ILC runs, the hosts build `tools/Cli`
+   and run `cli yaml aot-directives`. It lists every `List`, `HashSet` and `Dictionary` that appears in a field
+   or property of the data assemblies, as rd.xml directives (`obj/.../yaml.rd.xml`).
+
+Mono targets (Android, and the browser, which falls back to its interpreter) don't need step 2.
+
 ## Rendering
 
 ### SpriteBatch
@@ -300,6 +366,7 @@ target functions, plus `en_rive_backend()` so `RiveRuntime` knows which texture 
 - **Rive on Metal** waits on the GPU once per frame, because it can't share SDL's command queue.
 - **Rive resolution** is fixed when the instance is created. The sample always renders at density 2,
   which wastes memory and fill rate on 1× displays, the browser in particular.
+- **YAML** comments are lost when a parsed file is written back. `DateTime` members aren't supported.
 - **Fonts** cover printable ASCII only, and kerning comes only from the font's `kern` table (not GPOS).
 - **Draw calls:** sprites and glyphs each have their own texture. A shared atlas would let
   interleaved sprites and text batch together.

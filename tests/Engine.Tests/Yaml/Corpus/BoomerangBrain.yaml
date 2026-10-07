@@ -1,0 +1,39 @@
+meta:
+  name: Boomerang Brain
+  type: BrainOld
+  author: Asher Vollmer
+
+variables:
+  - SPAWNER
+
+rootNode:
+  type: Sequence
+  children:
+    - type: Rotate
+      amount: 360
+
+    - type: AreaAttack
+
+    - type: Selector
+      children:
+
+      - type: Sequence
+        children:
+        - type: DidCollide
+        - type: DoesNotHaveComponent
+          component: HomingMissile
+        - type: SetHomingTarget
+          target: SPAWNER
+          speed: 100
+
+      - type: Sequence
+        children:
+        - type: HasComponent
+          component: HomingMissile
+        - type: SetHomingTarget
+          target: SPAWNER
+          speed: 100
+          
+        - type: DoesOverlap
+          entity: SPAWNER
+        - type: Die

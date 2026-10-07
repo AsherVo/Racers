@@ -29,6 +29,12 @@ public sealed unsafe class ContentManager(Graphics graphics, string root)
         }
     }
 
+    public string LoadText ( string path ) => System.Text.Encoding.UTF8.GetString( LoadBytes( path ) );
+
+    /// <exception cref="YamlException">The file isn't valid YAML or doesn't match <typeparamref name="T"/>; it lists every problem.</exception>
+    public T LoadYaml< [ System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS ) ] T > ( string path ) =>
+        Yaml.Deserialize< T >( LoadText( path ), source: path );
+
     /// <param name="size">Pixel height in virtual-resolution pixels.</param>
     /// <param name="density">Atlas pixels per virtual pixel; 2 keeps text sharp on Retina and when
     /// the window is larger than the virtual resolution.</param>

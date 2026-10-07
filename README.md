@@ -16,6 +16,7 @@ src/Engine/            Platform-agnostic engine (net10.0, AOT-compatible)
   Graphics/SpriteBatch.cs  Batched quads → SDL_RenderGeometry (sprites, text and Rive, in any order)
   Graphics/Font.cs       TrueType → glyph atlas (stb_truetype in EngineNative)
   Graphics/Rive.cs       Rive files/instances; each instance renders into its own texture
+  Yaml/                  YAML parser and writer, plus reflection mapping between YAML and C# objects (game data)
 src/HelloSprite/       Sample game: Rive background, cars, text, a translucent Rive inset; click to add cars
 native/                EngineNative: flat C API over stb_truetype and the Rive runtime (Metal, WebGL 2)
 hosts/Desktop/         Windows/macOS/Linux: plain net10.0 exe, NativeAOT
@@ -23,13 +24,15 @@ hosts/Browser/         .NET WebAssembly + SDL3 compiled with Emscripten
 hosts/iOS/             net10.0-ios, SDL linked statically; NativeAOT in Release
 hosts/Android/         net10.0-android, SDL's Java SDLActivity calls MainActivity.Main()
 tools/                 Native builds (SDL wasm, EngineNative), macOS bundling, browser smoke test
+tools/Cli/             Developer CLI (tools/cli.sh): `yaml validate`, `yaml aot-directives`
+tests/Engine.Tests/    xUnit tests: dotnet test --project tests/Engine.Tests
 docs/                  architecture.md: how the engine works and why
 ```
 
 Games subclass `Engine.Game` and never see SDL or the platform. Hosts are a few lines each.
 [docs/architecture.md](docs/architecture.md) explains how it all fits together: the frame loop on
 each platform, the SDL binding, content loading, `SpriteBatch`, text, and how Rive renders into SDL
-textures on Metal and WebGL.
+textures on Metal and WebGL, and how game data is read from YAML.
 
 ## Building
 

@@ -43,6 +43,19 @@ dotnet build hosts/Android -t:Run -p:AndroidSdkDirectory=$ANDROID_HOME -p:JavaSd
 ```
 Debug builds use Fast Deployment, so install with `-t:Install` or `-t:Run`, not `adb install`.
 
+**Tests** (xUnit v3 on Microsoft.Testing.Platform, enabled in `global.json`):
+```sh
+dotnet test --project tests/Engine.Tests
+```
+
+**Developer CLI** (`tools/Cli`). Run `tools/cli.sh help` for the list of commands:
+```sh
+tools/cli.sh yaml validate src/Racers/Content/data                    # every *.yaml/*.yml parses
+tools/cli.sh yaml validate src/Racers/Content/data/cars --type CarData # ...and reads into a class
+tools/cli.sh yaml validate file.yaml --type MyType --assembly path/to/Other.dll
+```
+Problems print as `file:line:column: key.path: message`. The exit code is 1 if any file failed, 2 for usage errors.
+
 **Debug capture:** set `ENGINE_CAPTURE=/path/frame.png` and the engine saves frame 90 as a PNG on any platform.
 
 ## Build gotchas
@@ -76,3 +89,8 @@ the engine works at runtime are in [docs/architecture.md](docs/architecture.md).
    lowers `setjmp` (libpng, libjpeg) to `__wasm_setjmp`, but its Emscripten 3.1.56 runtime only has
    the older `saveSetjmp`. `build-native-wasm.sh` compiles Rive with emsdk 3.1.56, `--no-lto`,
    `-fwasm-exceptions -sSUPPORT_LONGJMP=wasm`.
+10. **NativeAOT can't create `List`/`Dictionary`/`HashSet` through reflection** unless the instantiation was
+    generated ahead of time. This fails even for `Dictionary<string, string>`, and even with
+    `IlcGenerateCompleteTypeMetadata`, so YAML game data broke in desktop-release and iOS builds while working
+    under `dotnet run`. `hosts/Directory.Build.targets` generates rd.xml directives for every collection type in
+    the data assemblies (see [architecture.md](architecture.md#reflection-under-aot)).

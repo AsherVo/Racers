@@ -1,0 +1,14 @@
+meta:
+  name: StunBoost
+  type: Skill
+  author: Asher Vollmer
+
+type: Enemies
+
+components:
+- type: Knob0
+  name: X
+  value: 0.2
+
+- type: AttackBonusPerStunned
+  addMultDamageKnob: X

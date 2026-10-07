@@ -8,7 +8,7 @@ Engine code should be rock solid.
 Tool code should be of average quality.
 
 ## Game Code
-Game code is dynamic, changing, and often uses non-ideal coding practices. This is fine.. Do NOT add any comments to game code unless directly instructed.
+Game code is dynamic, changing, and often uses non-ideal coding practices. This is fine. Do NOT add any comments to game code unless directly instructed.
 
 ## Naming
 - Types, functions, methods, and enum values: PascalCase (`YamlNode`, `ViewFit`, `YamlMap`).
