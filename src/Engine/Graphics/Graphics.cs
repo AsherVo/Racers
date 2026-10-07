@@ -13,6 +13,14 @@ public sealed unsafe class Graphics : IDisposable
     /// <summary>1x1 white texture for drawing solid rectangles.</summary>
     public Texture Pixel { get; }
 
+    RiveRuntime? _rive;
+
+    /// <summary>Created on first use, so games without Rive never load it.</summary>
+    internal RiveRuntime Rive => _rive ??= RiveRuntime.Create(Renderer);
+
+    /// <summary>Advances and renders Rive instances; runs between the game's Update and Draw.</summary>
+    internal void UpdateRive(float seconds) => _rive?.Update(seconds);
+
     internal Graphics(nint renderer, int width, int height)
     {
         Renderer = renderer;
@@ -32,5 +40,9 @@ public sealed unsafe class Graphics : IDisposable
         return new Texture(handle);
     }
 
-    public void Dispose() => Pixel.Dispose();
+    public void Dispose()
+    {
+        _rive?.Dispose();
+        Pixel.Dispose();
+    }
 }

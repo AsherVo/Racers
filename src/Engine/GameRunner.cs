@@ -56,7 +56,7 @@ public sealed unsafe class GameRunner(Game game, GameOptions options)
         Log.Info($"Platform: {SDL.GetPlatform()}, renderer: {SDL.Utf8(SDL.SDL_GetRendererName(_renderer))}");
 
         game.Graphics = new Graphics(_renderer, options.Width, options.Height);
-        game.Content = new ContentManager(_renderer, options.ContentRoot ?? ContentManager.DefaultRoot());
+        game.Content = new ContentManager(game.Graphics, options.ContentRoot ?? ContentManager.DefaultRoot());
         _batch = new SpriteBatch(game.Graphics);
 
         game.Load();
@@ -90,6 +90,7 @@ public sealed unsafe class GameRunner(Game game, GameOptions options)
         dt = MathF.Min(dt, 0.1f);
         _totalSeconds += dt;
         game.Update(new GameTime(_totalSeconds, dt));
+        game.Graphics.UpdateRive(dt);
 
         var c = options.ClearColor;
         SDL.SDL_SetRenderDrawColorFloat(_renderer, c.R, c.G, c.B, c.A);

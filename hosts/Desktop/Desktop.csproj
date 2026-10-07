@@ -19,6 +19,12 @@
     <PackageReference Include="SDL3-CS.Linux" />
   </ItemGroup>
 
+  <!-- Fonts and Rive (tools/build-native-macos.sh). P/Invoke finds it next to the executable. -->
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('OSX'))">
+    <None Include="$(MSBuildThisFileDirectory)../../artifacts/native/osx/libEngineNative.dylib"
+          Link="libEngineNative.dylib" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <ItemGroup>
     <None Include="$(GameContentDir)**" LinkBase="Content" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>

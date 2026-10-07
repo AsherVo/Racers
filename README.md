@@ -13,8 +13,11 @@ src/Engine/            Platform-agnostic engine (net10.0, AOT-compatible)
   build/StaticSdl.targets  Keeps those SDL symbols through the iOS native link
   GameRunner.cs          Init / Iterate / HandleEvent / Frame: the per-frame core
   GameHost.cs            SDL_RunApp → SDL_EnterAppMainCallbacks (desktop, iOS, Android)
-  Graphics/SpriteBatch.cs  Batched quads → SDL_RenderGeometry
-src/HelloSprite/       Sample game: bouncing tinted sprites, click/tap to add 100
+  Graphics/SpriteBatch.cs  Batched quads → SDL_RenderGeometry (sprites, text and Rive, in any order)
+  Graphics/Font.cs       TrueType → glyph atlas (stb_truetype in EngineNative)
+  Graphics/Rive.cs       Rive files/instances; each instance renders into its own texture
+src/HelloSprite/       Sample game: Rive background, cars, text, a translucent Rive inset; click to add cars
+native/                EngineNative: flat C API over stb_truetype and the Rive runtime (Metal)
 hosts/Desktop/         Windows/macOS/Linux: plain net10.0 exe, NativeAOT
 hosts/Browser/         .NET WebAssembly + SDL3 compiled with Emscripten
 hosts/iOS/             net10.0-ios, SDL linked statically; NativeAOT in Release
@@ -46,6 +49,12 @@ dotnet run --project hosts/Desktop
 dotnet publish hosts/Desktop -c Release -r osx-arm64     # or win-x64, linux-x64 (on that OS)
 tools/package-macos.sh                                    # universal, ad-hoc signed HelloSprite.app
 SIGN_IDENTITY="Developer ID Application: …" tools/package-macos.sh   # hardened runtime, for notarization
+```
+
+**Fonts and Rive** need `libEngineNative`, built so far for macOS only (universal, verified with
+`dotnet run` and the NativeAOT `.app`). Other hosts still build, but `LoadFont`/`LoadRive` fail there:
+```sh
+tools/build-native-macos.sh   # once: pinned rive-runtime + premake/ninja → artifacts/native/osx/
 ```
 
 **Browser** (verified in headless Chromium):
@@ -113,10 +122,22 @@ These cost real time. Each one is handled in the code, with a comment at the fix
 11. **macOS hardened runtime rejects ad-hoc signed dylibs** (library validation). The packaging
    script enables hardened runtime only for real identities.
 
+12. **Rive renders into textures SDL samples without a copy.** Each instance's target is an
+   IOSurface-backed `CVPixelBuffer`; Rive draws into it through Metal and SDL's Metal renderer wraps
+   it (`SDL_PROP_TEXTURE_CREATE_METAL_PIXELBUFFER_POINTER`). SDL doesn't expose its command queue,
+   so Rive uses its own queue: the engine waits for Rive's GPU work each frame before drawing, and
+   each instance rotates three textures so it never overwrites one SDL may still be sampling.
+13. **Rive output is premultiplied.** Those textures use `SDL_BLENDMODE_BLEND_PREMULTIPLIED` and
+   `SpriteBatch` premultiplies the tint, so straight-alpha sprites and text interleave with Rive freely.
+14. **Rive's archives are LTO bitcode and its feature defines change class layouts.** The bridge is
+   compiled with the exact `-D` flags Rive was built with, and linked with `-flto` (plus ImageIO,
+   which Rive uses to decode images on Apple platforms).
+
 ## Sizes (Release)
 
 | Target | Size |
 |---|---|
 | macOS arm64 executable (NativeAOT) | 1.0 MB + libSDL3.dylib 2.9 MB |
+| libEngineNative.dylib (Rive + fonts, universal) | 9.9 MB (~5 MB per architecture) |
 | Browser download (brotli) | 1.9 MB |
 | iOS simulator app (NativeAOT) | 8.2 MB |

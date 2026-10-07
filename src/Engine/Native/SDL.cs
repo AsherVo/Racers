@@ -36,6 +36,15 @@ internal static unsafe partial class SDL
     public const int SCALEMODE_PIXELART = 2;
     public const int TEXTUREACCESS_STATIC = 0;
     public const uint PIXELFORMAT_ABGR8888 = 0x16762004;
+    public const uint PIXELFORMAT_ARGB8888 = 0x16362004;
+    public const string PROP_TEXTURE_CREATE_FORMAT_NUMBER = "SDL.texture.create.format";
+    public const string PROP_TEXTURE_CREATE_WIDTH_NUMBER = "SDL.texture.create.width";
+    public const string PROP_TEXTURE_CREATE_HEIGHT_NUMBER = "SDL.texture.create.height";
+    public const string PROP_TEXTURE_CREATE_METAL_PIXELBUFFER_POINTER = "SDL.texture.create.metal.pixelbuffer";
+
+    // SDL_blendmode.h
+    public const uint BLENDMODE_BLEND = 0x1;
+    public const uint BLENDMODE_BLEND_PREMULTIPLIED = 0x10;
 
     // SDL_log.h
     public const int LOG_CATEGORY_APPLICATION = 0;
@@ -196,12 +205,22 @@ internal static unsafe partial class SDL
     [LibraryImport(Lib)]
     public static partial nint SDL_RenderReadPixels(nint renderer, void* rect);
 
+    [LibraryImport(Lib)]
+    public static partial nint SDL_GetRenderMetalLayer(nint renderer);
+
     // Textures and surfaces
     [LibraryImport(Lib)]
     public static partial nint SDL_CreateTexture(nint renderer, uint format, int access, int w, int h);
 
     [LibraryImport(Lib)]
     public static partial nint SDL_CreateTextureFromSurface(nint renderer, nint surface);
+
+    [LibraryImport(Lib)]
+    public static partial nint SDL_CreateTextureWithProperties(nint renderer, uint props);
+
+    [LibraryImport(Lib)]
+    [return: MarshalAs(UnmanagedType.U1)]
+    public static partial bool SDL_SetTextureBlendMode(nint texture, uint blendMode);
 
     [LibraryImport(Lib)]
     [return: MarshalAs(UnmanagedType.U1)]
@@ -227,6 +246,28 @@ internal static unsafe partial class SDL
 
     [LibraryImport(Lib)]
     public static partial void SDL_DestroySurface(nint surface);
+
+    // Properties
+    [LibraryImport(Lib)]
+    public static partial uint SDL_CreateProperties();
+
+    [LibraryImport(Lib)]
+    public static partial void SDL_DestroyProperties(uint props);
+
+    [LibraryImport(Lib, StringMarshalling = StringMarshalling.Utf8)]
+    [return: MarshalAs(UnmanagedType.U1)]
+    public static partial bool SDL_SetPointerProperty(uint props, string name, nint value);
+
+    [LibraryImport(Lib, StringMarshalling = StringMarshalling.Utf8)]
+    [return: MarshalAs(UnmanagedType.U1)]
+    public static partial bool SDL_SetNumberProperty(uint props, string name, long value);
+
+    // Files and memory
+    [LibraryImport(Lib, StringMarshalling = StringMarshalling.Utf8)]
+    public static partial void* SDL_LoadFile(string file, out nuint dataSize);
+
+    [LibraryImport(Lib)]
+    public static partial void SDL_free(void* mem);
 
     // Helpers
 

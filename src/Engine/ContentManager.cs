@@ -6,9 +6,36 @@ namespace Engine;
 /// Loads assets through SDL's file I/O, which already knows each platform's storage: the app bundle
 /// on Apple platforms, APK assets on Android (relative paths), and the Emscripten FS in the browser.
 /// </summary>
-public sealed unsafe class ContentManager(nint renderer, string root)
+public sealed unsafe class ContentManager(Graphics graphics, string root)
 {
+    readonly nint renderer = graphics.Renderer;
+
     public string Root { get; } = root;
+
+    public byte[] LoadBytes(string path)
+    {
+        string full = Root + path;
+        void* data = SDL.SDL_LoadFile(full, out nuint size);
+        if (data == null)
+            throw new FileNotFoundException($"SDL_LoadFile failed for '{full}': {SDL.GetError()}");
+
+        try
+        {
+            return new ReadOnlySpan<byte>(data, checked((int)size)).ToArray();
+        }
+        finally
+        {
+            SDL.SDL_free(data);
+        }
+    }
+
+    /// <param name="size">Pixel height in virtual-resolution pixels.</param>
+    /// <param name="density">Atlas pixels per virtual pixel; 2 keeps text sharp on Retina and when
+    /// the window is larger than the virtual resolution.</param>
+    public Font LoadFont(string path, float size, float density = 2f) =>
+        Font.Bake(renderer, LoadBytes(path), size, density);
+
+    public RiveFile LoadRive(string path) => graphics.Rive.Load(LoadBytes(path), path);
 
     public Texture LoadTexture(string path, TextureFilter filter = TextureFilter.Linear)
     {
