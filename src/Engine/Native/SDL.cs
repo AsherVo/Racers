@@ -25,6 +25,11 @@ internal static unsafe partial class SDL
     public const ulong WINDOW_HIGH_PIXEL_DENSITY = 0x2000;
     public const ulong WINDOW_FILL_DOCUMENT = 0x200000; // Emscripten only
 
+    // SDL_keycode.h / SDL_scancode.h
+    public const ushort KMOD_ALT = 0x0300; // either Alt (Option on macOS)
+    public const uint SCANCODE_RETURN = 40;
+    public const uint SCANCODE_KP_ENTER = 88;
+
     // SDL_render.h / SDL_surface.h / SDL_pixels.h
     public const int LOGICAL_PRESENTATION_LETTERBOX = 2;
     public const int SCALEMODE_LINEAR = 1;
@@ -146,6 +151,13 @@ internal static unsafe partial class SDL
 
     [LibraryImport(Lib)]
     public static partial void SDL_DestroyWindow(nint window);
+
+    [LibraryImport(Lib)]
+    public static partial ulong SDL_GetWindowFlags(nint window);
+
+    [LibraryImport(Lib)]
+    [return: MarshalAs(UnmanagedType.U1)]
+    public static partial bool SDL_SetWindowFullscreen(nint window, [MarshalAs(UnmanagedType.U1)] bool fullscreen);
 
     [LibraryImport(Lib)]
     public static partial void SDL_DestroyRenderer(nint renderer);

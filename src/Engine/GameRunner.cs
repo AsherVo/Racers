@@ -140,6 +140,11 @@ public sealed unsafe class GameRunner(Game game, GameOptions options)
                 game.OnPointer(new PointerEvent(action, new Vector2(e.Button.X, e.Button.Y)));
                 break;
 
+            case SDL.EVENT_KEY_DOWN when IsFullscreenToggle(ref e.Key):
+                if (e.Key.Repeat == 0)
+                    ToggleFullscreen();
+                break;
+
             case SDL.EVENT_KEY_DOWN:
             case SDL.EVENT_KEY_UP:
                 if (e.Key.Repeat == 0)
@@ -148,6 +153,22 @@ public sealed unsafe class GameRunner(Game game, GameOptions options)
         }
 
         return !game.ExitRequested;
+    }
+
+    static readonly bool Desktop = OperatingSystem.IsWindows() || OperatingSystem.IsMacOS() || OperatingSystem.IsLinux();
+
+    /// <summary>Alt+Enter (Option+Return on macOS), desktop only. Mobile is always fullscreen and the browser fills the page.</summary>
+    static bool IsFullscreenToggle(ref SDL.KeyboardEvent key) =>
+        Desktop
+        && (key.Mod & SDL.KMOD_ALT) != 0
+        && key.Scancode is SDL.SCANCODE_RETURN or SDL.SCANCODE_KP_ENTER;
+
+    /// <summary>Switches between a window and borderless fullscreen at desktop resolution.</summary>
+    public void ToggleFullscreen()
+    {
+        bool fullscreen = (SDL.SDL_GetWindowFlags(_window) & SDL.WINDOW_FULLSCREEN) != 0;
+        if (!SDL.SDL_SetWindowFullscreen(_window, !fullscreen))
+            Log.Error($"SDL_SetWindowFullscreen failed: {SDL.GetError()}");
     }
 
     /// <summary>Saves the current back buffer as a PNG, for automated checks on any platform.</summary>

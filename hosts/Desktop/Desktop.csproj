@@ -2,7 +2,8 @@
 
   <!-- Windows, macOS (no Catalyst) and Linux: a plain .NET app, published with NativeAOT. -->
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
+    <!-- WinExe: no console window on Windows. Makes no difference on macOS or Linux. -->
+    <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
     <AssemblyName>HelloSprite</AssemblyName>
     <RootNamespace>Desktop</RootNamespace>
