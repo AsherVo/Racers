@@ -1,8 +1,11 @@
 # Coding Standards
 All code should be self-documenting.
 
-## Engine Code and Tool Code
-Engine code and Tool code should be rock solid.
+## Engine Code
+Engine code should be rock solid.
+
+## Tool Code
+Tool code should be of average quality.
 
 ## Game Code
 Game code is dynamic, changing, and often uses non-ideal coding practices. This is fine.. Do NOT add any comments to game code unless directly instructed.
@@ -22,4 +25,4 @@ Game code is dynamic, changing, and often uses non-ideal coding practices. This 
 
 ```C#
 if ( condition )
-   return;```
+    return;```
