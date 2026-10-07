@@ -1,4 +1,4 @@
 using Engine;
-using HelloSprite;
+using Racers;
 
-return GameHost.Run(() => new HelloSpriteGame(), HelloSpriteGame.Options);
+return GameHost.Run(() => new RacersGame(), RacersGame.Options);

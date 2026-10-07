@@ -1,7 +1,7 @@
 using Android.App;
 using Android.Content.PM;
 using Engine;
-using HelloSprite;
+using Racers;
 using Org.Libsdl.App;
 
 namespace AndroidHost;
@@ -22,5 +22,5 @@ public class MainActivity : SDLActivity
     protected override string[] GetLibraries() => ["SDL3"];
 
     // Runs on SDL's thread; returns when the game ends.
-    protected override void Main() => GameHost.Run(() => new HelloSpriteGame(), HelloSpriteGame.Options);
+    protected override void Main() => GameHost.Run(() => new RacersGame(), RacersGame.Options);
 }

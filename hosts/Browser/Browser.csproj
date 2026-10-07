@@ -8,7 +8,7 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <OutputType>Exe</OutputType>
-    <AssemblyName>HelloSprite.Browser</AssemblyName>
+    <AssemblyName>Racers.Browser</AssemblyName>
     <RootNamespace>Browser</RootNamespace>
     <InvariantGlobalization>true</InvariantGlobalization>
     <!-- Single-threaded keeps hosting simple (no COOP/COEP headers needed). -->
@@ -21,7 +21,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\HelloSprite\HelloSprite.Game.csproj" />
+    <ProjectReference Include="..\..\src\Racers\Racers.Game.csproj" />
   </ItemGroup>
 
   <ItemGroup>

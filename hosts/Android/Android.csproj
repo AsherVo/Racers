@@ -4,10 +4,10 @@
   <PropertyGroup>
     <TargetFramework>net10.0-android</TargetFramework>
     <OutputType>Exe</OutputType>
-    <AssemblyName>HelloSprite.Android</AssemblyName>
+    <AssemblyName>Racers.Android</AssemblyName>
     <RootNamespace>AndroidHost</RootNamespace>
     <SupportedOSPlatformVersion>24</SupportedOSPlatformVersion>
-    <ApplicationId>com.example.hellosprite</ApplicationId>
+    <ApplicationId>com.example.Racers</ApplicationId>
     <ApplicationTitle>Hello Sprite</ApplicationTitle>
     <ApplicationDisplayVersion>0.1.0</ApplicationDisplayVersion>
     <ApplicationVersion>1</ApplicationVersion>
@@ -15,7 +15,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\HelloSprite\HelloSprite.Game.csproj" />
+    <ProjectReference Include="..\..\src\Racers\Racers.Game.csproj" />
     <PackageReference Include="SDL3-CS.Android" />
   </ItemGroup>
 

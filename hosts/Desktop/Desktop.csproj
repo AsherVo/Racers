@@ -5,14 +5,14 @@
     <!-- WinExe: no console window on Windows. Makes no difference on macOS or Linux. -->
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
-    <AssemblyName>HelloSprite</AssemblyName>
+    <AssemblyName>Racers</AssemblyName>
     <RootNamespace>Desktop</RootNamespace>
     <PublishAot>true</PublishAot>
     <InvariantGlobalization>true</InvariantGlobalization>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\HelloSprite\HelloSprite.Game.csproj" />
+    <ProjectReference Include="..\..\src\Racers\Racers.Game.csproj" />
     <!-- Each package only contributes natives for its own RIDs. -->
     <PackageReference Include="SDL3-CS.MacOS" />
     <PackageReference Include="SDL3-CS.Windows" />

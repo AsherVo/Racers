@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices.JavaScript;
 using Engine;
-using HelloSprite;
+using Racers;
 
 namespace Browser;
 
@@ -19,7 +19,7 @@ public static partial class Program
     [JSExport]
     internal static bool Init()
     {
-        s_runner = new GameRunner(new HelloSpriteGame(), HelloSpriteGame.Options);
+        s_runner = new GameRunner(new RacersGame(), RacersGame.Options);
         return s_runner.Init();
     }
 
