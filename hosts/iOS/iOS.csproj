@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- iOS host: SDL3 is linked statically (from SDL3-CS.iOS) and owns UIApplicationMain. -->
+  <PropertyGroup>
+    <!--
+      Pinned to the iOS 26 SDK pack because the workload's default (27.0) requires Xcode 27.
+      That pack expects Xcode 26.0 exactly; skipping the check lets Xcode 26.x builds through.
+      Remove both once Xcode and the workload agree.
+    -->
+    <TargetFramework>net10.0-ios26.0</TargetFramework>
+    <ValidateXcodeVersion>false</ValidateXcodeVersion>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>HelloSprite.iOS</AssemblyName>
+    <RootNamespace>iOSHost</RootNamespace>
+    <SupportedOSPlatformVersion>15.0</SupportedOSPlatformVersion>
+    <ApplicationId>com.example.hellosprite</ApplicationId>
+    <ApplicationTitle>Hello Sprite</ApplicationTitle>
+    <ApplicationDisplayVersion>0.1.0</ApplicationDisplayVersion>
+    <ApplicationVersion>1</ApplicationVersion>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <PublishAot Condition="'$(Configuration)' == 'Release'">true</PublishAot>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\HelloSprite\HelloSprite.Game.csproj" />
+    <PackageReference Include="SDL3-CS.iOS" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- SDL's HIDAPI (Bluetooth game controllers) needs CoreBluetooth; SDL3-CS.iOS's targets omit it. -->
+    <LinkerArgument Include="-framework" />
+    <LinkerArgument Include="CoreBluetooth" />
+  </ItemGroup>
+
+  <!-- Keep the SDL functions the engine imports through the static link's dead-stripping. -->
+  <Import Project="..\..\src\Engine\build\StaticSdl.targets" />
+
+  <ItemGroup>
+    <!-- SDL_GetBasePath() is the bundle root on iOS. -->
+    <BundleResource Include="$(GameContentDir)**" LogicalName="Content/%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
+</Project>

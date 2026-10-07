@@ -1,0 +1,58 @@
+<Project Sdk="Microsoft.NET.Sdk.WebAssembly">
+
+  <!--
+    Browser host: .NET WebAssembly (Mono runtime) with SDL3 statically linked via Emscripten.
+    Requires the wasm-tools workload and artifacts/sdl-wasm/SDL3.a from tools/build-sdl-wasm.sh.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>HelloSprite.Browser</AssemblyName>
+    <RootNamespace>Browser</RootNamespace>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <!-- Single-threaded keeps hosting simple (no COOP/COEP headers needed). -->
+    <WasmEnableThreads>false</WasmEnableThreads>
+    <RunAOTCompilation Condition="'$(Configuration)' == 'Release'">true</RunAOTCompilation>
+    <SdlWasmLibrary>$(MSBuildThisFileDirectory)../../artifacts/sdl-wasm/SDL3.a</SdlWasmLibrary>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\HelloSprite\HelloSprite.Game.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Linking SDL3.a also makes the build generate P/Invoke stubs for the engine's "SDL3" imports. -->
+    <NativeFileReference Include="$(SdlWasmLibrary)" />
+    <!-- SDL's renderer talks to WebGL through Emscripten's GL library. -->
+    <EmccExtraLDFlags Include="-lGL;-sMAX_WEBGL_VERSION=2" />
+  </ItemGroup>
+
+  <!--
+    Game content is served as static files under Content/ and listed in Content/manifest.json;
+    main.js copies them into the Emscripten file system before the game starts, so the engine
+    loads them through SDL like on every other platform.
+  -->
+  <ItemGroup>
+    <GameContent Include="$(GameContentDir)**" />
+    <Content Include="@(GameContent)" Link="wwwroot/Content/%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <Target Name="WriteContentManifest" BeforeTargets="AssignTargetPaths">
+    <ItemGroup>
+      <_ContentManifestEntry Include="@(GameContent->'&quot;%(RecursiveDir)%(Filename)%(Extension)&quot;'->Replace('\', '/'))" />
+    </ItemGroup>
+    <PropertyGroup>
+      <_ContentManifestPath>$(IntermediateOutputPath)content-manifest.json</_ContentManifestPath>
+      <_ContentManifestJson>[@(_ContentManifestEntry, ',')]</_ContentManifestJson>
+    </PropertyGroup>
+    <WriteLinesToFile File="$(_ContentManifestPath)" Lines="$(_ContentManifestJson)" Overwrite="true" WriteOnlyWhenDifferent="true" />
+    <ItemGroup>
+      <Content Include="$(_ContentManifestPath)" Link="wwwroot/Content/manifest.json" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="CheckSdlWasmLibrary" BeforeTargets="Build">
+    <Error Condition="!Exists('$(SdlWasmLibrary)')" Text="Missing $(SdlWasmLibrary). Run tools/build-sdl-wasm.sh first." />
+  </Target>
+
+</Project>

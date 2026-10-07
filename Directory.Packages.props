@@ -1,0 +1,12 @@
+<Project>
+  <PropertyGroup>
+    <SDL3CSVersion>3.4.18</SDL3CSVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageVersion Include="SDL3-CS.MacOS" Version="$(SDL3CSVersion)" />
+    <PackageVersion Include="SDL3-CS.Windows" Version="$(SDL3CSVersion)" />
+    <PackageVersion Include="SDL3-CS.Linux" Version="$(SDL3CSVersion)" />
+    <PackageVersion Include="SDL3-CS.iOS" Version="$(SDL3CSVersion)" />
+    <PackageVersion Include="SDL3-CS.Android" Version="$(SDL3CSVersion)" />
+  </ItemGroup>
+</Project>
