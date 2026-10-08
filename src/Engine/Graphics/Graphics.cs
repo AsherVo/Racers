@@ -6,9 +6,12 @@ public sealed unsafe class Graphics : IDisposable
 {
     internal nint Renderer { get; }
 
-    /// <summary>Virtual resolution the game draws in.</summary>
-    public int Width { get; }
-    public int Height { get; }
+    /// <summary>Resolution the game draws in, in game pixels. (0, 0) is the bottom-left corner.</summary>
+    public int Width { get; private set; }
+    public int Height { get; private set; }
+
+    /// <summary>Output pixels per game pixel at the current window size; a density for sharp fonts and Rive.</summary>
+    public float PixelScale { get; private set; } = 1f;
 
     /// <summary>1x1 white texture for drawing solid rectangles.</summary>
     public Texture Pixel { get; }
@@ -21,12 +24,17 @@ public sealed unsafe class Graphics : IDisposable
     /// <summary>Advances and renders Rive instances; runs between the game's Update and Draw.</summary>
     internal void UpdateRive ( float seconds ) => _rive?.Update( seconds );
 
-    internal Graphics ( nint renderer, int width, int height )
+    internal Graphics ( nint renderer )
     {
         Renderer = renderer;
+        Pixel = CreateSolid( renderer );
+    }
+
+    internal void SetView ( int width, int height, float pixelScale )
+    {
         Width = width;
         Height = height;
-        Pixel = CreateSolid( renderer );
+        PixelScale = pixelScale;
     }
 
     static Texture CreateSolid ( nint renderer )

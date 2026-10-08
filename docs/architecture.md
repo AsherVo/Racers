@@ -78,8 +78,33 @@ and drawing. On return it resets the clock so no time is skipped.
 
 ### Window, resolution and input
 
-The game draws at a fixed virtual resolution (`GameOptions.Width/Height`, default 1280×720).
-`SDL_SetRenderLogicalPresentation(LETTERBOX)` scales that onto whatever window or screen exists.
+Each game has a `config.yaml` in its content folder (`GameOptions.ConfigPath`), mapped to `GameConfig`. The
+runner reads it right after `SDL_Init`, before the window exists:
+
+```yaml
+title: Resource Racers
+resolutionX: 400        # game pixels; (0, 0) is the bottom-left, (resolutionX, resolutionY) the top-right
+resolutionY: 225
+pixelPerfect: false     # true: scale only by whole numbers (1x, 2x, ...)
+dynamicSize: false      # true: the resolution follows the window
+dynamicPixelScale: 4    # with dynamicSize: window points per game pixel
+```
+
+`ViewFit` turns the config and the window's size into the game's resolution (`Graphics.Width/Height`) and an
+SDL logical presentation mode:
+
+| | Fixed size | `dynamicSize` |
+|---|---|---|
+| Resolution | `resolutionX × resolutionY` | window points ÷ `dynamicPixelScale` |
+| `pixelPerfect: false` | `LETTERBOX`: as large as fits | `LETTERBOX` (bars under one game pixel) |
+| `pixelPerfect: true` | `INTEGER_SCALE`: whole multiples only | `INTEGER_SCALE`, pixel size rounded to whole output pixels |
+| Desktop window opens at | the largest whole multiple that fits 90% of the screen | resolution × `dynamicPixelScale`, shrunk to fit |
+
+SDL fills the letterbox with the clear color, so each frame clears the whole window black and then fills only
+the game's area with `GameOptions.ClearColor`. On `SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED` the runner refits and,
+if the resolution or `Graphics.PixelScale` (output pixels per game pixel) changed, calls `Game.OnResize`.
+`PixelScale` is the density to bake fonts and render Rive at for sharp output.
+
 Windows are resizable and high-DPI. On mobile they're fullscreen, and in the browser they fill the
 page. Alt+Enter (Option+Return) toggles borderless fullscreen on desktop.
 
@@ -88,8 +113,8 @@ resizable SDL window asks for "any" orientation, and Android 15+ ignores fullscr
 runner sets `SDL_HINT_ORIENTATIONS` from `GameOptions.Orientation` before `SDL_Init`, and creates
 fullscreen windows on mobile.
 
-Pointer events are converted to virtual-resolution coordinates
-(`SDL_ConvertEventToRenderCoordinates`) before they reach `Game.OnPointer`. SDL synthesizes mouse
+Pointer events are converted to game pixels (`SDL_ConvertEventToRenderCoordinates`, then y flipped
+to point up) before they reach `Game.OnPointer`. SDL synthesizes mouse
 events from touch, so one path covers both. Key events reach `Game.OnKey` as physical keys (`Key`
 values are SDL scancodes), with auto-repeat filtered out.
 
@@ -224,6 +249,11 @@ tint) into a vertex array and submitted with `SDL_RenderGeometry`. The batch flu
 texture changes, or when it reaches 4,096 quads. `DrawCalls` reports how many submits the last frame
 made.
 
+Positions are in game pixels with y up, and rotations are counter-clockwise. SDL's y points down, so
+`SpriteBatch` flips each vertex as it writes it. Images stay upright, and sources and origins stay in texture
+pixels from the image's top-left. A plain position or a destination rectangle places an image's bottom-left
+corner; `DrawString` places the first line's top-left, and further lines go below it.
+
 Two consequences:
 
 - **Draw order is call order.** Sprites, text and Rive layer exactly as the game issues them, in any
@@ -258,8 +288,8 @@ selects SDL's pixel-art scaling for crisp upscaled sprites. `Linear` is the defa
 - The atlas becomes a texture of white texels with coverage as alpha, so the draw color tints the
   text.
 - `SpriteBatch.DrawString` lays out glyphs with advance and kerning, handles `\n`, and draws each
-  glyph as a quad scaled by `1 / density`. Baking at density 2 keeps text sharp when the virtual
-  resolution is magnified (Retina, fullscreen).
+  glyph as a quad scaled by `1 / density`. Baking at `Graphics.PixelScale` keeps text sharp at the
+  window's scale.
 
 Text is ordinary quads, so it batches with itself and layers with everything else.
 `Font.MeasureString` gives the layout box. Characters outside ASCII draw as `?`.
@@ -364,8 +394,8 @@ target functions, plus `en_rive_backend()` so `RiveRuntime` knows which texture 
 ## Known limits
 
 - **Rive on Metal** waits on the GPU once per frame, because it can't share SDL's command queue.
-- **Rive resolution** is fixed when the instance is created. The sample always renders at density 2,
-  which wastes memory and fill rate on 1× displays, the browser in particular.
+- **Rive and font resolution** is fixed when the instance or font is created. The sample uses the
+  `Graphics.PixelScale` it starts with, so text and Rive soften if the window grows later.
 - **YAML** comments are lost when a parsed file is written back. `DateTime` members aren't supported.
 - **Fonts** cover printable ASCII only, and kerning comes only from the font's `kern` table (not GPOS).
 - **Draw calls:** sprites and glyphs each have their own texture. A shared atlas would let

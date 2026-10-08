@@ -12,6 +12,7 @@ public sealed unsafe class GameRunner ( Game game, GameOptions options )
 {
     nint _window;
     nint _renderer;
+    GameConfig _config = null!;
     SpriteBatch _batch = null!;
     ulong _lastTicks;
     double _totalSeconds;
@@ -39,6 +40,10 @@ public sealed unsafe class GameRunner ( Game game, GameOptions options )
         if ( !SDL.SDL_Init( SDL.INIT_VIDEO | SDL.INIT_EVENTS ) )
             return Fail( "SDL_Init" );
 
+        string contentRoot = options.ContentRoot ?? ContentManager.DefaultRoot();
+        _config = options.ConfigPath is null ? new GameConfig() : ContentManager.ReadYaml< GameConfig >( contentRoot, options.ConfigPath );
+        _config.Validate( options.ConfigPath ?? nameof( GameConfig ) );
+
         ulong flags = SDL.WINDOW_RESIZABLE | SDL.WINDOW_HIGH_PIXEL_DENSITY;
         if ( OperatingSystem.IsBrowser() )
         {
@@ -52,18 +57,26 @@ public sealed unsafe class GameRunner ( Game game, GameOptions options )
         else if ( mobile )
             flags |= SDL.WINDOW_FULLSCREEN; // hides the status and navigation bars
 
-        if ( !SDL.SDL_CreateWindowAndRenderer( options.Title, options.Width, options.Height, flags, out _window, out _renderer ) )
+        var ( windowWidth, windowHeight ) = InitialWindowSize();
+        if ( !SDL.SDL_CreateWindowAndRenderer( _config.title, windowWidth, windowHeight, flags, out _window, out _renderer ) )
             return Fail( "SDL_CreateWindowAndRenderer" );
 
         // In the browser, requestAnimationFrame already paces frames to the display.
         if ( !OperatingSystem.IsBrowser() && !SDL.SDL_SetRenderVSync( _renderer, 1 ) )
             Log.Error( $"SDL_SetRenderVSync failed: {SDL.GetError()}" );
-        SDL.SDL_SetRenderLogicalPresentation( _renderer, options.Width, options.Height, SDL.LOGICAL_PRESENTATION_LETTERBOX );
 
         Log.Info( $"Platform: {SDL.GetPlatform()}, renderer: {SDL.Utf8( SDL.SDL_GetRendererName( _renderer ) )}" );
 
-        game.Graphics = new Graphics( _renderer, options.Width, options.Height );
-        game.Content = new ContentManager( game.Graphics, options.ContentRoot ?? ContentManager.DefaultRoot() );
+        game.Graphics = new Graphics( _renderer );
+        if ( !UpdateView() )
+        {
+            // No usable window size yet; show the configured resolution until the first resize event.
+            SDL.SDL_SetRenderLogicalPresentation( _renderer, _config.resolutionX, _config.resolutionY, SDL.LOGICAL_PRESENTATION_LETTERBOX );
+            game.Graphics.SetView( _config.resolutionX, _config.resolutionY, 1f );
+        }
+        Log.Info( $"Resolution {game.Graphics.Width}x{game.Graphics.Height} at {game.Graphics.PixelScale:0.##}x" );
+
+        game.Content = new ContentManager( game.Graphics, contentRoot );
         _batch = new SpriteBatch( game.Graphics );
 
         game.Load();
@@ -99,9 +112,12 @@ public sealed unsafe class GameRunner ( Game game, GameOptions options )
         game.Update( new GameTime( _totalSeconds, dt ) );
         game.Graphics.UpdateRive( dt );
 
+        // RenderClear covers the whole window, so the bars around the game stay black.
+        SDL.SDL_SetRenderDrawColorFloat( _renderer, 0f, 0f, 0f, 1f );
+        SDL.SDL_RenderClear( _renderer );
         var c = options.ClearColor;
         SDL.SDL_SetRenderDrawColorFloat( _renderer, c.R, c.G, c.B, c.A );
-        SDL.SDL_RenderClear( _renderer );
+        SDL.SDL_RenderFillRect( _renderer, new SDL.FRect { W = game.Graphics.Width, H = game.Graphics.Height } );
 
         _batch.Begin();
         game.Draw( _batch );
@@ -133,11 +149,16 @@ public sealed unsafe class GameRunner ( Game game, GameOptions options )
                 _lastTicks = SDL.SDL_GetTicksNS();
                 break;
 
+            case SDL.EVENT_WINDOW_PIXEL_SIZE_CHANGED:
+                if ( UpdateView() )
+                    game.OnResize();
+                break;
+
             // SDL synthesizes mouse events from touch by default, so this covers mobile too.
             case SDL.EVENT_MOUSE_MOTION:
                 fixed ( SDL.Event* p = &e )
                     SDL.SDL_ConvertEventToRenderCoordinates( _renderer, p );
-                game.OnPointer( new PointerEvent( PointerAction.Move, new Vector2( e.Motion.X, e.Motion.Y ) ) );
+                game.OnPointer( new PointerEvent( PointerAction.Move, ToGame( e.Motion.X, e.Motion.Y ) ) );
                 break;
 
             case SDL.EVENT_MOUSE_BUTTON_DOWN:
@@ -145,7 +166,7 @@ public sealed unsafe class GameRunner ( Game game, GameOptions options )
                 fixed ( SDL.Event* p = &e )
                     SDL.SDL_ConvertEventToRenderCoordinates( _renderer, p );
                 var action = e.Button.Down != 0 ? PointerAction.Down : PointerAction.Up;
-                game.OnPointer( new PointerEvent( action, new Vector2( e.Button.X, e.Button.Y ) ) );
+                game.OnPointer( new PointerEvent( action, ToGame( e.Button.X, e.Button.Y ) ) );
                 break;
 
             case SDL.EVENT_KEY_DOWN when IsFullscreenToggle( ref e.Key ):
@@ -161,6 +182,44 @@ public sealed unsafe class GameRunner ( Game game, GameOptions options )
         }
 
         return !game.ExitRequested;
+    }
+
+    /// <summary>Converts SDL render coordinates (top-left origin, y down) to game pixels (bottom-left origin, y up).</summary>
+    Vector2 ToGame ( float x, float y ) => new( x, game.Graphics.Height - y );
+
+    ( int Width, int Height ) InitialWindowSize ()
+    {
+        // Mobile windows are fullscreen and the browser's fills the page, so only the desktop picks a size.
+        if ( !Desktop || !SDL.SDL_GetDisplayUsableBounds( SDL.SDL_GetPrimaryDisplay(), out var usable ) )
+            usable = default;
+
+        return ViewFit.InitialWindowSize( _config, usable.W, usable.H );
+    }
+
+    /// <summary>Fits the game to the window's current size. Returns whether anything the game sees changed.</summary>
+    bool UpdateView ()
+    {
+        // A minimized window can report a zero size; keep the last view until it's restored.
+        if ( !SDL.SDL_GetRenderOutputSize( _renderer, out int outputWidth, out int outputHeight )
+            || !SDL.SDL_GetWindowSize( _window, out int windowWidth, out _ )
+            || outputWidth <= 0 || outputHeight <= 0 || windowWidth <= 0 )
+            return false;
+
+        var fit = ViewFit.Compute( _config, outputWidth, outputHeight, outputWidth / ( float )windowWidth );
+        if ( !SDL.SDL_SetRenderLogicalPresentation( _renderer, fit.Width, fit.Height, fit.Presentation )
+            || !SDL.SDL_GetRenderLogicalPresentationRect( _renderer, out var presented ) )
+        {
+            Log.Error( $"Fitting the game to the window failed: {SDL.GetError()}" );
+            return false;
+        }
+
+        var graphics = game.Graphics;
+        float pixelScale = presented.W / fit.Width;
+        if ( fit.Width == graphics.Width && fit.Height == graphics.Height && pixelScale == graphics.PixelScale )
+            return false;
+
+        graphics.SetView( fit.Width, fit.Height, pixelScale );
+        return true;
     }
 
     static readonly bool Desktop = OperatingSystem.IsWindows() || OperatingSystem.IsMacOS() || OperatingSystem.IsLinux();

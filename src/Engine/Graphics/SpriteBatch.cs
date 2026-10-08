@@ -12,6 +12,11 @@ namespace Engine;
 /// <remarks>
 /// Sprites, text and Rive artboards are all textured quads drawn in call order, so they layer in
 /// any order. Each texture blends in its own alpha mode (straight or premultiplied).
+/// <para>
+/// Positions are in game pixels with (0, 0) at the bottom-left and y pointing up; rotations are
+/// counter-clockwise. Images stay upright. Sources and origins are in texture pixels from the
+/// image's top-left, as an image editor shows them.
+/// </para>
 /// </remarks>
 public sealed unsafe class SpriteBatch
 {
@@ -42,23 +47,26 @@ public sealed unsafe class SpriteBatch
         _active = false;
     }
 
+    /// <summary>Draws a texture at its natural size, bottom-left at <paramref name="position"/>.</summary>
     public void Draw ( Texture texture, Vector2 position, Color color ) =>
-        Draw( texture, position, null, color, 0f, Vector2.Zero, Vector2.One );
+        Draw( texture, position, null, color, 0f, new Vector2( 0f, texture.Height ), Vector2.One );
 
+    /// <summary>Stretches a texture to fill <paramref name="destination"/>, whose X and Y are its bottom-left corner.</summary>
     public void Draw ( Texture texture, RectangleF destination, Color color ) =>
-        Draw( texture, destination.Location.ToVector2(), null, color, 0f, Vector2.Zero,
+        Draw( texture, destination.Location.ToVector2(), null, color, 0f, new Vector2( 0f, texture.Height ),
             new Vector2( destination.Width / texture.Width, destination.Height / texture.Height ) );
 
+    /// <param name="rect">X and Y are the bottom-left corner.</param>
     public void FillRectangle ( RectangleF rect, Color color ) => Draw( _graphics.Pixel, rect, color );
 
-    /// <summary>Draws an artboard at its natural size, top-left at <paramref name="position"/>.</summary>
+    /// <summary>Draws an artboard at its natural size, bottom-left at <paramref name="position"/>.</summary>
     public void Draw ( RiveInstance rive, Vector2 position, Color color ) =>
-        Draw( rive, position, color, 0f, Vector2.Zero, Vector2.One );
+        Draw( rive, position, color, 0f, new Vector2( 0f, rive.Height ), Vector2.One );
 
-    /// <summary>Stretches an artboard to fill <paramref name="destination"/>.</summary>
+    /// <summary>Stretches an artboard to fill <paramref name="destination"/>, whose X and Y are its bottom-left corner.</summary>
     public void Draw ( RiveInstance rive, RectangleF destination, Color color ) => Draw( rive.Texture, destination, color );
 
-    /// <param name="origin">Rotation/scale pivot in artboard units.</param>
+    /// <param name="origin">Rotation/scale pivot in artboard units from its top-left; it lands on <paramref name="position"/>.</param>
     /// <param name="scale">Relative to the artboard's natural size.</param>
     public void Draw ( RiveInstance rive, Vector2 position, Color color, float rotation, Vector2 origin, Vector2 scale )
     {
@@ -67,7 +75,7 @@ public sealed unsafe class SpriteBatch
         Draw( texture, position, null, color, rotation, origin * pixelsPerUnit, scale / pixelsPerUnit );
     }
 
-    /// <summary>Draws text with its first line's top-left at <paramref name="position"/>. '\n' starts a new line.</summary>
+    /// <summary>Draws text with its first line's top-left at <paramref name="position"/>. '\n' starts a new line below.</summary>
     public void DrawString ( Font font, ReadOnlySpan< char > text, Vector2 position, Color color, float scale = 1f )
     {
         float x = 0, baseline = font.Ascent, toVirtual = 1f / font.Density;
@@ -89,7 +97,7 @@ public sealed unsafe class SpriteBatch
             ref readonly var g = ref font.Glyph( i );
             if ( g.X1 > g.X0 )
             {
-                var at = position + new Vector2( x + g.XOffset * toVirtual, baseline + g.YOffset * toVirtual ) * scale;
+                var at = position + new Vector2( x + g.XOffset * toVirtual, -( baseline + g.YOffset * toVirtual ) ) * scale;
                 Draw( font.Texture, at, Font.Source( g ), color, 0f, Vector2.Zero, new Vector2( scale * toVirtual ) );
             }
 
@@ -99,7 +107,8 @@ public sealed unsafe class SpriteBatch
     }
 
     /// <param name="source">Region of the texture in pixels; null for the whole texture.</param>
-    /// <param name="origin">Rotation/scale pivot in source pixels, relative to the region's top-left.</param>
+    /// <param name="origin">Rotation/scale pivot in source pixels from the region's top-left; it lands on <paramref name="position"/>.</param>
+    /// <param name="rotation">Counter-clockwise, in radians.</param>
     public void Draw ( Texture texture, Vector2 position, RectangleF? source, Color color, float rotation, Vector2 origin, Vector2 scale )
     {
         if ( !_active )
@@ -115,13 +124,14 @@ public sealed unsafe class SpriteBatch
         float u0 = src.Left / texture.Width, v0 = src.Top / texture.Height;
         float u1 = src.Right / texture.Width, v1 = src.Bottom / texture.Height;
 
-        // Quad corners relative to the origin, scaled, then rotated and translated.
-        float x0 = -origin.X * scale.X, y0 = -origin.Y * scale.Y;
-        float x1 = ( src.Width - origin.X ) * scale.X, y1 = ( src.Height - origin.Y ) * scale.Y;
+        // Quad corners relative to the origin, scaled, turned y-up (texture rows run down), then rotated and translated.
+        float x0 = -origin.X * scale.X, y0 = origin.Y * scale.Y;
+        float x1 = ( src.Width - origin.X ) * scale.X, y1 = ( origin.Y - src.Height ) * scale.Y;
         var ( sin, cos ) = rotation == 0f ? ( 0f, 1f ) : MathF.SinCos( rotation );
         if ( texture.Premultiplied )
             color = new Color( color.R * color.A, color.G * color.A, color.B * color.A, color.A );
 
+        float height = _graphics.Height;
         var v = _vertices.AsSpan( _sprites * 4, 4 );
         v[0] = Vertex( x0, y0, u0, v0 );
         v[1] = Vertex( x1, y0, u1, v0 );
@@ -129,10 +139,11 @@ public sealed unsafe class SpriteBatch
         v[3] = Vertex( x0, y1, u0, v1 );
         _sprites++;
 
+        // SDL's y runs down from the top, so the game's y is flipped on the way out.
         SDL.Vertex Vertex ( float x, float y, float u, float tv ) => new()
         {
             X = position.X + x * cos - y * sin,
-            Y = position.Y + x * sin + y * cos,
+            Y = height - ( position.Y + x * sin + y * cos ),
             R = color.R,
             G = color.G,
             B = color.B,

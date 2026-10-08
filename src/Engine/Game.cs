@@ -17,9 +17,12 @@ public abstract class Game
     protected internal virtual void Draw ( SpriteBatch batch ) { }
     protected internal virtual void Unload () { }
 
-    /// <summary>Mouse and touch, in logical (virtual resolution) coordinates.</summary>
+    /// <summary>Mouse and touch, in game pixels with (0, 0) at the bottom-left.</summary>
     protected internal virtual void OnPointer ( PointerEvent e ) { }
     protected internal virtual void OnKey ( Key key, bool down ) { }
+
+    /// <summary>The window changed size: <see cref="Graphics.PixelScale"/> may differ, and with a dynamic size, so may the resolution.</summary>
+    protected internal virtual void OnResize () { }
 }
 
 public readonly record struct GameTime ( double TotalSeconds, float DeltaSeconds );
@@ -32,11 +35,8 @@ public enum Orientation { Landscape, Portrait, Any }
 
 public sealed record GameOptions
 {
-    public string Title { get; init; } = "Game";
-
-    /// <summary>Virtual resolution; SDL letterboxes it onto the real display.</summary>
-    public int Width { get; init; } = 1280;
-    public int Height { get; init; } = 720;
+    /// <summary>Content file holding the <see cref="GameConfig"/>. Null uses <see cref="GameConfig"/>'s defaults.</summary>
+    public string? ConfigPath { get; init; } = "config.yaml";
 
     public Color ClearColor { get; init; } = new( 0.1f, 0.1f, 0.15f );
 

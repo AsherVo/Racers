@@ -37,6 +37,7 @@ internal static unsafe partial class SDL
 
     // SDL_render.h / SDL_surface.h / SDL_pixels.h
     public const int LOGICAL_PRESENTATION_LETTERBOX = 2;
+    public const int LOGICAL_PRESENTATION_INTEGER_SCALE = 4;
     public const int SCALEMODE_LINEAR = 1;
     public const int SCALEMODE_PIXELART = 2;
     public const int TEXTUREACCESS_STATIC = 0;
@@ -67,6 +68,7 @@ internal static unsafe partial class SDL
     public const uint EVENT_TERMINATING = 0x101;
     public const uint EVENT_WILL_ENTER_BACKGROUND = 0x103;
     public const uint EVENT_DID_ENTER_FOREGROUND = 0x106;
+    public const uint EVENT_WINDOW_PIXEL_SIZE_CHANGED = 0x207;
     public const uint EVENT_KEY_DOWN = 0x300;
     public const uint EVENT_KEY_UP = 0x301;
     public const uint EVENT_MOUSE_MOTION = 0x400;
@@ -107,6 +109,16 @@ internal static unsafe partial class SDL
         public uint WindowId, Which;
         public byte Button, Down, Clicks, Padding;
         public float X, Y;
+    }
+
+    public struct Rect
+    {
+        public int X, Y, W, H;
+    }
+
+    public struct FRect
+    {
+        public float X, Y, W, H;
     }
 
     /// <summary>SDL_Vertex: position, color (floats), normalized texture coordinate.</summary>
@@ -168,6 +180,17 @@ internal static unsafe partial class SDL
     public static partial void SDL_DestroyWindow ( nint window );
 
     [LibraryImport( Lib )]
+    public static partial uint SDL_GetPrimaryDisplay ();
+
+    [LibraryImport( Lib )]
+    [return: MarshalAs( UnmanagedType.U1 )]
+    public static partial bool SDL_GetDisplayUsableBounds ( uint displayId, out Rect rect );
+
+    [LibraryImport( Lib )]
+    [return: MarshalAs( UnmanagedType.U1 )]
+    public static partial bool SDL_GetWindowSize ( nint window, out int w, out int h );
+
+    [LibraryImport( Lib )]
     [return: MarshalAs( UnmanagedType.U1 )]
     public static partial bool SDL_GL_SetAttribute ( int attr, int value );
 
@@ -194,6 +217,14 @@ internal static unsafe partial class SDL
 
     [LibraryImport( Lib )]
     [return: MarshalAs( UnmanagedType.U1 )]
+    public static partial bool SDL_GetRenderLogicalPresentationRect ( nint renderer, out FRect rect );
+
+    [LibraryImport( Lib )]
+    [return: MarshalAs( UnmanagedType.U1 )]
+    public static partial bool SDL_GetRenderOutputSize ( nint renderer, out int w, out int h );
+
+    [LibraryImport( Lib )]
+    [return: MarshalAs( UnmanagedType.U1 )]
     public static partial bool SDL_ConvertEventToRenderCoordinates ( nint renderer, Event* e );
 
     [LibraryImport( Lib )]
@@ -203,6 +234,10 @@ internal static unsafe partial class SDL
     [LibraryImport( Lib )]
     [return: MarshalAs( UnmanagedType.U1 )]
     public static partial bool SDL_RenderClear ( nint renderer );
+
+    [LibraryImport( Lib )]
+    [return: MarshalAs( UnmanagedType.U1 )]
+    public static partial bool SDL_RenderFillRect ( nint renderer, in FRect rect );
 
     [LibraryImport( Lib )]
     [return: MarshalAs( UnmanagedType.U1 )]

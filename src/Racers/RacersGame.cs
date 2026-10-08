@@ -7,10 +7,8 @@ namespace Racers;
 
 public sealed class RacersGame : Game
 {
-    public static readonly GameOptions Options = new() { Title = "Resource Racers" };
+    public static readonly GameOptions Options = new();
 
-    // Display pixels per virtual pixel to render Rive at, so it stays sharp on Retina screens.
-    const float Density = 2f;
     const int Lanes = 6;
 
     struct Car
@@ -36,8 +34,8 @@ public sealed class RacersGame : Game
     protected override void Load ()
     {
         _carTexture = Content.LoadTexture( "car_1.png", TextureFilter.PixelArt );
-        _titleFont = Content.LoadFont( "Crates.ttf", 96 );
-        _smallFont = Content.LoadFont( "Crates.ttf", 20 );
+        _titleFont = Content.LoadFont( "Crates.ttf", 30, Graphics.PixelScale );
+        _smallFont = Content.LoadFont( "Crates.ttf", 8, Graphics.PixelScale );
 
         _rive = Content.LoadRive( "cloudyroad.riv" );
 
@@ -46,17 +44,31 @@ public sealed class RacersGame : Game
         var artboard = probe.Size;
         probe.Dispose();
         float cover = MathF.Max( Graphics.Width / artboard.X, Graphics.Height / artboard.Y );
-        _background = _rive.CreateInstance( "Background", resolution: MathF.Min( cover * Density, 4096f / MathF.Max( artboard.X, artboard.Y ) ) );
-        var size = artboard * cover;
-        _backgroundRect = new RectangleF( ( Graphics.Width - size.X ) / 2, ( Graphics.Height - size.Y ) / 2, size.X, size.Y );
+        _background = _rive.CreateInstance( "Background", resolution: MathF.Min( cover * Graphics.PixelScale, 4096f / MathF.Max( artboard.X, artboard.Y ) ) );
+        FitBackground();
         Log.Info( $"Rive artboard 'Background' is {artboard.X}x{artboard.Y}; texture {_background.Texture.Width}x{_background.Texture.Height}" );
 
         // A second, independent instance of the same artboard, drawn small.
-        _inset = _rive.CreateInstance( "Background", resolution: 0.35f * cover * Density );
+        _inset = _rive.CreateInstance( "Background", resolution: 0.35f * cover * Graphics.PixelScale );
 
         for ( int lane = 0; lane < Lanes; lane++ )
             for ( int i = 0; i < 3; i++ )
                 Spawn( lane, _random.NextSingle() * Graphics.Width );
+    }
+
+    void FitBackground ()
+    {
+        var artboard = _background.Size;
+        float cover = MathF.Max( Graphics.Width / artboard.X, Graphics.Height / artboard.Y );
+        var size = artboard * cover;
+        _backgroundRect = new RectangleF( ( Graphics.Width - size.X ) / 2, ( Graphics.Height - size.Y ) / 2, size.X, size.Y );
+    }
+
+    protected override void OnResize ()
+    {
+        FitBackground();
+        foreach ( ref var car in CollectionsMarshal.AsSpan( _cars ) )
+            car.Position.Y = LaneY( car.Lane );
     }
 
     protected override void Unload ()
@@ -69,12 +81,12 @@ public sealed class RacersGame : Game
         _smallFont.Dispose();
     }
 
-    float LaneY ( int lane ) => Graphics.Height * ( 0.42f + 0.09f * lane );
+    float LaneY ( int lane ) => Graphics.Height * ( 0.58f - 0.09f * lane );
 
     void Spawn ( int lane, float x ) => _cars.Add( new Car
     {
         Position = new Vector2( x, LaneY( lane ) ),
-        Speed = 90f + _random.NextSingle() * 260f,
+        Speed = 30f + _random.NextSingle() * 80f,
         Hue = _random.NextSingle(),
         Lane = lane,
         Number = _cars.Count + 1,
@@ -84,7 +96,7 @@ public sealed class RacersGame : Game
     {
         if ( e.Action == PointerAction.Down )
         {
-            int lane = Math.Clamp( ( int )MathF.Round( ( e.Position.Y / Graphics.Height - 0.42f ) / 0.09f ), 0, Lanes - 1 );
+            int lane = Math.Clamp( ( int )MathF.Round( ( 0.58f - e.Position.Y / Graphics.Height ) / 0.09f ), 0, Lanes - 1 );
             Spawn( lane, e.Position.X );
         }
     }
@@ -97,11 +109,11 @@ public sealed class RacersGame : Game
 
     protected override void Update ( GameTime time )
     {
-        float wrap = Graphics.Width + 200;
+        float wrap = Graphics.Width + 60;
         foreach ( ref var car in CollectionsMarshal.AsSpan( _cars ) )
         {
             car.Position.X += car.Speed * time.DeltaSeconds;
-            if ( car.Position.X > Graphics.Width + 100 )
+            if ( car.Position.X > Graphics.Width + 30 )
                 car.Position.X -= wrap;
         }
 
@@ -125,8 +137,8 @@ public sealed class RacersGame : Game
         // 2. Text over Rive, with a translucent drop shadow.
         const string title = "RACERS";
         var titleSize = _titleFont.MeasureString( title );
-        var titlePos = new Vector2( ( Graphics.Width - titleSize.X ) / 2, 40 );
-        batch.DrawString( _titleFont, title, titlePos + new Vector2( 5, 6 ), Color.Black.WithAlpha( 0.45f ) );
+        var titlePos = new Vector2( ( Graphics.Width - titleSize.X ) / 2, Graphics.Height - 12 );
+        batch.DrawString( _titleFont, title, titlePos + new Vector2( 2, -2 ), Color.Black.WithAlpha( 0.45f ) );
         batch.DrawString( _titleFont, title, titlePos, new Color( 1f, 0.85f, 0.3f ) );
 
         // 3. Cars; halfway through the lanes, 4. a translucent, rotating Rive inset that the
@@ -140,7 +152,7 @@ public sealed class RacersGame : Game
             foreach ( ref readonly var car in CollectionsMarshal.AsSpan( _cars ) )
             {
                 if ( car.Lane == lane )
-                    batch.Draw( _carTexture, car.Position, null, Color.FromHsv( car.Hue, 0.5f, 1f ), 0f, carOrigin, new Vector2( 2f ) );
+                    batch.Draw( _carTexture, car.Position, null, Color.FromHsv( car.Hue, 0.5f, 1f ), 0f, carOrigin, Vector2.One );
             }
         }
 
@@ -148,13 +160,13 @@ public sealed class RacersGame : Game
         foreach ( ref readonly var car in CollectionsMarshal.AsSpan( _cars ) )
         {
             string tag = car.Number.ToString();
-            var tagPos = car.Position - new Vector2( _smallFont.MeasureString( tag ).X / 2, 52 );
+            var tagPos = car.Position + new Vector2( -_smallFont.MeasureString( tag ).X / 2, 24 );
             batch.DrawString( _smallFont, tag, tagPos, Color.White.WithAlpha( 0.8f ) );
         }
 
         // 6. HUD text on top of everything.
-        batch.DrawString( _smallFont, _stats, new Vector2( 17, Graphics.Height - 31 ), Color.Black.WithAlpha( 0.6f ) );
-        batch.DrawString( _smallFont, _stats, new Vector2( 16, Graphics.Height - 32 ), Color.White );
+        batch.DrawString( _smallFont, _stats, new Vector2( 6, 11 ), Color.Black.WithAlpha( 0.6f ) );
+        batch.DrawString( _smallFont, _stats, new Vector2( 5, 12 ), Color.White );
 
         _batch = batch;
     }
@@ -162,7 +174,7 @@ public sealed class RacersGame : Game
     void DrawInset ( SpriteBatch batch )
     {
         float scale = 0.35f * _backgroundRect.Width / _inset.Width;
-        var center = new Vector2( Graphics.Width * 0.72f, Graphics.Height * 0.6f );
+        var center = new Vector2( Graphics.Width * 0.72f, Graphics.Height * 0.4f );
         batch.Draw( _inset, center, Color.White.WithAlpha( 0.75f ), MathF.Sin( _insetSpin ) * 0.35f, _inset.Size / 2, new Vector2( scale ) );
     }
 }
