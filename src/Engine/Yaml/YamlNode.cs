@@ -114,7 +114,7 @@ public sealed class YamlList : YamlNode, IReadOnlyList< YamlNode >
 {
     readonly List< YamlNode > items = new();
 
-    public YamlList () {}
+    public YamlList () { }
 
     public YamlList ( IEnumerable< YamlNode > items )
     {
@@ -126,10 +126,10 @@ public sealed class YamlList : YamlNode, IReadOnlyList< YamlNode >
 
     public int Count => items.Count;
 
-    public YamlNode this[ int index ]
+    public YamlNode this[int index]
     {
-        get => items[ index ];
-        set => items[ index ] = value ?? throw new ArgumentNullException( nameof( value ) );
+        get => items[index];
+        set => items[index] = value ?? throw new ArgumentNullException( nameof( value ) );
     }
 
     public void Add ( YamlNode item ) => items.Add( item ?? throw new ArgumentNullException( nameof( item ) ) );
@@ -160,12 +160,12 @@ public sealed class YamlMap : YamlNode, IReadOnlyList< KeyValuePair< YamlNode, Y
 
     public int Count => entries.Count;
 
-    public KeyValuePair< YamlNode, YamlNode > this[ int index ] => entries[ index ];
+    public KeyValuePair< YamlNode, YamlNode > this[int index] => entries[index];
 
     /// <exception cref="KeyNotFoundException">No scalar key has this text.</exception>
-    public YamlNode this[ string key ]
+    public YamlNode this[string key]
     {
-        get => TryGetValue( key, out var value ) ? value : throw new KeyNotFoundException( $"Key '{ key }' was not found." );
+        get => TryGetValue( key, out var value ) ? value : throw new KeyNotFoundException( $"Key '{key}' was not found." );
         set => Set( key, value );
     }
 
@@ -178,11 +178,11 @@ public sealed class YamlMap : YamlNode, IReadOnlyList< KeyValuePair< YamlNode, Y
     /// <returns>The entry index of the scalar key, or -1.</returns>
     public int IndexOf ( string key ) => scalarKeyIndices.TryGetValue( key, out int index ) ? index : -1;
 
-    public bool TryGetValue ( string key, [ NotNullWhen( true ) ] out YamlNode? value )
+    public bool TryGetValue ( string key, [NotNullWhen( true )] out YamlNode? value )
     {
         if ( scalarKeyIndices.TryGetValue( key, out int index ) )
         {
-            value = entries[ index ].Value;
+            value = entries[index].Value;
             return true;
         }
 
@@ -200,7 +200,7 @@ public sealed class YamlMap : YamlNode, IReadOnlyList< KeyValuePair< YamlNode, Y
         ArgumentNullException.ThrowIfNull( value );
 
         if ( key is YamlScalar scalar && !scalarKeyIndices.TryAdd( scalar.Value, entries.Count ) )
-            throw new ArgumentException( $"Duplicate key '{ scalar.Value }'.", nameof( key ) );
+            throw new ArgumentException( $"Duplicate key '{scalar.Value}'.", nameof( key ) );
 
         entries.Add( new( key, value ) );
     }
@@ -211,7 +211,7 @@ public sealed class YamlMap : YamlNode, IReadOnlyList< KeyValuePair< YamlNode, Y
         ArgumentNullException.ThrowIfNull( value );
 
         if ( scalarKeyIndices.TryGetValue( key, out int index ) )
-            entries[ index ] = new( entries[ index ].Key, value );
+            entries[index] = new( entries[index].Key, value );
         else
             Add( key, value );
     }
@@ -243,8 +243,8 @@ public sealed class YamlMap : YamlNode, IReadOnlyList< KeyValuePair< YamlNode, Y
         scalarKeyIndices.Clear();
         for ( int i = 0; i < entries.Count; i++ )
         {
-            if ( entries[ i ].Key is YamlScalar scalar )
-                scalarKeyIndices[ scalar.Value ] = i;
+            if ( entries[i].Key is YamlScalar scalar )
+                scalarKeyIndices[scalar.Value] = i;
         }
     }
 }
@@ -277,19 +277,19 @@ public static class YamlScalarResolver
         magnitude = 0;
 
         int i = 0;
-        if ( value.Length > 0 && value[ 0 ] is '-' or '+' )
+        if ( value.Length > 0 && value[0] is '-' or '+' )
         {
-            negative = value[ 0 ] == '-';
+            negative = value[0] == '-';
             i = 1;
         }
 
         int radix = 10;
-        if ( value.Length - i > 2 && value[ i ] == '0' && value[ i + 1 ] is 'x' or 'o' )
+        if ( value.Length - i > 2 && value[i] == '0' && value[i + 1] is 'x' or 'o' )
         {
             if ( i != 0 )
                 return false;
 
-            radix = value[ i + 1 ] == 'x' ? 16 : 8;
+            radix = value[i + 1] == 'x' ? 16 : 8;
             i += 2;
         }
 
@@ -298,7 +298,7 @@ public static class YamlScalarResolver
 
         for ( ; i < value.Length; i++ )
         {
-            int digit = DigitValue( value[ i ] );
+            int digit = DigitValue( value[i] );
             if ( digit < 0 || digit >= radix )
                 return false;
 
@@ -343,12 +343,12 @@ public static class YamlScalarResolver
             return true;
 
         int i = 0;
-        if ( i < value.Length && value[ i ] is '-' or '+' )
+        if ( i < value.Length && value[i] is '-' or '+' )
             i++;
 
         int integerDigits = CountDigits( value, ref i );
         int fractionDigits = 0;
-        if ( i < value.Length && value[ i ] == '.' )
+        if ( i < value.Length && value[i] == '.' )
         {
             i++;
             fractionDigits = CountDigits( value, ref i );
@@ -357,10 +357,10 @@ public static class YamlScalarResolver
         if ( integerDigits == 0 && fractionDigits == 0 )
             return false;
 
-        if ( i < value.Length && value[ i ] is 'e' or 'E' )
+        if ( i < value.Length && value[i] is 'e' or 'E' )
         {
             i++;
-            if ( i < value.Length && value[ i ] is '-' or '+' )
+            if ( i < value.Length && value[i] is '-' or '+' )
                 i++;
 
             if ( CountDigits( value, ref i ) == 0 )
@@ -409,8 +409,8 @@ public static class YamlScalarResolver
 
     static bool IsYaml11NumberLike ( string value )
     {
-        int i = value.Length > 0 && value[ 0 ] is '-' or '+' ? 1 : 0;
-        if ( i >= value.Length || !( char.IsAsciiDigit( value[ i ] ) || value[ i ] == '.' ) )
+        int i = value.Length > 0 && value[0] is '-' or '+' ? 1 : 0;
+        if ( i >= value.Length || !( char.IsAsciiDigit( value[i] ) || value[i] == '.' ) )
             return false;
 
         foreach ( char c in value.AsSpan( i ) )
@@ -444,7 +444,7 @@ public static class YamlScalarResolver
     static int CountDigits ( string value, ref int i )
     {
         int start = i;
-        while ( i < value.Length && char.IsAsciiDigit( value[ i ] ) )
+        while ( i < value.Length && char.IsAsciiDigit( value[i] ) )
             i++;
 
         return i - start;

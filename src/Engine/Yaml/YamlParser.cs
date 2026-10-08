@@ -37,9 +37,9 @@ sealed class YamlParser
 
     bool AtEnd => pos >= text.Length;
 
-    char Current => pos < text.Length ? text[ pos ] : '\0';
+    char Current => pos < text.Length ? text[pos] : '\0';
 
-    char PeekAt ( int offset ) => pos + offset < text.Length ? text[ pos + offset ] : '\0';
+    char PeekAt ( int offset ) => pos + offset < text.Length ? text[pos + offset] : '\0';
 
     static bool IsBlank ( char c ) => c is ' ' or '\t';
 
@@ -53,16 +53,16 @@ sealed class YamlParser
     // up front, so the rest of the parser only ever sees '\n' and printable text.
     static string Normalize ( string text, string? source )
     {
-        int start = text.Length > 0 && text[ 0 ] == '\uFEFF' ? 1 : 0;
+        int start = text.Length > 0 && text[0] == '\uFEFF' ? 1 : 0;
         var builder = new StringBuilder( text.Length );
         int line = 1;
         int column = 1;
         for ( int i = start; i < text.Length; i++ )
         {
-            char c = text[ i ];
+            char c = text[i];
             if ( c == '\r' )
             {
-                if ( i + 1 < text.Length && text[ i + 1 ] == '\n' )
+                if ( i + 1 < text.Length && text[i + 1] == '\n' )
                     i++;
 
                 c = '\n';
@@ -78,7 +78,7 @@ sealed class YamlParser
 
             bool forbidden = c < ' ' && c != '\t' || c == '\u007F' || c is >= '\u0080' and <= '\u009F' && c != '\u0085' || c is '\uFFFE' or '\uFFFF';
             if ( forbidden )
-                throw new YamlException( new YamlError( $"Invalid character U+{ ( int )c:X4}.", line, column, Source: source ) );
+                throw new YamlException( new YamlError( $"Invalid character U+{( int )c:X4}.", line, column, Source: source ) );
 
             builder.Append( c );
             column++;
@@ -94,7 +94,7 @@ sealed class YamlParser
 
     void Advance ()
     {
-        if ( text[ pos ] == '\n' )
+        if ( text[pos] == '\n' )
         {
             line++;
             lineStart = pos + 1;
@@ -106,12 +106,12 @@ sealed class YamlParser
     void EnterNode ()
     {
         if ( ++depth > MAX_DEPTH )
-            throw Error( $"Nesting is deeper than { MAX_DEPTH } levels." );
+            throw Error( $"Nesting is deeper than {MAX_DEPTH} levels." );
     }
 
-    (int Pos, int Line, int LineStart) Save () => (pos, line, lineStart);
+    ( int Pos, int Line, int LineStart ) Save () => ( pos, line, lineStart );
 
-    void Restore ( (int Pos, int Line, int LineStart) state ) => (pos, line, lineStart) = state;
+    void Restore ( ( int Pos, int Line, int LineStart ) state ) => ( pos, line, lineStart ) = state;
 
     void SkipBlanks ()
     {
@@ -122,7 +122,7 @@ sealed class YamlParser
     int IndentOfCurrentLine ()
     {
         int i = lineStart;
-        while ( i < text.Length && text[ i ] == ' ' )
+        while ( i < text.Length && text[i] == ' ' )
             i++;
 
         return i - lineStart;
@@ -139,16 +139,16 @@ sealed class YamlParser
         if ( index + 3 > text.Length )
             return false;
 
-        char c = text[ index ];
-        if ( c != '-' && c != '.' || text[ index + 1 ] != c || text[ index + 2 ] != c )
+        char c = text[index];
+        if ( c != '-' && c != '.' || text[index + 1] != c || text[index + 2] != c )
             return false;
 
-        return index + 3 == text.Length || IsBlankOrEnd( text[ index + 3 ] );
+        return index + 3 == text.Length || IsBlankOrEnd( text[index + 3] );
     }
 
     void SkipComment ()
     {
-        if ( pos > lineStart && !IsBlank( text[ pos - 1 ] ) )
+        if ( pos > lineStart && !IsBlank( text[pos - 1] ) )
             throw Error( "Comments must be separated from other tokens by whitespace." );
 
         while ( !IsBreakOrEnd( Current ) )
@@ -168,7 +168,7 @@ sealed class YamlParser
         if ( Current == ':' && IsBlankOrEnd( PeekAt( 1 ) ) )
             throw Error( "Mapping values are not allowed here." );
 
-        throw Error( $"Unexpected '{ Current }'." );
+        throw Error( $"Unexpected '{Current}'." );
     }
 
     /// <summary>
@@ -193,9 +193,9 @@ sealed class YamlParser
     /// <summary>Block collection entries must be indented with spaces; a tab may only separate scalars.</summary>
     void CheckNoTabBefore ( int index )
     {
-        for ( int i = index - 1; i >= lineStart && IsBlank( text[ i ] ); i-- )
+        for ( int i = index - 1; i >= lineStart && IsBlank( text[i] ); i-- )
         {
-            if ( text[ i ] == '\t' )
+            if ( text[i] == '\t' )
                 throw Error( "Tabs cannot be used for indentation.", line, i - lineStart );
         }
     }
@@ -267,8 +267,8 @@ sealed class YamlParser
     void ResetTagHandles ()
     {
         tagHandles.Clear();
-        tagHandles[ "!" ] = "!";
-        tagHandles[ "!!" ] = CORE_TAG_PREFIX;
+        tagHandles["!"] = "!";
+        tagHandles["!!"] = CORE_TAG_PREFIX;
     }
 
     void ParseDirective ()
@@ -283,12 +283,12 @@ sealed class YamlParser
             SkipBlanks();
             string version = ScanNonBlank();
             string[] parts = version.Split( '.' );
-            if ( parts.Length != 2 || !int.TryParse( parts[ 0 ], NumberStyles.None, CultureInfo.InvariantCulture, out int major )
-                || !int.TryParse( parts[ 1 ], NumberStyles.None, CultureInfo.InvariantCulture, out _ ) )
-                throw Error( $"Invalid %YAML version '{ version }'." );
+            if ( parts.Length != 2 || !int.TryParse( parts[0], NumberStyles.None, CultureInfo.InvariantCulture, out int major )
+                || !int.TryParse( parts[1], NumberStyles.None, CultureInfo.InvariantCulture, out _ ) )
+                throw Error( $"Invalid %YAML version '{version}'." );
 
             if ( major != 1 )
-                throw Error( $"Unsupported YAML version { version }." );
+                throw Error( $"Unsupported YAML version {version}." );
 
             seenYamlDirective = true;
         }
@@ -296,19 +296,19 @@ sealed class YamlParser
         {
             SkipBlanks();
             string handle = ScanNonBlank();
-            if ( handle.Length == 0 || handle[ 0 ] != '!' || handle[ ^1 ] != '!' )
-                throw Error( $"Invalid tag handle '{ handle }'." );
+            if ( handle.Length == 0 || handle[0] != '!' || handle[^1] != '!' )
+                throw Error( $"Invalid tag handle '{handle}'." );
 
             SkipBlanks();
             string prefix = ScanNonBlank();
             if ( prefix.Length == 0 )
                 throw Error( "Missing tag prefix." );
 
-            tagHandles[ handle ] = prefix;
+            tagHandles[handle] = prefix;
         }
         else
         {
-            while ( !IsBreakOrEnd( Current ) && !( Current == '#' && IsBlank( text[ pos - 1 ] ) ) )
+            while ( !IsBreakOrEnd( Current ) && !( Current == '#' && IsBlank( text[pos - 1] ) ) )
                 pos++;
         }
 
@@ -321,7 +321,7 @@ sealed class YamlParser
         while ( !IsBlankOrEnd( Current ) )
             pos++;
 
-        return text[ start..pos ];
+        return text[start..pos];
     }
 
     YamlNode ParseDocumentRoot ( bool explicitStart )
@@ -363,7 +363,7 @@ sealed class YamlParser
                 throw Error( "A node can only have one anchor.", propertiesLine, propertiesColumn );
 
             node.Anchor = anchor;
-            anchors[ anchor ] = node;
+            anchors[anchor] = node;
         }
     }
 
@@ -514,7 +514,7 @@ sealed class YamlParser
             throw Error( "A block scalar cannot be a mapping key." );
 
         if ( !CanStartPlain( flow: false ) )
-            throw Error( Current == '\0' ? "Unexpected end of input." : $"Unexpected '{ Current }'." );
+            throw Error( Current == '\0' ? "Unexpected end of input." : $"Unexpected '{Current}'." );
 
         plainText = ScanPlainLine( flow: false );
         return EmptyScalar( nodeLine, nodeColumn );
@@ -589,7 +589,7 @@ sealed class YamlParser
         if ( !IsIndicator( ':' ) )
         {
             if ( plainText != null && IsLineEndOrComment() )
-                throw Error( $"Expected ':' after '{ plainText }'. Every line in a mapping needs a key.", startLine, startColumn );
+                throw Error( $"Expected ':' after '{plainText}'. Every line in a mapping needs a key.", startLine, startColumn );
 
             throw Error( "Expected ':' after a mapping key." );
         }
@@ -665,7 +665,7 @@ sealed class YamlParser
     void AddEntry ( YamlMap map, YamlNode key, YamlNode value )
     {
         if ( key is YamlScalar scalar && map.ContainsKey( scalar.Value ) )
-            throw Error( $"Duplicate key '{ scalar.Value }'.", key.Line, key.Column - 1 );
+            throw Error( $"Duplicate key '{scalar.Value}'.", key.Line, key.Column - 1 );
 
         map.Add( key, value );
     }
@@ -712,7 +712,7 @@ sealed class YamlParser
         if ( pos == start )
             throw Error( "Expected an anchor name." );
 
-        return text[ start..pos ];
+        return text[start..pos];
     }
 
     YamlNode ParseAlias ()
@@ -722,7 +722,7 @@ sealed class YamlParser
         pos++;
         string name = ScanAnchorName();
         if ( !anchors.TryGetValue( name, out var node ) )
-            throw Error( $"Undefined alias '*{ name }'.", aliasLine, aliasColumn );
+            throw Error( $"Undefined alias '*{name}'.", aliasLine, aliasColumn );
 
         return node;
     }
@@ -744,7 +744,7 @@ sealed class YamlParser
                 pos++;
             }
 
-            string verbatim = text[ start..pos ];
+            string verbatim = text[start..pos];
             pos++;
             if ( verbatim.Length == 0 || verbatim == "!" )
                 throw Error( "Invalid verbatim tag.", tagLine, tagColumn );
@@ -759,7 +759,7 @@ sealed class YamlParser
 
         if ( Current == '!' )
         {
-            handle = "!" + text[ wordStart..pos ] + "!";
+            handle = "!" + text[wordStart..pos] + "!";
             pos++;
         }
         else
@@ -776,12 +776,12 @@ sealed class YamlParser
             pos++;
         }
 
-        string suffix = text[ suffixStart..pos ];
+        string suffix = text[suffixStart..pos];
         if ( handle == "!" && suffix.Length == 0 )
             return YamlScalar.NON_SPECIFIC_TAG;
 
         if ( !tagHandles.TryGetValue( handle, out string? prefix ) )
-            throw Error( $"Undefined tag handle '{ handle }'.", tagLine, tagColumn );
+            throw Error( $"Undefined tag handle '{handle}'.", tagLine, tagColumn );
 
         if ( suffix.Length == 0 )
             throw Error( "Expected a tag suffix.", tagLine, tagColumn );
@@ -798,7 +798,7 @@ sealed class YamlParser
         var builder = new StringBuilder();
         for ( int i = 0; i < uri.Length; i++ )
         {
-            if ( uri[ i ] == '%' )
+            if ( uri[i] == '%' )
             {
                 if ( i + 2 >= uri.Length || !byte.TryParse( uri.AsSpan( i + 1, 2 ), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out byte b ) )
                     throw Error( "Invalid '%' escape in tag.", uriLine, uriColumn );
@@ -809,7 +809,7 @@ sealed class YamlParser
             }
 
             FlushBytes();
-            builder.Append( uri[ i ] );
+            builder.Append( uri[i] );
         }
 
         FlushBytes();
@@ -854,7 +854,7 @@ sealed class YamlParser
             if ( c == ':' && ( IsBlankOrEnd( PeekAt( 1 ) ) || flow && IsFlowIndicator( PeekAt( 1 ) ) ) )
                 break;
 
-            if ( c == '#' && pos > start && IsBlank( text[ pos - 1 ] ) )
+            if ( c == '#' && pos > start && IsBlank( text[pos - 1] ) )
                 break;
 
             if ( flow && IsFlowIndicator( c ) )
@@ -866,7 +866,7 @@ sealed class YamlParser
         }
 
         pos = end;
-        return text[ start..end ];
+        return text[start..end];
     }
 
     /// <summary>
@@ -1001,7 +1001,7 @@ sealed class YamlParser
             case 'x': AppendCodePoint( builder, 2, escapeLine, escapeColumn ); break;
             case 'u': AppendCodePoint( builder, 4, escapeLine, escapeColumn ); break;
             case 'U': AppendCodePoint( builder, 8, escapeLine, escapeColumn ); break;
-            default: throw Error( $"Invalid escape '\\{ e }'.", escapeLine, escapeColumn );
+            default: throw Error( $"Invalid escape '\\{e}'.", escapeLine, escapeColumn );
         }
     }
 
@@ -1009,7 +1009,7 @@ sealed class YamlParser
     {
         if ( pos + digits > text.Length
             || !int.TryParse( text.AsSpan( pos, digits ), NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture, out int codePoint ) )
-            throw Error( $"Expected { digits } hexadecimal digits in escape.", escapeLine, escapeColumn );
+            throw Error( $"Expected {digits} hexadecimal digits in escape.", escapeLine, escapeColumn );
 
         pos += digits;
         if ( codePoint > 0x10FFFF )
@@ -1124,7 +1124,7 @@ sealed class YamlParser
         }
 
         if ( !IsBlankOrEnd( Current ) )
-            throw Error( $"Invalid block scalar header character '{ Current }'." );
+            throw Error( $"Invalid block scalar header character '{Current}'." );
 
         ExpectLineEnd();
 
@@ -1155,7 +1155,7 @@ sealed class YamlParser
 
                 if ( spaces <= parentIndent || IsDocumentMarkerAt( lineStart ) )
                 {
-                    if ( text[ lineStart + spaces ] == '\t' && text.AsSpan( lineStart, lineEnd - lineStart ).Trim( " \t" ).IsEmpty )
+                    if ( text[lineStart + spaces] == '\t' && text.AsSpan( lineStart, lineEnd - lineStart ).Trim( " \t" ).IsEmpty )
                         throw Error( "Tabs cannot be used for indentation." );
 
                     pos = lineStart;
@@ -1180,7 +1180,7 @@ sealed class YamlParser
                 break;
             }
 
-            lines.Add( text[ ( lineStart + contentIndent )..lineEnd ] );
+            lines.Add( text[( lineStart + contentIndent )..lineEnd] );
             pos = lineEnd;
         }
 
@@ -1192,7 +1192,7 @@ sealed class YamlParser
     {
         for ( int i = lines.Count - 1; i >= 0; i-- )
         {
-            if ( lines[ i ].Length > 0 )
+            if ( lines[i].Length > 0 )
                 return i;
         }
 
@@ -1222,7 +1222,7 @@ sealed class YamlParser
             if ( i > 0 )
                 builder.Append( '\n' );
 
-            builder.Append( lines[ i ] );
+            builder.Append( lines[i] );
         }
 
         return Chomp( builder, lines, lastContent, chomping );
@@ -1239,14 +1239,14 @@ sealed class YamlParser
         bool previousMoreIndented = false;
         for ( int i = 0; i <= lastContent; i++ )
         {
-            string current = lines[ i ];
+            string current = lines[i];
             if ( current.Length == 0 )
             {
                 emptyLines++;
                 continue;
             }
 
-            bool moreIndented = IsBlank( current[ 0 ] );
+            bool moreIndented = IsBlank( current[0] );
             if ( !seenContent )
             {
                 builder.Append( '\n', emptyLines );
@@ -1308,7 +1308,7 @@ sealed class YamlParser
                 break;
             }
 
-            throw Error( $"Expected ',' or '{ close }' in flow collection." );
+            throw Error( $"Expected ',' or '{close}' in flow collection." );
         }
 
         depth--;
@@ -1453,7 +1453,7 @@ sealed class YamlParser
                 }
                 else
                 {
-                    throw Error( $"Unexpected '{ Current }' in flow collection." );
+                    throw Error( $"Unexpected '{Current}' in flow collection." );
                 }
 
                 break;

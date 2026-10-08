@@ -15,7 +15,7 @@ public sealed class YamlReadContext
     readonly List< PathSegment > path = new();
     int depth;
 
-    readonly record struct PathSegment( string? Key, int Index );
+    readonly record struct PathSegment ( string? Key, int Index );
 
     public YamlReadContext ( YamlReadOptions? options = null, string? source = null )
     {
@@ -64,21 +64,21 @@ public sealed class YamlReadContext
 
     public void PopPath () => path.RemoveAt( path.Count - 1 );
 
-    public object? Read ( YamlNode node, [ DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS ) ] Type type ) =>
+    public object? Read ( YamlNode node, [DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS )] Type type ) =>
         YamlSerializer.Read( node, type, this );
 
-    public T? Read< [ DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS ) ] T > ( YamlNode node ) =>
+    public T? Read< [DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS )] T > ( YamlNode node ) =>
         ( T? )YamlSerializer.Read( node, typeof( T ), this );
 
     internal static string Describe ( YamlNode node ) => node switch
     {
         YamlScalar { IsNullValue: true } => "null",
-        YamlScalar scalar => scalar.Value.Length > 40 ? $"'{ scalar.Value[ ..40 ] }...'" : $"'{ scalar.Value }'",
+        YamlScalar scalar => scalar.Value.Length > 40 ? $"'{scalar.Value[..40]}...'" : $"'{scalar.Value}'",
         YamlList => "a list",
         _ => "a map",
     };
 
-    internal void Expected ( YamlNode node, string expected ) => AddError( node, $"Expected { expected }, found { Describe( node ) }." );
+    internal void Expected ( YamlNode node, string expected ) => AddError( node, $"Expected {expected}, found {Describe( node )}." );
 
     internal bool TryGetText ( YamlNode node, string expected, out string text )
     {
@@ -97,7 +97,7 @@ public sealed class YamlReadContext
     {
         if ( depth >= YamlParser.MAX_DEPTH )
         {
-            AddError( node, $"Nesting is deeper than { YamlParser.MAX_DEPTH } levels." );
+            AddError( node, $"Nesting is deeper than {YamlParser.MAX_DEPTH} levels." );
             return false;
         }
 
@@ -122,7 +122,7 @@ public sealed class YamlReadContext
             return default;
 
         if ( text.Length == 1 )
-            return text[ 0 ];
+            return text[0];
 
         Expected( node, "a single character" );
         return default;
@@ -156,7 +156,7 @@ public sealed class YamlReadContext
         Int128 value = negative ? -( Int128 )magnitude : magnitude;
         if ( value < min || value > max )
         {
-            AddError( node, $"{ text } is out of range ({ min } to { max })." );
+            AddError( node, $"{text} is out of range ({min} to {max})." );
             return 0;
         }
 
@@ -186,7 +186,7 @@ public sealed class YamlReadContext
         float single = ( float )value;
         if ( errors.Count == errorCount && float.IsInfinity( single ) && !double.IsInfinity( value ) )
         {
-            AddError( node, $"{ value } is out of range for a float." );
+            AddError( node, $"{value} is out of range for a float." );
             return 0;
         }
 
@@ -201,7 +201,7 @@ public sealed class YamlReadContext
         if ( YamlScalarResolver.TryParseInteger( text, out bool negative, out ulong magnitude ) )
             return negative ? -( decimal )magnitude : magnitude;
 
-        bool finite = char.IsAsciiDigit( text[ ^1 ] ) || text[ ^1 ] == '.';
+        bool finite = char.IsAsciiDigit( text[^1] ) || text[^1] == '.';
         if ( finite && YamlScalarResolver.IsFloat( text )
             && decimal.TryParse( text, NumberStyles.Float, CultureInfo.InvariantCulture, out decimal value ) )
             return value;

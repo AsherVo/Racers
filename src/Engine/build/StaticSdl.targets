@@ -8,7 +8,7 @@
     the engine's [LibraryImport] declarations so it can't drift. (Apple builds run on macOS only.)
   -->
   <Target Name="ReferenceEngineSdlSymbols" BeforeTargets="_ComputeLinkerInputs">
-    <Exec Command="grep -oE 'static partial .*SDL_[A-Za-z0-9_]+\(' &quot;$(MSBuildThisFileDirectory)../Native/SDL.cs&quot; | grep -oE 'SDL_[A-Za-z0-9_]+' | sort -u"
+    <Exec Command="grep -oE 'static partial .*SDL_[A-Za-z0-9_]+ *\(' &quot;$(MSBuildThisFileDirectory)../Native/SDL.cs&quot; | grep -oE 'SDL_[A-Za-z0-9_]+' | sort -u"
           ConsoleToMSBuild="true" StandardOutputImportance="low">
       <Output TaskParameter="ConsoleOutput" ItemName="_EngineSdlImport" />
     </Exec>

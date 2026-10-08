@@ -10,23 +10,23 @@ public abstract class Game
 
     internal bool ExitRequested { get; private set; }
 
-    public void Exit() => ExitRequested = true;
+    public void Exit () => ExitRequested = true;
 
-    protected internal virtual void Load() { }
-    protected internal virtual void Update(GameTime time) { }
-    protected internal virtual void Draw(SpriteBatch batch) { }
-    protected internal virtual void Unload() { }
+    protected internal virtual void Load () { }
+    protected internal virtual void Update ( GameTime time ) { }
+    protected internal virtual void Draw ( SpriteBatch batch ) { }
+    protected internal virtual void Unload () { }
 
     /// <summary>Mouse and touch, in logical (virtual resolution) coordinates.</summary>
-    protected internal virtual void OnPointer(PointerEvent e) { }
-    protected internal virtual void OnKey(Key key, bool down) { }
+    protected internal virtual void OnPointer ( PointerEvent e ) { }
+    protected internal virtual void OnKey ( Key key, bool down ) { }
 }
 
-public readonly record struct GameTime(double TotalSeconds, float DeltaSeconds);
+public readonly record struct GameTime ( double TotalSeconds, float DeltaSeconds );
 
 public enum PointerAction { Down, Move, Up }
 
-public readonly record struct PointerEvent(PointerAction Action, Vector2 Position);
+public readonly record struct PointerEvent ( PointerAction Action, Vector2 Position );
 
 public enum Orientation { Landscape, Portrait, Any }
 
@@ -38,7 +38,7 @@ public sealed record GameOptions
     public int Width { get; init; } = 1280;
     public int Height { get; init; } = 720;
 
-    public Color ClearColor { get; init; } = new(0.1f, 0.1f, 0.15f);
+    public Color ClearColor { get; init; } = new( 0.1f, 0.1f, 0.15f );
 
     /// <summary>Allowed screen orientations on phones and tablets.</summary>
     public Orientation Orientation { get; init; } = Orientation.Landscape;

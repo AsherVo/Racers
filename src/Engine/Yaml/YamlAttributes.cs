@@ -15,14 +15,14 @@ public enum YamlIgnoreCondition
 }
 
 /// <summary>Leaves a public field or property out of YAML, or only out of the output under a condition.</summary>
-[ AttributeUsage( AttributeTargets.Field | AttributeTargets.Property ) ]
+[AttributeUsage( AttributeTargets.Field | AttributeTargets.Property )]
 public sealed class YamlIgnoreAttribute : Attribute
 {
     public YamlIgnoreCondition Condition { get; set; } = YamlIgnoreCondition.Always;
 }
 
 /// <summary>Includes a member, even a non-public one, optionally under a different key.</summary>
-[ AttributeUsage( AttributeTargets.Field | AttributeTargets.Property ) ]
+[AttributeUsage( AttributeTargets.Field | AttributeTargets.Property )]
 public sealed class YamlMemberAttribute : Attribute
 {
     public YamlMemberAttribute ( string? name = null )
@@ -34,7 +34,7 @@ public sealed class YamlMemberAttribute : Attribute
 }
 
 /// <summary>Reading fails if the key is missing. Members are otherwise optional and keep their initial value.</summary>
-[ AttributeUsage( AttributeTargets.Field | AttributeTargets.Property ) ]
+[AttributeUsage( AttributeTargets.Field | AttributeTargets.Property )]
 public sealed class YamlRequiredAttribute : Attribute
 {
 }
@@ -44,7 +44,7 @@ public sealed class YamlRequiredAttribute : Attribute
 /// discriminator key (<c>type: Sequence</c>), and writing emits that key first. Every concrete subclass in the
 /// root's assembly can be chosen, plus any listed with <see cref="YamlDerivedTypeAttribute"/>.
 /// </summary>
-[ AttributeUsage( AttributeTargets.Class | AttributeTargets.Interface, Inherited = false ) ]
+[AttributeUsage( AttributeTargets.Class | AttributeTargets.Interface, Inherited = false )]
 public sealed class YamlPolymorphicAttribute : Attribute
 {
     public YamlPolymorphicAttribute ( string discriminatorKey = "type" )
@@ -56,20 +56,20 @@ public sealed class YamlPolymorphicAttribute : Attribute
 }
 
 /// <summary>Adds a subclass from another assembly to a <see cref="YamlPolymorphicAttribute"/> root.</summary>
-[ AttributeUsage( AttributeTargets.Class | AttributeTargets.Interface, AllowMultiple = true, Inherited = false ) ]
+[AttributeUsage( AttributeTargets.Class | AttributeTargets.Interface, AllowMultiple = true, Inherited = false )]
 public sealed class YamlDerivedTypeAttribute : Attribute
 {
-    public YamlDerivedTypeAttribute ( [ DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS ) ] Type derivedType )
+    public YamlDerivedTypeAttribute ( [DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS )] Type derivedType )
     {
         DerivedType = derivedType;
     }
 
-    [ DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS ) ]
+    [DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS )]
     public Type DerivedType { get; }
 }
 
 /// <summary>The discriminator value for this class under a polymorphic root. Defaults to the class name.</summary>
-[ AttributeUsage( AttributeTargets.Class, Inherited = false ) ]
+[AttributeUsage( AttributeTargets.Class, Inherited = false )]
 public sealed class YamlTypeNameAttribute : Attribute
 {
     public YamlTypeNameAttribute ( string name )
@@ -84,15 +84,15 @@ public sealed class YamlTypeNameAttribute : Attribute
 /// Converts a type, or one member, with an <see cref="IYamlConverter"/> instead of the default mapping, for a
 /// custom representation such as a color written as <c>"#FF8800"</c>. The converter needs a parameterless constructor.
 /// </summary>
-[ AttributeUsage( AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Field | AttributeTargets.Property ) ]
+[AttributeUsage( AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Field | AttributeTargets.Property )]
 public sealed class YamlConverterAttribute : Attribute
 {
-    public YamlConverterAttribute ( [ DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS ) ] Type converterType )
+    public YamlConverterAttribute ( [DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS )] Type converterType )
     {
         ConverterType = converterType;
     }
 
-    [ DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS ) ]
+    [DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS )]
     public Type ConverterType { get; }
 }
 

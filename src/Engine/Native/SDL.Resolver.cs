@@ -14,12 +14,12 @@ internal static partial class SDL
 #pragma warning disable CA2255 // ModuleInitializer in a library
     [ModuleInitializer]
 #pragma warning restore CA2255
-    internal static void RegisterResolver()
+    internal static void RegisterResolver ()
     {
-        if (!OperatingSystem.IsIOS() && !OperatingSystem.IsTvOS())
+        if ( !OperatingSystem.IsIOS() && !OperatingSystem.IsTvOS() )
             return;
 
-        NativeLibrary.SetDllImportResolver(typeof(SDL).Assembly, static (name, _, _) =>
-            name == Lib ? NativeLibrary.GetMainProgramHandle() : 0);
+        NativeLibrary.SetDllImportResolver( typeof( SDL ).Assembly, static ( name, _, _ ) =>
+            name == Lib ? NativeLibrary.GetMainProgramHandle() : 0 );
     }
 }

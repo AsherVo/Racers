@@ -16,11 +16,11 @@ namespace AndroidHost;
     Theme = "@android:style/Theme.NoTitleBar.Fullscreen",
     ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize | ConfigChanges.SmallestScreenSize |
         ConfigChanges.ScreenLayout | ConfigChanges.Keyboard | ConfigChanges.KeyboardHidden |
-        ConfigChanges.Navigation | ConfigChanges.UiMode | ConfigChanges.Density)]
+        ConfigChanges.Navigation | ConfigChanges.UiMode | ConfigChanges.Density )]
 public class MainActivity : SDLActivity
 {
-    protected override string[] GetLibraries() => ["SDL3"];
+    protected override string[] GetLibraries () => ["SDL3"];
 
     // Runs on SDL's thread; returns when the game ends.
-    protected override void Main() => GameHost.Run(() => new RacersGame(), RacersGame.Options);
+    protected override void Main () => GameHost.Run( () => new RacersGame(), RacersGame.Options );
 }

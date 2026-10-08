@@ -24,11 +24,11 @@ public static class Yaml
         var documents = YamlParser.ParseStream( text, source );
         if ( documents.Count > 1 )
         {
-            var second = documents[ 1 ];
-            throw new YamlException( new YamlError( $"Expected one document, found { documents.Count }.", second.Line, second.Column, Source: source ) );
+            var second = documents[1];
+            throw new YamlException( new YamlError( $"Expected one document, found {documents.Count}.", second.Line, second.Column, Source: source ) );
         }
 
-        return documents.Count == 1 ? documents[ 0 ] : new YamlScalar( "", YamlScalarStyle.Plain );
+        return documents.Count == 1 ? documents[0] : new YamlScalar( "", YamlScalarStyle.Plain );
     }
 
     /// <exception cref="YamlException">The text is not valid YAML.</exception>
@@ -41,15 +41,15 @@ public static class Yaml
 
     /// <exception cref="YamlException">The text is not valid YAML or doesn't match <typeparamref name="T"/>; it lists every problem found.</exception>
     /// <exception cref="InvalidOperationException"><typeparamref name="T"/> has a member YAML can't represent.</exception>
-    public static T Deserialize< [ DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS ) ] T > ( string text, YamlReadOptions? options = null, string? source = null ) =>
+    public static T Deserialize< [DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS )] T > ( string text, YamlReadOptions? options = null, string? source = null ) =>
         ( T )Deserialize( Parse( text, source ), typeof( T ), options, source );
 
     /// <inheritdoc cref="Deserialize{T}(string, YamlReadOptions?, string?)"/>
-    public static T Deserialize< [ DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS ) ] T > ( YamlNode node, YamlReadOptions? options = null, string? source = null ) =>
+    public static T Deserialize< [DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS )] T > ( YamlNode node, YamlReadOptions? options = null, string? source = null ) =>
         ( T )Deserialize( node, typeof( T ), options, source );
 
     /// <inheritdoc cref="Deserialize{T}(string, YamlReadOptions?, string?)"/>
-    public static object Deserialize ( YamlNode node, [ DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS ) ] Type type, YamlReadOptions? options = null, string? source = null )
+    public static object Deserialize ( YamlNode node, [DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS )] Type type, YamlReadOptions? options = null, string? source = null )
     {
         var context = new YamlReadContext( options, source );
         var value = ReadDocument( node, type, context );
@@ -59,7 +59,7 @@ public static class Yaml
         return value!;
     }
 
-    public static bool TryDeserialize< [ DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS ) ] T > ( string text, [ MaybeNullWhen( false ) ] out T value,
+    public static bool TryDeserialize< [DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS )] T > ( string text, [MaybeNullWhen( false )] out T value,
         out IReadOnlyList< YamlError > errors, YamlReadOptions? options = null, string? source = null )
     {
         bool success = TryDeserialize( text, typeof( T ), out object? result, out errors, options, source );
@@ -69,7 +69,7 @@ public static class Yaml
 
     /// <summary>Parses and reads <paramref name="text"/>, collecting syntax errors and mapping errors instead of throwing.</summary>
     /// <exception cref="InvalidOperationException"><paramref name="type"/> has a member YAML can't represent.</exception>
-    public static bool TryDeserialize ( string text, [ DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS ) ] Type type, [ NotNullWhen( true ) ] out object? value,
+    public static bool TryDeserialize ( string text, [DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS )] Type type, [NotNullWhen( true )] out object? value,
         out IReadOnlyList< YamlError > errors, YamlReadOptions? options = null, string? source = null )
     {
         value = null;
@@ -97,20 +97,20 @@ public static class Yaml
     static List< YamlError > SortedErrors ( YamlReadContext context ) =>
         context.Errors.OrderBy( error => error.Line ).ThenBy( error => error.Column ).ToList();
 
-    static object? ReadDocument ( YamlNode node, [ DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS ) ] Type type, YamlReadContext context )
+    static object? ReadDocument ( YamlNode node, [DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS )] Type type, YamlReadContext context )
     {
         if ( !node.IsNull )
             return context.Read( node, type );
 
-        context.AddError( node, $"Expected a { type.Name }, but the document is empty." );
+        context.AddError( node, $"Expected a {type.Name}, but the document is empty." );
         return null;
     }
 
-    public static YamlNode ToNode< [ DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS ) ] T > ( T value ) => new YamlWriteContext().Write( value );
+    public static YamlNode ToNode< [DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS )] T > ( T value ) => new YamlWriteContext().Write( value );
 
-    public static YamlNode ToNode ( object? value, [ DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS ) ] Type type ) => new YamlWriteContext().Write( value, type );
+    public static YamlNode ToNode ( object? value, [DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS )] Type type ) => new YamlWriteContext().Write( value, type );
 
-    public static string Serialize< [ DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS ) ] T > ( T value ) => Write( ToNode( value ) );
+    public static string Serialize< [DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS )] T > ( T value ) => Write( ToNode( value ) );
 
-    public static string Serialize ( object? value, [ DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS ) ] Type type ) => Write( ToNode( value, type ) );
+    public static string Serialize ( object? value, [DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS )] Type type ) => Write( ToNode( value, type ) );
 }

@@ -17,23 +17,23 @@ public sealed class Texture : IDisposable
     /// </summary>
     public bool Premultiplied { get; }
 
-    internal Texture(nint handle, TextureFilter filter = TextureFilter.Linear, bool premultiplied = false)
+    internal Texture ( nint handle, TextureFilter filter = TextureFilter.Linear, bool premultiplied = false )
     {
         Handle = handle;
         Premultiplied = premultiplied;
-        SDL.SDL_GetTextureSize(handle, out float w, out float h);
-        Width = (int)w;
-        Height = (int)h;
-        SDL.SDL_SetTextureScaleMode(handle, filter == TextureFilter.PixelArt ? SDL.SCALEMODE_PIXELART : SDL.SCALEMODE_LINEAR);
-        SDL.SDL_SetTextureBlendMode(handle, premultiplied ? SDL.BLENDMODE_BLEND_PREMULTIPLIED : SDL.BLENDMODE_BLEND);
+        SDL.SDL_GetTextureSize( handle, out float w, out float h );
+        Width = ( int )w;
+        Height = ( int )h;
+        SDL.SDL_SetTextureScaleMode( handle, filter == TextureFilter.PixelArt ? SDL.SCALEMODE_PIXELART : SDL.SCALEMODE_LINEAR );
+        SDL.SDL_SetTextureBlendMode( handle, premultiplied ? SDL.BLENDMODE_BLEND_PREMULTIPLIED : SDL.BLENDMODE_BLEND );
     }
 
-    public void Dispose()
+    public void Dispose ()
     {
-        if (Handle == 0)
+        if ( Handle == 0 )
             return;
 
-        SDL.SDL_DestroyTexture(Handle);
+        SDL.SDL_DestroyTexture( Handle );
         Handle = 0;
     }
 }

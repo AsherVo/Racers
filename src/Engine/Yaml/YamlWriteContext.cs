@@ -7,16 +7,16 @@ public sealed class YamlWriteContext
 {
     int depth;
 
-    public YamlNode Write ( object? value, [ DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS ) ] Type type ) =>
+    public YamlNode Write ( object? value, [DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS )] Type type ) =>
         YamlSerializer.Write( value, type, this );
 
-    public YamlNode Write< [ DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS ) ] T > ( T value ) =>
+    public YamlNode Write< [DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS )] T > ( T value ) =>
         YamlSerializer.Write( value, typeof( T ), this );
 
     internal void Enter ()
     {
         if ( ++depth > YamlParser.MAX_DEPTH )
-            throw new InvalidOperationException( $"Values are nested deeper than { YamlParser.MAX_DEPTH } levels; the object graph may contain a cycle." );
+            throw new InvalidOperationException( $"Values are nested deeper than {YamlParser.MAX_DEPTH} levels; the object graph may contain a cycle." );
     }
 
     internal void Exit () => depth--;

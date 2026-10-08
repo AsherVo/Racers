@@ -10,7 +10,7 @@ static class YamlSerializer
 {
     const string TRIM_JUSTIFICATION = "Types reached through member signatures are kept by rooting the game and engine assemblies.";
 
-    public static object? Read ( YamlNode node, [ DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS ) ] Type type, YamlReadContext context )
+    public static object? Read ( YamlNode node, [DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS )] Type type, YamlReadContext context )
     {
         var info = YamlTypeInfo.Get( type );
         if ( node.IsNull )
@@ -74,10 +74,10 @@ static class YamlSerializer
         _ => ( ulong )value,
     };
 
-    static bool TryParseEnumName ( Type type, string text, [ NotNullWhen( true ) ] out object? value )
+    static bool TryParseEnumName ( Type type, string text, [NotNullWhen( true )] out object? value )
     {
         value = null;
-        if ( text.Length == 0 || !( char.IsLetter( text[ 0 ] ) || text[ 0 ] == '_' ) || text.Contains( ',' ) )
+        if ( text.Length == 0 || !( char.IsLetter( text[0] ) || text[0] == '_' ) || text.Contains( ',' ) )
             return false;
 
         return Enum.TryParse( type, text, ignoreCase: false, out value ) && Enum.IsDefined( type, value );
@@ -85,31 +85,31 @@ static class YamlSerializer
 
     static object? ReadEnum ( YamlNode node, Type type, YamlReadContext context )
     {
-        if ( !context.TryGetText( node, $"a { type.Name }", out string text ) )
+        if ( !context.TryGetText( node, $"a {type.Name}", out string text ) )
             return null;
 
         if ( TryParseEnumName( type, text, out object? value ) )
             return value;
 
-        context.AddError( node, $"'{ text }' is not a { type.Name }. Expected one of: { string.Join( ", ", Enum.GetNames( type ) ) }." );
+        context.AddError( node, $"'{text}' is not a {type.Name}. Expected one of: {string.Join( ", ", Enum.GetNames( type ) )}." );
         return null;
     }
 
     // [Flags] enums read from a list of names, comma-separated names, or a single name.
     static object? ReadFlags ( YamlNode node, Type type, YamlReadContext context )
     {
-        var names = new List< (YamlNode Node, string Name) >();
+        var names = new List< ( YamlNode Node, string Name ) >();
         if ( node is YamlList list )
         {
             foreach ( var item in list )
             {
-                if ( context.TryGetText( item, $"a { type.Name } name", out string itemText ) )
-                    names.Add( (item, itemText) );
+                if ( context.TryGetText( item, $"a {type.Name} name", out string itemText ) )
+                    names.Add( ( item, itemText ) );
             }
         }
-        else if ( context.TryGetText( node, $"{ type.Name } names", out string text ) )
+        else if ( context.TryGetText( node, $"{type.Name} names", out string text ) )
         {
-            names.AddRange( text.Split( ',', StringSplitOptions.TrimEntries ).Select( name => (node, name) ) );
+            names.AddRange( text.Split( ',', StringSplitOptions.TrimEntries ).Select( name => ( node, name ) ) );
         }
         else
         {
@@ -117,12 +117,12 @@ static class YamlSerializer
         }
 
         ulong bits = 0;
-        foreach ( var (nameNode, name) in names )
+        foreach ( var ( nameNode, name ) in names )
         {
             if ( TryParseEnumName( type, name, out object? flag ) )
                 bits |= ToBits( flag );
             else
-                context.AddError( nameNode, $"'{ name }' is not a { type.Name }. Expected any of: { string.Join( ", ", Enum.GetNames( type ) ) }." );
+                context.AddError( nameNode, $"'{name}' is not a {type.Name}. Expected any of: {string.Join( ", ", Enum.GetNames( type ) )}." );
         }
 
         return Enum.ToObject( type, bits );
@@ -141,7 +141,7 @@ static class YamlSerializer
         _ => ( ulong )value,
     };
 
-    [ UnconditionalSuppressMessage( "AOT", "IL3050", Justification = "The array type comes from a member signature in a rooted assembly." ) ]
+    [UnconditionalSuppressMessage( "AOT", "IL3050", Justification = "The array type comes from a member signature in a rooted assembly." )]
     static object? ReadCollection ( YamlNode node, YamlTypeInfo info, YamlReadContext context )
     {
         if ( node is not YamlList list )
@@ -159,7 +159,7 @@ static class YamlSerializer
         for ( int i = 0; i < list.Count; i++ )
         {
             context.PushPath( i );
-            var item = Read( list[ i ], elementType, context ) ?? info.ElementDefault;
+            var item = Read( list[i], elementType, context ) ?? info.ElementDefault;
             if ( array != null )
             {
                 array.SetValue( item, i );
@@ -168,9 +168,9 @@ static class YamlSerializer
             {
                 ( ( IList )collection! ).Add( item );
             }
-            else if ( !( bool )info.SetAdd!.Invoke( collection, BindingFlags.DoNotWrapExceptions, null, [ item ], null )! )
+            else if ( !( bool )info.SetAdd!.Invoke( collection, BindingFlags.DoNotWrapExceptions, null, [item], null )! )
             {
-                context.AddError( list[ i ], "Duplicate item in a set." );
+                context.AddError( list[i], "Duplicate item in a set." );
             }
 
             context.PopPath();
@@ -192,7 +192,7 @@ static class YamlSerializer
             return null;
 
         var dictionary = ( IDictionary )info.CreateInstance();
-        foreach ( var (keyNode, valueNode) in map )
+        foreach ( var ( keyNode, valueNode ) in map )
         {
             context.PushPath( keyNode is YamlScalar scalar ? scalar.Value : "?" );
             int errorCount = context.Errors.Count;
@@ -205,7 +205,7 @@ static class YamlSerializer
             }
             else if ( dictionary.Contains( key ) )
             {
-                context.AddError( keyNode, $"Duplicate key '{ key }'." );
+                context.AddError( keyNode, $"Duplicate key '{key}'." );
             }
             else
             {
@@ -228,58 +228,58 @@ static class YamlSerializer
                 return scalar.Resolve();
 
             case YamlList list:
-            {
-                if ( !context.Enter( node ) )
-                    return null;
-
-                var result = new List< object? >( list.Count );
-                for ( int i = 0; i < list.Count; i++ )
                 {
-                    context.PushPath( i );
-                    result.Add( ReadAny( list[ i ], context ) );
-                    context.PopPath();
-                }
+                    if ( !context.Enter( node ) )
+                        return null;
 
-                context.Exit();
-                return result;
-            }
-
-            default:
-            {
-                var map = ( YamlMap )node;
-                if ( !context.Enter( node ) )
-                    return null;
-
-                var result = new Dictionary< string, object? >( map.Count, StringComparer.Ordinal );
-                foreach ( var (keyNode, valueNode) in map )
-                {
-                    if ( keyNode is not YamlScalar key )
+                    var result = new List< object? >( list.Count );
+                    for ( int i = 0; i < list.Count; i++ )
                     {
-                        context.AddError( keyNode, "Only scalar keys can be read as a Dictionary<string, object>." );
-                        continue;
+                        context.PushPath( i );
+                        result.Add( ReadAny( list[i], context ) );
+                        context.PopPath();
                     }
 
-                    context.PushPath( key.Value );
-                    result[ key.Value ] = ReadAny( valueNode, context );
-                    context.PopPath();
+                    context.Exit();
+                    return result;
                 }
 
-                context.Exit();
-                return result;
-            }
+            default:
+                {
+                    var map = ( YamlMap )node;
+                    if ( !context.Enter( node ) )
+                        return null;
+
+                    var result = new Dictionary< string, object? >( map.Count, StringComparer.Ordinal );
+                    foreach ( var ( keyNode, valueNode ) in map )
+                    {
+                        if ( keyNode is not YamlScalar key )
+                        {
+                            context.AddError( keyNode, "Only scalar keys can be read as a Dictionary<string, object>." );
+                            continue;
+                        }
+
+                        context.PushPath( key.Value );
+                        result[key.Value] = ReadAny( valueNode, context );
+                        context.PopPath();
+                    }
+
+                    context.Exit();
+                    return result;
+                }
         }
     }
 
-    [ UnconditionalSuppressMessage( "Trimming", "IL2072", Justification = TRIM_JUSTIFICATION ) ]
+    [UnconditionalSuppressMessage( "Trimming", "IL2072", Justification = TRIM_JUSTIFICATION )]
     static object? ReadObject ( YamlNode node, YamlTypeInfo info, YamlReadContext context )
     {
         if ( node is not YamlMap map )
         {
-            context.Expected( node, $"a map for { info.Type.Name }" );
+            context.Expected( node, $"a map for {info.Type.Name}" );
             return null;
         }
 
-        var consumed = new bool[ map.Count ];
+        var consumed = new bool[map.Count];
         var concrete = info;
         if ( info.Polymorphism is { } polymorphism )
         {
@@ -300,14 +300,14 @@ static class YamlSerializer
             if ( index < 0 )
             {
                 if ( member.Required )
-                    context.AddError( map, $"Missing required key '{ member.Name }' for { concrete.Type.Name }." );
+                    context.AddError( map, $"Missing required key '{member.Name}' for {concrete.Type.Name}." );
 
                 continue;
             }
 
-            consumed[ index ] = true;
+            consumed[index] = true;
             context.PushPath( member.Name );
-            var valueNode = map[ index ].Value;
+            var valueNode = map[index].Value;
             var value = member.Converter == null || valueNode.IsNull
                 ? Read( valueNode, member.Type, context )
                 : member.Converter.Read( valueNode, member.Type, context );
@@ -331,19 +331,19 @@ static class YamlSerializer
             if ( !staticType.IsAbstract && !staticType.IsInterface )
                 return staticType;
 
-            context.AddError( map, $"Missing '{ polymorphism.Key }' to choose which { staticType.Name } to create. "
-                + $"Expected one of: { polymorphism.NamesAssignableTo( staticType ) }." );
+            context.AddError( map, $"Missing '{polymorphism.Key}' to choose which {staticType.Name} to create. "
+                + $"Expected one of: {polymorphism.NamesAssignableTo( staticType )}." );
             return null;
         }
 
-        consumed[ index ] = true;
-        var discriminator = map[ index ].Value;
+        consumed[index] = true;
+        var discriminator = map[index].Value;
         context.PushPath( polymorphism.Key );
         Type? chosen = null;
         if ( discriminator is not YamlScalar { IsNullValue: false } scalar )
-            context.Expected( discriminator, $"a { staticType.Name } type name" );
+            context.Expected( discriminator, $"a {staticType.Name} type name" );
         else if ( !polymorphism.TryGetType( scalar.Value, staticType, out chosen ) )
-            context.AddError( discriminator, $"Unknown { staticType.Name } type '{ scalar.Value }'. Expected one of: { polymorphism.NamesAssignableTo( staticType ) }." );
+            context.AddError( discriminator, $"Unknown {staticType.Name} type '{scalar.Value}'. Expected one of: {polymorphism.NamesAssignableTo( staticType )}." );
 
         context.PopPath();
         return chosen;
@@ -353,19 +353,19 @@ static class YamlSerializer
     {
         for ( int i = 0; i < consumed.Length; i++ )
         {
-            if ( consumed[ i ] )
+            if ( consumed[i] )
                 continue;
 
-            var keyNode = map[ i ].Key;
+            var keyNode = map[i].Key;
             string key = keyNode is YamlScalar scalar ? scalar.Value : YamlReadContext.Describe( keyNode );
             context.PushPath( key );
-            context.AddError( keyNode, $"Unknown key '{ key }' for { type.Name }." );
+            context.AddError( keyNode, $"Unknown key '{key}' for {type.Name}." );
             context.PopPath();
         }
     }
 
-    [ UnconditionalSuppressMessage( "Trimming", "IL2072", Justification = TRIM_JUSTIFICATION ) ]
-    public static YamlNode Write ( object? value, [ DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS ) ] Type type, YamlWriteContext context )
+    [UnconditionalSuppressMessage( "Trimming", "IL2072", Justification = TRIM_JUSTIFICATION )]
+    public static YamlNode Write ( object? value, [DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS )] Type type, YamlWriteContext context )
     {
         if ( value == null )
             return YamlScalar.Null();
@@ -389,31 +389,31 @@ static class YamlSerializer
                 return Plain( ( ( decimal )value ).ToString( CultureInfo.InvariantCulture ) );
             case YamlTypeKind.Enum:
                 return new YamlScalar( Enum.GetName( type, value )
-                    ?? throw new InvalidOperationException( $"{ value } is not a named { type.Name } value." ) );
+                    ?? throw new InvalidOperationException( $"{value} is not a named {type.Name} value." ) );
             case YamlTypeKind.Flags:
                 return WriteFlags( value, type );
             case YamlTypeKind.Nullable:
                 return Write( value, info.ElementType!, context );
             case YamlTypeKind.Array or YamlTypeKind.List or YamlTypeKind.Set:
-            {
-                context.Enter();
-                var list = new YamlList();
-                foreach ( var item in ( IEnumerable )value )
-                    list.Add( Write( item, info.ElementType!, context ) );
+                {
+                    context.Enter();
+                    var list = new YamlList();
+                    foreach ( var item in ( IEnumerable )value )
+                        list.Add( Write( item, info.ElementType!, context ) );
 
-                context.Exit();
-                return list;
-            }
+                    context.Exit();
+                    return list;
+                }
             case YamlTypeKind.Dictionary:
-            {
-                context.Enter();
-                var map = new YamlMap();
-                foreach ( DictionaryEntry entry in ( IDictionary )value )
-                    map.Add( Write( entry.Key, info.KeyType!, context ), Write( entry.Value, info.ElementType!, context ) );
+                {
+                    context.Enter();
+                    var map = new YamlMap();
+                    foreach ( DictionaryEntry entry in ( IDictionary )value )
+                        map.Add( Write( entry.Key, info.KeyType!, context ), Write( entry.Value, info.ElementType!, context ) );
 
-                context.Exit();
-                return map;
-            }
+                    context.Exit();
+                    return map;
+                }
             case YamlTypeKind.Node:
                 return ( YamlNode )value;
             case YamlTypeKind.Any:
@@ -461,13 +461,13 @@ static class YamlSerializer
         }
 
         if ( remaining != 0 )
-            throw new InvalidOperationException( $"{ value } has bits that are not named { type.Name } flags." );
+            throw new InvalidOperationException( $"{value} has bits that are not named {type.Name} flags." );
 
         names.Reverse();
         return names.Count == 0 ? new YamlList() : new YamlScalar( string.Join( ", ", names ) );
     }
 
-    [ UnconditionalSuppressMessage( "Trimming", "IL2072", Justification = TRIM_JUSTIFICATION ) ]
+    [UnconditionalSuppressMessage( "Trimming", "IL2072", Justification = TRIM_JUSTIFICATION )]
     static YamlNode WriteObject ( object value, YamlTypeInfo info, YamlWriteContext context )
     {
         var concrete = info;
@@ -477,7 +477,7 @@ static class YamlSerializer
             var runtimeType = value.GetType();
             if ( !polymorphism.TryGetName( runtimeType, out typeName ) )
             {
-                throw new InvalidOperationException( $"{ runtimeType.FullName } is not a YAML type under { polymorphism.Root.FullName }. "
+                throw new InvalidOperationException( $"{runtimeType.FullName} is not a YAML type under {polymorphism.Root.FullName}. "
                     + "Subclasses outside the root's assembly need [YamlDerivedType] on the root." );
             }
 

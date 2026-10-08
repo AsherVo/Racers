@@ -11,7 +11,7 @@ namespace Cli;
 /// </summary>
 sealed class YamlAotDirectivesCommand : ICommand
 {
-    static readonly Type[] collectionDefinitions = [ typeof( List<> ), typeof( HashSet<> ), typeof( Dictionary<,> ) ];
+    static readonly Type[] collectionDefinitions = [typeof( List<> ), typeof( HashSet<> ), typeof( Dictionary<,> )];
 
     public string Name => "yaml aot-directives";
 
@@ -21,7 +21,7 @@ sealed class YamlAotDirectivesCommand : ICommand
 
     public int Run ( string[] args )
     {
-        var arguments = new Arguments( args, valueOptions: [ "out" ], flags: [] );
+        var arguments = new Arguments( args, valueOptions: ["out"], flags: [] );
         string output = arguments.Value( "out" ) ?? throw new UsageException( "--out is required." );
         if ( arguments.Positional.Count == 0 )
             throw new UsageException( "Give at least one assembly." );
@@ -58,7 +58,7 @@ sealed class YamlAotDirectivesCommand : ICommand
             File.WriteAllText( output, xml );
         }
 
-        Console.WriteLine( $"{ collections.Count } collection types { ( unchanged ? "unchanged in" : "written to" ) } { output }" );
+        Console.WriteLine( $"{collections.Count} collection types {( unchanged ? "unchanged in" : "written to" )} {output}" );
         return ExitCode.SUCCESS;
     }
 
@@ -92,9 +92,9 @@ sealed class YamlAotDirectivesCommand : ICommand
         builder.AppendLine( "  <Application>" );
         foreach ( var group in collections.GroupBy( type => type.Assembly.GetName().Name! ).OrderBy( group => group.Key, StringComparer.Ordinal ) )
         {
-            builder.AppendLine( $"    <Assembly Name=\"{ group.Key }\">" );
+            builder.AppendLine( $"    <Assembly Name=\"{group.Key}\">" );
             foreach ( string name in group.Select( TypeName ).Order( StringComparer.Ordinal ) )
-                builder.AppendLine( $"      <Type Name=\"{ System.Security.SecurityElement.Escape( name ) }\" Dynamic=\"Required All\" />" );
+                builder.AppendLine( $"      <Type Name=\"{System.Security.SecurityElement.Escape( name )}\" Dynamic=\"Required All\" />" );
 
             builder.AppendLine( "    </Assembly>" );
         }
@@ -113,7 +113,7 @@ sealed class YamlAotDirectivesCommand : ICommand
         if ( !type.IsGenericType )
             return type.FullName!;
 
-        var arguments = type.GetGenericArguments().Select( argument => $"[{ TypeName( argument ) },{ argument.Assembly.GetName().Name }]" );
+        var arguments = type.GetGenericArguments().Select( argument => $"[{TypeName( argument )},{argument.Assembly.GetName().Name}]" );
         return type.GetGenericTypeDefinition().FullName + "[" + string.Join( ",", arguments ) + "]";
     }
 

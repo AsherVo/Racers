@@ -60,14 +60,14 @@ sealed class YamlWriter
         CountVisits( root, visits, path, 0 );
 
         var usedNames = new HashSet< string >( StringComparer.Ordinal );
-        foreach ( var (node, count) in visits )
+        foreach ( var ( node, count ) in visits )
         {
             if ( count > 1 && node.Anchor is { } anchor && IsValidAnchorName( anchor ) && usedNames.Add( anchor ) )
-                anchorNames[ node ] = anchor;
+                anchorNames[node] = anchor;
         }
 
         int next = 1;
-        foreach ( var (node, count) in visits )
+        foreach ( var ( node, count ) in visits )
         {
             bool needsAnchor = count > 1 && ( node is not YamlScalar || node.Anchor != null );
             if ( !needsAnchor || anchorNames.ContainsKey( node ) )
@@ -80,25 +80,25 @@ sealed class YamlWriter
             }
             while ( !usedNames.Add( name ) );
 
-            anchorNames[ node ] = name;
+            anchorNames[node] = name;
         }
     }
 
     static void CountVisits ( YamlNode node, Dictionary< YamlNode, int > visits, HashSet< YamlNode > path, int depth )
     {
         if ( depth > YamlParser.MAX_DEPTH )
-            throw new InvalidOperationException( $"YAML nesting is deeper than { YamlParser.MAX_DEPTH } levels." );
+            throw new InvalidOperationException( $"YAML nesting is deeper than {YamlParser.MAX_DEPTH} levels." );
 
         if ( visits.TryGetValue( node, out int count ) )
         {
             if ( path.Contains( node ) )
                 throw new InvalidOperationException( "A YAML node contains itself, so it can't be written." );
 
-            visits[ node ] = count + 1;
+            visits[node] = count + 1;
             return;
         }
 
-        visits[ node ] = 1;
+        visits[node] = 1;
         path.Add( node );
         switch ( node )
         {
@@ -107,7 +107,7 @@ sealed class YamlWriter
                     CountVisits( item, visits, path, depth + 1 );
                 break;
             case YamlMap map:
-                foreach ( var (key, value) in map )
+                foreach ( var ( key, value ) in map )
                 {
                     CountVisits( key, visits, path, depth + 1 );
                     CountVisits( value, visits, path, depth + 1 );
@@ -152,13 +152,13 @@ sealed class YamlWriter
             return tag;
 
         if ( tag.StartsWith( CORE_PREFIX, StringComparison.Ordinal ) && IsTagSuffix( tag.AsSpan( CORE_PREFIX.Length ) ) )
-            return "!!" + tag[ CORE_PREFIX.Length.. ];
+            return "!!" + tag[CORE_PREFIX.Length..];
 
-        if ( tag.Length > 1 && tag[ 0 ] == '!' && IsTagSuffix( tag.AsSpan( 1 ) ) )
+        if ( tag.Length > 1 && tag[0] == '!' && IsTagSuffix( tag.AsSpan( 1 ) ) )
             return tag;
 
         if ( tag.Length == 0 || tag.Any( c => c is '>' || char.IsWhiteSpace( c ) || char.IsControl( c ) ) )
-            throw new InvalidOperationException( $"The tag '{ tag }' can't be written." );
+            throw new InvalidOperationException( $"The tag '{tag}' can't be written." );
 
         return "!<" + tag + ">";
     }
@@ -254,7 +254,7 @@ sealed class YamlWriter
                 Indent( indent );
 
             output.Append( '-' );
-            WriteValue( list[ i ], indent, Position.SequenceItem );
+            WriteValue( list[i], indent, Position.SequenceItem );
         }
     }
 
@@ -265,7 +265,7 @@ sealed class YamlWriter
             if ( i > 0 || !compactFirst )
                 Indent( indent );
 
-            var (key, value) = map[ i ];
+            var ( key, value ) = map[i];
             if ( !TryWriteImplicitKey( key ) )
             {
                 output.Append( '?' );
@@ -360,14 +360,14 @@ sealed class YamlWriter
         if ( value.Length == 0 || isKey && value.Length > 1024 )
             return false;
 
-        char first = value[ 0 ];
+        char first = value[0];
         if ( first is ' ' or ',' or '[' or ']' or '{' or '}' or '#' or '&' or '*' or '!' or '|' or '>' or '\'' or '"' or '%' or '@' or '`' )
             return false;
 
-        if ( first is '-' or '?' or ':' && ( value.Length == 1 || value[ 1 ] is ' ' ) )
+        if ( first is '-' or '?' or ':' && ( value.Length == 1 || value[1] is ' ' ) )
             return false;
 
-        if ( value[ ^1 ] is ' ' or ':' )
+        if ( value[^1] is ' ' or ':' )
             return false;
 
         if ( value.StartsWith( "---", StringComparison.Ordinal ) || value.StartsWith( "...", StringComparison.Ordinal ) )
@@ -375,14 +375,14 @@ sealed class YamlWriter
 
         for ( int i = 0; i < value.Length; i++ )
         {
-            char c = value[ i ];
+            char c = value[i];
             if ( IsSpecialCharacter( c ) )
                 return false;
 
-            if ( c == ':' && value[ i + 1 ] == ' ' )
+            if ( c == ':' && value[i + 1] == ' ' )
                 return false;
 
-            if ( c == '#' && value[ i - 1 ] == ' ' )
+            if ( c == '#' && value[i - 1] == ' ' )
                 return false;
         }
 
@@ -414,7 +414,7 @@ sealed class YamlWriter
         builder.Append( '"' );
         for ( int i = 0; i < value.Length; i++ )
         {
-            char c = value[ i ];
+            char c = value[i];
             switch ( c )
             {
                 case '"': builder.Append( "\\\"" ); break;
@@ -433,7 +433,7 @@ sealed class YamlWriter
                     else if ( c is '\uFEFF' or '\uFFFE' or '\uFFFF' || char.IsSurrogate( c ) && !IsSurrogatePairAt( value, i ) )
                         builder.Append( "\\u" ).Append( ( ( int )c ).ToString( "X4" ) );
                     else if ( char.IsHighSurrogate( c ) )
-                        builder.Append( c ).Append( value[ ++i ] );
+                        builder.Append( c ).Append( value[++i] );
                     else
                         builder.Append( c );
                     break;
@@ -444,19 +444,19 @@ sealed class YamlWriter
     }
 
     static bool IsSurrogatePairAt ( string value, int i ) =>
-        char.IsHighSurrogate( value[ i ] ) && i + 1 < value.Length && char.IsLowSurrogate( value[ i + 1 ] );
+        char.IsHighSurrogate( value[i] ) && i + 1 < value.Length && char.IsLowSurrogate( value[i + 1] );
 
     void WriteLiteral ( string value, int contentIndent )
     {
         int trailingBreaks = 0;
-        while ( trailingBreaks < value.Length && value[ value.Length - 1 - trailingBreaks ] == '\n' )
+        while ( trailingBreaks < value.Length && value[value.Length - 1 - trailingBreaks] == '\n' )
             trailingBreaks++;
 
-        string[] lines = value[ ..^trailingBreaks ].Split( '\n' );
+        string[] lines = value[..^trailingBreaks].Split( '\n' );
         string firstContent = lines.First( l => l.Length > 0 );
 
         output.Append( '|' );
-        if ( firstContent[ 0 ] == ' ' )
+        if ( firstContent[0] == ' ' )
             output.Append( INDENT );
 
         if ( trailingBreaks == 0 )

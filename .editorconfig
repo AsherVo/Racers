@@ -1,0 +1,37 @@
+root = true
+
+[*]
+charset = utf-8
+insert_final_newline = true
+
+[*.cs]
+indent_style = space
+indent_size = 4
+
+# Braces on their own line (Allman); else/catch/finally start a new line.
+csharp_new_line_before_open_brace = all
+csharp_new_line_before_else = true
+csharp_new_line_before_catch = true
+csharp_new_line_before_finally = true
+
+# Calls: FooBar( x, y ) and FooBar()
+csharp_space_between_method_call_name_and_opening_parenthesis = false
+csharp_space_between_method_call_parameter_list_parentheses = true
+csharp_space_between_method_call_empty_parameter_list_parentheses = false
+
+# Declarations: bool FooBar ( i32 x, i32 y ) and i32 main ()
+csharp_space_between_method_declaration_name_and_open_parenthesis = true
+csharp_space_between_method_declaration_parameter_list_parentheses = true
+csharp_space_between_method_declaration_empty_parameter_list_parentheses = false
+
+# Grouping parens, control flow and casts: ( a + b ) * c, if ( condition ), ( int )x
+csharp_space_after_keywords_in_control_flow_statements = true
+csharp_space_between_parentheses = control_flow_statements,expressions,type_casts
+
+# Generics, tuples and checked: FooBar< T >(), ( a, b ), checked( x ). Rider honors these; Roslyn
+# (dotnet format, VS, VS Code) has no equivalent and will strip the spaces, so don't run
+# `dotnet format whitespace` over the whole tree.
+resharper_space_within_type_argument_angles = true
+resharper_space_within_type_parameter_angles = true
+resharper_space_within_tuple_parentheses = true
+resharper_space_within_checked_parentheses = true

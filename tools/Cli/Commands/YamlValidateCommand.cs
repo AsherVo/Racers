@@ -21,7 +21,7 @@ sealed class YamlValidateCommand : ICommand
 
     public int Run ( string[] args )
     {
-        var arguments = new Arguments( args, valueOptions: [ "type", "assembly" ], flags: [ "allow-unknown-keys", "quiet" ] );
+        var arguments = new Arguments( args, valueOptions: ["type", "assembly"], flags: ["allow-unknown-keys", "quiet"] );
         if ( arguments.Positional.Count == 0 )
             throw new UsageException( "Give at least one file or directory." );
 
@@ -42,25 +42,25 @@ sealed class YamlValidateCommand : ICommand
             }
             catch ( InvalidOperationException exception ) when ( type != null )
             {
-                Console.Error.WriteLine( $"error: { type.FullName } can't be read from YAML: { exception.Message }" );
+                Console.Error.WriteLine( $"error: {type.FullName} can't be read from YAML: {exception.Message}" );
                 return ExitCode.FAILURE;
             }
 
             if ( errors.Count == 0 )
             {
                 if ( !quiet )
-                    Console.WriteLine( $"ok    { display }" );
+                    Console.WriteLine( $"ok    {display}" );
 
                 continue;
             }
 
             failed++;
             foreach ( var error in errors )
-                Console.WriteLine( $"error { error }" );
+                Console.WriteLine( $"error {error}" );
         }
 
-        string against = type == null ? "" : $" against { type.FullName }";
-        Console.WriteLine( $"{ files.Count } file{ ( files.Count == 1 ? "" : "s" ) } checked{ against }: { failed } with errors." );
+        string against = type == null ? "" : $" against {type.FullName}";
+        Console.WriteLine( $"{files.Count} file{( files.Count == 1 ? "" : "s" )} checked{against}: {failed} with errors." );
         return failed == 0 ? ExitCode.SUCCESS : ExitCode.FAILURE;
     }
 
@@ -100,7 +100,7 @@ sealed class YamlValidateCommand : ICommand
             }
             else
             {
-                throw new UsageException( $"'{ path }' does not exist." );
+                throw new UsageException( $"'{path}' does not exist." );
             }
         }
 
@@ -116,7 +116,7 @@ sealed class YamlValidateCommand : ICommand
         foreach ( string path in assemblyPaths )
         {
             if ( !File.Exists( path ) )
-                throw new UsageException( $"Assembly '{ path }' does not exist." );
+                throw new UsageException( $"Assembly '{path}' does not exist." );
 
             assemblies.Add( Assembly.LoadFrom( Path.GetFullPath( path ) ) );
         }
@@ -127,14 +127,14 @@ sealed class YamlValidateCommand : ICommand
             matches = types.Where( type => type.Name == name || type.FullName?.Replace( '+', '.' ) == name ).ToList();
 
         if ( matches.Count == 1 )
-            return matches[ 0 ];
+            return matches[0];
 
         if ( matches.Count > 1 )
-            throw new UsageException( $"'{ name }' is ambiguous: { string.Join( ", ", matches.Select( type => type.FullName ) ) }." );
+            throw new UsageException( $"'{name}' is ambiguous: {string.Join( ", ", matches.Select( type => type.FullName ) )}." );
 
         var similar = types.Where( type => type.Name.Contains( name, StringComparison.OrdinalIgnoreCase ) ).Take( 5 ).Select( type => type.FullName );
-        string suggestion = similar.Any() ? $" Did you mean: { string.Join( ", ", similar ) }?" : "";
-        throw new UsageException( $"No type named '{ name }'.{ suggestion }" );
+        string suggestion = similar.Any() ? $" Did you mean: {string.Join( ", ", similar )}?" : "";
+        throw new UsageException( $"No type named '{name}'.{suggestion}" );
     }
 
     static IEnumerable< Type > LoadableTypes ( Assembly assembly )

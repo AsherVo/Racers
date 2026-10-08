@@ -24,7 +24,7 @@ static class CommandRunner
 {
     public static int Run ( IReadOnlyList< ICommand > commands, string[] args )
     {
-        if ( args.Length == 0 || args[ 0 ] is "help" or "--help" or "-h" )
+        if ( args.Length == 0 || args[0] is "help" or "--help" or "-h" )
         {
             PrintHelp( commands );
             return args.Length == 0 ? ExitCode.USAGE : ExitCode.SUCCESS;
@@ -36,7 +36,7 @@ static class CommandRunner
 
         if ( command == null )
         {
-            Console.Error.WriteLine( $"Unknown command '{ string.Join( ' ', args.Take( 2 ) ) }'." );
+            Console.Error.WriteLine( $"Unknown command '{string.Join( ' ', args.Take( 2 ) )}'." );
             PrintHelp( commands );
             return ExitCode.USAGE;
         }
@@ -44,7 +44,7 @@ static class CommandRunner
         var rest = args.Skip( command.Name.Split( ' ' ).Length ).ToArray();
         if ( rest.Any( arg => arg is "--help" or "-h" ) )
         {
-            Console.WriteLine( $"{ command.Summary }\n\nUsage: cli { command.Usage }" );
+            Console.WriteLine( $"{command.Summary}\n\nUsage: cli {command.Usage}" );
             return ExitCode.SUCCESS;
         }
 
@@ -54,8 +54,8 @@ static class CommandRunner
         }
         catch ( UsageException exception )
         {
-            Console.Error.WriteLine( $"error: { exception.Message }" );
-            Console.Error.WriteLine( $"Usage: cli { command.Usage }" );
+            Console.Error.WriteLine( $"error: {exception.Message}" );
+            Console.Error.WriteLine( $"Usage: cli {command.Usage}" );
             return ExitCode.USAGE;
         }
     }
@@ -63,7 +63,7 @@ static class CommandRunner
     static bool Matches ( ICommand command, string[] args )
     {
         string[] words = command.Name.Split( ' ' );
-        return args.Length >= words.Length && words.Select( ( word, i ) => word == args[ i ] ).All( match => match );
+        return args.Length >= words.Length && words.Select( ( word, i ) => word == args[i] ).All( match => match );
     }
 
     static void PrintHelp ( IReadOnlyList< ICommand > commands )
@@ -71,7 +71,7 @@ static class CommandRunner
         Console.WriteLine( "Usage: cli <command> [arguments]   (cli <command> --help for details)\n\nCommands:" );
         int width = commands.Max( command => command.Name.Length );
         foreach ( var command in commands )
-            Console.WriteLine( $"  { command.Name.PadRight( width ) }  { command.Summary }" );
+            Console.WriteLine( $"  {command.Name.PadRight( width )}  {command.Summary}" );
     }
 }
 
@@ -81,7 +81,7 @@ sealed class UsageException ( string message ) : Exception( message );
 sealed class Arguments
 {
     readonly List< string > positional = new();
-    readonly List< (string Name, string? Value) > options = new();
+    readonly List< ( string Name, string? Value ) > options = new();
 
     /// <param name="valueOptions">Options that take a value, as <c>--name value</c> or <c>--name=value</c>.</param>
     /// <param name="flags">Options that take no value.</param>
@@ -89,7 +89,7 @@ sealed class Arguments
     {
         for ( int i = 0; i < args.Length; i++ )
         {
-            string arg = args[ i ];
+            string arg = args[i];
             if ( !arg.StartsWith( "--", StringComparison.Ordinal ) )
             {
                 positional.Add( arg );
@@ -97,23 +97,23 @@ sealed class Arguments
             }
 
             int equals = arg.IndexOf( '=' );
-            string name = equals > 0 ? arg[ 2..equals ] : arg[ 2.. ];
+            string name = equals > 0 ? arg[2..equals] : arg[2..];
             if ( flags.Contains( name ) && equals < 0 )
             {
-                options.Add( (name, null) );
+                options.Add( ( name, null ) );
             }
             else if ( valueOptions.Contains( name ) )
             {
                 if ( equals > 0 )
-                    options.Add( (name, arg[ ( equals + 1 ).. ]) );
+                    options.Add( ( name, arg[( equals + 1 )..] ) );
                 else if ( i + 1 < args.Length )
-                    options.Add( (name, args[ ++i ]) );
+                    options.Add( ( name, args[++i] ) );
                 else
-                    throw new UsageException( $"--{ name } needs a value." );
+                    throw new UsageException( $"--{name} needs a value." );
             }
             else
             {
-                throw new UsageException( $"Unknown option --{ name }." );
+                throw new UsageException( $"Unknown option --{name}." );
             }
         }
     }

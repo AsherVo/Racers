@@ -1,4 +1,4 @@
 using Engine;
 using Racers;
 
-return GameHost.Run(() => new RacersGame(), RacersGame.Options);
+return GameHost.Run( () => new RacersGame(), RacersGame.Options );

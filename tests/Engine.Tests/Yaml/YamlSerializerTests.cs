@@ -9,7 +9,7 @@ public enum Element
     Shock,
 }
 
-[ Flags ]
+[Flags]
 public enum Targets
 {
     None = 0,
@@ -41,19 +41,19 @@ public class Weapon
     public object? extra;
     public YamlNode? raw;
 
-    [ YamlIgnore ]
+    [YamlIgnore]
     public int cachedValue = 42;
 
-    [ YamlMember( "display_name" ) ]
+    [YamlMember( "display_name" )]
     public string? displayName;
 
-    [ YamlMember ]
+    [YamlMember]
     int secret = 0;
 
-    [ YamlIgnore( Condition = YamlIgnoreCondition.WhenNull ) ]
+    [YamlIgnore( Condition = YamlIgnoreCondition.WhenNull )]
     public string? note;
 
-    [ YamlIgnore( Condition = YamlIgnoreCondition.WhenDefault ) ]
+    [YamlIgnore( Condition = YamlIgnoreCondition.WhenDefault )]
     public int bonus;
 
     public int Secret => secret;
@@ -65,13 +65,13 @@ public class Weapon
 
 public class Requirements
 {
-    [ YamlRequired ]
+    [YamlRequired]
     public string id = "";
 
     public int optional = 7;
 }
 
-[ YamlPolymorphic ]
+[YamlPolymorphic]
 public abstract class Shape
 {
     public string? label;
@@ -82,7 +82,7 @@ public class Circle : Shape
     public float radius;
 }
 
-[ YamlTypeName( "rect" ) ]
+[YamlTypeName( "rect" )]
 public class Rectangle : Shape
 {
     public float width;
@@ -93,7 +93,7 @@ public class Square : Rectangle
 {
 }
 
-[ YamlPolymorphic( "kind" ) ]
+[YamlPolymorphic( "kind" )]
 public class Effect
 {
     public int power;
@@ -112,7 +112,7 @@ public class Scene
     public Effect? effect;
 }
 
-[ YamlConverter( typeof( HexColorConverter ) ) ]
+[YamlConverter( typeof( HexColorConverter ) )]
 public struct HexColor
 {
     public byte r;
@@ -125,7 +125,7 @@ public class HexColorConverter : IYamlConverter
     public object? Read ( YamlNode node, Type type, YamlReadContext context )
     {
         string? text = context.ReadString( node );
-        if ( text is not { Length: 7 } || text[ 0 ] != '#' || !uint.TryParse( text.AsSpan( 1 ), NumberStyles.HexNumber, null, out uint rgb ) )
+        if ( text is not { Length: 7 } || text[0] != '#' || !uint.TryParse( text.AsSpan( 1 ), NumberStyles.HexNumber, null, out uint rgb ) )
         {
             context.AddError( node, "Expected a color like #FF8800." );
             return null;
@@ -137,7 +137,7 @@ public class HexColorConverter : IYamlConverter
     public YamlNode Write ( object value, Type type, YamlWriteContext context )
     {
         var color = ( HexColor )value;
-        return new YamlScalar( $"#{ color.r:X2}{ color.g:X2}{ color.b:X2}" );
+        return new YamlScalar( $"#{color.r:X2}{color.g:X2}{color.b:X2}" );
     }
 }
 
@@ -153,7 +153,7 @@ public class Theme
     public HexColor background;
     public HexColor? accent;
 
-    [ YamlConverter( typeof( UppercaseConverter ) ) ]
+    [YamlConverter( typeof( UppercaseConverter ) )]
     public string code = "";
 }
 
@@ -175,7 +175,7 @@ public class UsesInterfaceCollection
 
 public class ReadonlyMember
 {
-    [ YamlMember ]
+    [YamlMember]
     public readonly int value;
 }
 
@@ -204,7 +204,7 @@ public class YamlSerializerTests
         bonus: 3
         """;
 
-    [ Fact ]
+    [Fact]
     public void ReadsEverySupportedMemberType ()
     {
         var weapon = Yaml.Deserialize< Weapon >( WEAPON );
@@ -216,14 +216,14 @@ public class YamlSerializerTests
         Assert.Equal( Targets.Everyone, weapon.targets );
         Assert.Equal( -2f, weapon.offset.y );
         Assert.Equal( 0.5f, weapon.aim?.x );
-        Assert.Equal( [ 1, 2, 3 ], weapon.levels );
-        Assert.Equal( [ "hot", "bright" ], weapon.tags );
-        Assert.Equal( [ Element.Fire, Element.Ice ], weapon.resistances.Order() );
-        Assert.Equal( 1.5f, weapon.stats[ "speed" ] );
-        Assert.Equal( [ 1, 2 ], weapon.combos[ Element.Fire ] );
-        Assert.Empty( weapon.combos[ Element.Ice ] );
+        Assert.Equal( [1, 2, 3], weapon.levels );
+        Assert.Equal( ["hot", "bright"], weapon.tags );
+        Assert.Equal( [Element.Fire, Element.Ice], weapon.resistances.Order() );
+        Assert.Equal( 1.5f, weapon.stats["speed"] );
+        Assert.Equal( [1, 2], weapon.combos[Element.Fire] );
+        Assert.Empty( weapon.combos[Element.Ice] );
         var extra = Assert.IsType< Dictionary< string, object? > >( weapon.extra );
-        Assert.Equal( [ 1L, "two", 3.5, true, null ], Assert.IsType< List< object? > >( extra[ "notes" ] ) );
+        Assert.Equal( [1L, "two", 3.5, true, null], Assert.IsType< List< object? > >( extra["notes"] ) );
         Assert.IsType< YamlList >( weapon.raw );
         Assert.Equal( "Laser Beam", weapon.displayName );
         Assert.Equal( 99, weapon.Secret );
@@ -232,7 +232,7 @@ public class YamlSerializerTests
         Assert.Equal( 3, weapon.bonus );
     }
 
-    [ Fact ]
+    [Fact]
     public void WritesAndReadsBackTheSameValues ()
     {
         var weapon = Yaml.Deserialize< Weapon >( WEAPON );
@@ -241,7 +241,7 @@ public class YamlSerializerTests
 
         Assert.Equal( written, Yaml.Serialize( again ) );
         Assert.Equal( weapon.targets, again.targets );
-        Assert.Equal( weapon.combos[ Element.Fire ], again.combos[ Element.Fire ] );
+        Assert.Equal( weapon.combos[Element.Fire], again.combos[Element.Fire] );
         Assert.Contains( "targets: Party, Enemies\n", written.Replace( "Everyone", "Party, Enemies" ) );
         Assert.Contains( "display_name: Laser Beam\n", written );
         Assert.DoesNotContain( "cachedValue", written );
@@ -249,7 +249,7 @@ public class YamlSerializerTests
         Assert.DoesNotContain( "privateSetter", written );
     }
 
-    [ Fact ]
+    [Fact]
     public void WritesMembersInDeclarationOrder ()
     {
         string written = Yaml.Serialize( new Weapon() );
@@ -258,7 +258,7 @@ public class YamlSerializerTests
             "display_name", "secret", "range" ], keys );
     }
 
-    [ Fact ]
+    [Fact]
     public void IgnoreConditionsOmitNullAndDefaultValues ()
     {
         string written = Yaml.Serialize( new Weapon { note = null, bonus = 0 } );
@@ -270,7 +270,7 @@ public class YamlSerializerTests
         Assert.Contains( "bonus: 1\n", written );
     }
 
-    [ Fact ]
+    [Fact]
     public void MissingKeysKeepInitialValues ()
     {
         var weapon = Yaml.Deserialize< Weapon >( "name: Stick\n" );
@@ -278,7 +278,7 @@ public class YamlSerializerTests
         Assert.Empty( weapon.tags );
     }
 
-    [ Fact ]
+    [Fact]
     public void ReportsEveryErrorWithPathAndPosition ()
     {
         bool ok = Yaml.TryDeserialize< Weapon >( """
@@ -303,21 +303,21 @@ public class YamlSerializerTests
         ], errors.Select( error => error.ToString() ) );
     }
 
-    [ Fact ]
+    [Fact]
     public void DeserializeThrowsWithAllErrors ()
     {
         var exception = Assert.Throws< YamlException >( () => Yaml.Deserialize< Weapon >( "damage: x\nrange: y\n" ) );
         Assert.Equal( 2, exception.Errors.Count );
     }
 
-    [ Fact ]
+    [Fact]
     public void UnknownKeysCanBeAllowed ()
     {
         var weapon = Yaml.Deserialize< Weapon >( "name: Axe\nunused: 1\n", new YamlReadOptions { AllowUnknownKeys = true } );
         Assert.Equal( "Axe", weapon.name );
     }
 
-    [ Fact ]
+    [Fact]
     public void RequiredMembersMustBePresent ()
     {
         Assert.False( Yaml.TryDeserialize< Requirements >( "optional: 1\n", out _, out var errors ) );
@@ -325,34 +325,34 @@ public class YamlSerializerTests
         Assert.Equal( 7, Yaml.Deserialize< Requirements >( "id: a\n" ).optional );
     }
 
-    [ Theory ]
-    [ InlineData( "damage: 2147483648", "out of range" ) ]
-    [ InlineData( "damage:", "Expected an integer, found null" ) ]
-    [ InlineData( "offset: 3", "Expected a map for Point" ) ]
-    [ InlineData( "targets: Party, Allies", "'Allies' is not a Targets" ) ]
-    [ InlineData( "resistances: [Fire, Fire]", "Duplicate item" ) ]
-    [ InlineData( "levels: {a: 1}", "Expected a list" ) ]
+    [Theory]
+    [InlineData( "damage: 2147483648", "out of range" )]
+    [InlineData( "damage:", "Expected an integer, found null" )]
+    [InlineData( "offset: 3", "Expected a map for Point" )]
+    [InlineData( "targets: Party, Allies", "'Allies' is not a Targets" )]
+    [InlineData( "resistances: [Fire, Fire]", "Duplicate item" )]
+    [InlineData( "levels: {a: 1}", "Expected a list" )]
     public void ReportsValueErrors ( string text, string message )
     {
         Assert.False( Yaml.TryDeserialize< Weapon >( text, out _, out var errors ) );
         Assert.Contains( message, Assert.Single( errors ).Message );
     }
 
-    [ Fact ]
+    [Fact]
     public void EmptyDocumentIsAnError ()
     {
         Assert.False( Yaml.TryDeserialize< Weapon >( "# nothing\n", out _, out var errors ) );
         Assert.Contains( "document is empty", Assert.Single( errors ).Message );
     }
 
-    [ Fact ]
+    [Fact]
     public void SyntaxErrorsAreReportedByTryDeserialize ()
     {
         Assert.False( Yaml.TryDeserialize< Weapon >( "name: [", out _, out var errors ) );
         Assert.Contains( "Unterminated", Assert.Single( errors ).Message );
     }
 
-    [ Fact ]
+    [Fact]
     public void ReadsPolymorphicTypesByDiscriminator ()
     {
         var scene = Yaml.Deserialize< Scene >( """
@@ -370,18 +370,18 @@ public class YamlSerializerTests
             effect: {kind: Burn, power: 2, duration: 1.5}
             """ );
 
-        Assert.Equal( 2f, Assert.IsType< Circle >( scene.shapes[ 0 ] ).radius );
-        Assert.Equal( "box", Assert.IsType< Rectangle >( scene.shapes[ 1 ] ).label );
-        Assert.IsType< Square >( scene.shapes[ 2 ] );
+        Assert.Equal( 2f, Assert.IsType< Circle >( scene.shapes[0] ).radius );
+        Assert.Equal( "box", Assert.IsType< Rectangle >( scene.shapes[1] ).label );
+        Assert.IsType< Square >( scene.shapes[2] );
         Assert.IsType< Circle >( scene.focus );
         Assert.Equal( 10f, Assert.IsType< Rectangle >( scene.frame ).width );
         Assert.Equal( 1.5f, Assert.IsType< Burn >( scene.effect ).duration );
     }
 
-    [ Fact ]
+    [Fact]
     public void WritesPolymorphicDiscriminatorFirst ()
     {
-        var scene = new Scene { shapes = [ new Circle { radius = 1 }, new Rectangle { width = 2, label = "r" } ], effect = new Effect { power = 1 } };
+        var scene = new Scene { shapes = [new Circle { radius = 1 }, new Rectangle { width = 2, label = "r" }], effect = new Effect { power = 1 } };
         string written = Yaml.Serialize( scene );
 
         Assert.Contains( "- type: Circle\n  label: null\n  radius: 1.0\n", written );
@@ -390,18 +390,18 @@ public class YamlSerializerTests
         Assert.Equal( written, Yaml.Serialize( Yaml.Deserialize< Scene >( written ) ) );
     }
 
-    [ Theory ]
-    [ InlineData( "focus: {radius: 1}", "Missing 'type' to choose which Shape to create. Expected one of: Circle, rect, Square." ) ]
-    [ InlineData( "focus: {type: Triangle}", "Unknown Shape type 'Triangle'. Expected one of: Circle, rect, Square." ) ]
-    [ InlineData( "frame: {type: Circle}", "Unknown Rectangle type 'Circle'. Expected one of: rect, Square." ) ]
-    [ InlineData( "focus: {type: [x]}", "Expected a Shape type name, found a list." ) ]
+    [Theory]
+    [InlineData( "focus: {radius: 1}", "Missing 'type' to choose which Shape to create. Expected one of: Circle, rect, Square." )]
+    [InlineData( "focus: {type: Triangle}", "Unknown Shape type 'Triangle'. Expected one of: Circle, rect, Square." )]
+    [InlineData( "frame: {type: Circle}", "Unknown Rectangle type 'Circle'. Expected one of: rect, Square." )]
+    [InlineData( "focus: {type: [x]}", "Expected a Shape type name, found a list." )]
     public void ReportsPolymorphicErrors ( string text, string message )
     {
         Assert.False( Yaml.TryDeserialize< Scene >( text, out _, out var errors ) );
         Assert.Equal( message, Assert.Single( errors ).Message );
     }
 
-    [ Fact ]
+    [Fact]
     public void UsesConvertersForTypesAndMembers ()
     {
         var theme = Yaml.Deserialize< Theme >( "background: '#FF8800'\naccent: '#000010'\ncode: abc\n" );
@@ -411,17 +411,17 @@ public class YamlSerializerTests
         Assert.Equal( "background: '#FF8800'\naccent: '#000010'\ncode: abc\n".Replace( "'", "\"" ), Yaml.Serialize( theme ) );
 
         Assert.False( Yaml.TryDeserialize< Theme >( "background: red\n", out _, out var errors ) );
-        Assert.Equal( "background: Expected a color like #FF8800.", Assert.Single( errors ).ToString()[ "<yaml>:1:13: ".Length.. ] );
+        Assert.Equal( "background: Expected a color like #FF8800.", Assert.Single( errors ).ToString()["<yaml>:1:13: ".Length..] );
     }
 
-    [ Fact ]
+    [Fact]
     public void SupportsInitOnlyProperties ()
     {
         var settings = Yaml.Deserialize< Settings >( "title: Racers\nvolume: 8\n" );
         Assert.Equal( new Settings { title = "Racers", volume = 8 }, settings );
     }
 
-    [ Fact ]
+    [Fact]
     public void ExplainsUnsupportedTypes ()
     {
         var noConstructor = Assert.Throws< InvalidOperationException >( () => Yaml.Deserialize< NoDefaultConstructor >( "value: 1\n" ) );
@@ -435,7 +435,7 @@ public class YamlSerializerTests
         Assert.Contains( "readonly", readonlyMember.Message );
     }
 
-    [ Fact ]
+    [Fact]
     public void RejectsCyclicObjects ()
     {
         var shape = new Scene();
