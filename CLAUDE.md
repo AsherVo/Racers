@@ -14,6 +14,7 @@ Game code is dynamic, changing, and often uses non-ideal coding practices. This 
 - Types, functions, methods, and enum values: PascalCase (`YamlNode`, `ViewFit`, `YamlMap`).
 - Non-static variables: camelCase (`fbWidth`, `pixelPerfect`).
 - Static variables: PascalCase
+- Properties are treated like variables: instance properties are camelCase, static properties are PascalCase.
 - Constants: SCREAMING_CASE (`CLEAR_COLOR`).
 
 ## Formatting (C#)

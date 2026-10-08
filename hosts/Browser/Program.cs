@@ -11,7 +11,7 @@ namespace Browser;
 [System.Runtime.Versioning.SupportedOSPlatform( "browser" )]
 public static partial class Program
 {
-    static GameRunner? s_runner;
+    static GameRunner? Runner;
 
     // Required for an Exe; the JS side calls Init instead of running Main.
     public static void Main () { }
@@ -19,21 +19,21 @@ public static partial class Program
     [JSExport]
     internal static bool Init ()
     {
-        s_runner = new GameRunner( new RacersGame(), RacersGame.Options );
-        return s_runner.Init();
+        Runner = new GameRunner( new RacersGame(), RacersGame.Options );
+        return Runner.Init();
     }
 
     [JSExport]
     internal static bool Frame ()
     {
-        if ( s_runner is null )
+        if ( Runner is null )
             return false;
 
-        if ( s_runner.Frame() )
+        if ( Runner.Frame() )
             return true;
 
-        s_runner.Shutdown();
-        s_runner = null;
+        Runner.Shutdown();
+        Runner = null;
         return false;
     }
 }

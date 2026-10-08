@@ -1,11 +1,11 @@
 namespace Engine;
 
-public readonly record struct Color ( float R, float G, float B, float A = 1f )
+public readonly record struct Color ( float r, float g, float b, float a = 1f )
 {
     public static readonly Color White = new( 1f, 1f, 1f );
     public static readonly Color Black = new( 0f, 0f, 0f );
 
-    public Color WithAlpha ( float a ) => this with { A = a };
+    public Color WithAlpha ( float a ) => this with { a = a };
 
     /// <param name="hue">0..1, wraps.</param>
     public static Color FromHsv ( float hue, float saturation, float value, float alpha = 1f )

@@ -6,11 +6,11 @@ namespace Cli;
 /// <summary>Checks that YAML files parse, and optionally that they read into a C# type without errors.</summary>
 sealed class YamlValidateCommand : ICommand
 {
-    public string Name => "yaml validate";
+    public string name => "yaml validate";
 
-    public string Summary => "Check that YAML files parse, and optionally that they read into a C# type.";
+    public string summary => "Check that YAML files parse, and optionally that they read into a C# type.";
 
-    public string Usage =>
+    public string usage =>
         "yaml validate <file-or-directory>... [--type <TypeName>] [--assembly <path.dll>]... [--allow-unknown-keys] [--quiet]\n\n"
         + "  Directories are searched recursively for *.yaml and *.yml files.\n"
         + "  --type                The class each file must read into, by full or short name (e.g. Racers.CarData).\n"
@@ -22,12 +22,12 @@ sealed class YamlValidateCommand : ICommand
     public int Run ( string[] args )
     {
         var arguments = new Arguments( args, valueOptions: ["type", "assembly"], flags: ["allow-unknown-keys", "quiet"] );
-        if ( arguments.Positional.Count == 0 )
+        if ( arguments.positional.Count == 0 )
             throw new UsageException( "Give at least one file or directory." );
 
-        var files = FindFiles( arguments.Positional );
+        var files = FindFiles( arguments.positional );
         var type = ResolveType( arguments.Value( "type" ), arguments.Values( "assembly" ) );
-        var options = new YamlReadOptions { AllowUnknownKeys = arguments.Flag( "allow-unknown-keys" ) };
+        var options = new YamlReadOptions { allowUnknownKeys = arguments.Flag( "allow-unknown-keys" ) };
         bool quiet = arguments.Flag( "quiet" );
 
         int failed = 0;
@@ -79,7 +79,7 @@ sealed class YamlValidateCommand : ICommand
         }
         catch ( YamlException exception )
         {
-            return exception.Errors;
+            return exception.errors;
         }
     }
 

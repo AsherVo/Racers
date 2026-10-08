@@ -33,11 +33,11 @@ sealed class YamlParser
 
     public static List< YamlNode > ParseStream ( string text, string? source ) => new YamlParser( text, source ).ParseStream();
 
-    int Column => pos - lineStart;
+    int column => pos - lineStart;
 
-    bool AtEnd => pos >= text.Length;
+    bool atEnd => pos >= text.Length;
 
-    char Current => pos < text.Length ? text[pos] : '\0';
+    char current => pos < text.Length ? text[pos] : '\0';
 
     char PeekAt ( int offset ) => pos + offset < text.Length ? text[pos + offset] : '\0';
 
@@ -78,7 +78,7 @@ sealed class YamlParser
 
             bool forbidden = c < ' ' && c != '\t' || c == '\u007F' || c is >= '\u0080' and <= '\u009F' && c != '\u0085' || c is '\uFFFE' or '\uFFFF';
             if ( forbidden )
-                throw new YamlException( new YamlError( $"Invalid character U+{( int )c:X4}.", line, column, Source: source ) );
+                throw new YamlException( new YamlError( $"Invalid character U+{( int )c:X4}.", line, column, source: source ) );
 
             builder.Append( c );
             column++;
@@ -87,10 +87,10 @@ sealed class YamlParser
         return builder.ToString();
     }
 
-    YamlException Error ( string message ) => Error( message, line, Column );
+    YamlException Error ( string message ) => Error( message, line, column );
 
     YamlException Error ( string message, int errorLine, int errorColumn ) =>
-        new( new YamlError( message, errorLine, errorColumn + 1, Source: source ) );
+        new( new YamlError( message, errorLine, errorColumn + 1, source: source ) );
 
     void Advance ()
     {
@@ -115,7 +115,7 @@ sealed class YamlParser
 
     void SkipBlanks ()
     {
-        while ( IsBlank( Current ) )
+        while ( IsBlank( current ) )
             pos++;
     }
 
@@ -128,11 +128,11 @@ sealed class YamlParser
         return i - lineStart;
     }
 
-    bool IsLineEndOrComment () => IsBreakOrEnd( Current ) || Current == '#';
+    bool IsLineEndOrComment () => IsBreakOrEnd( current ) || current == '#';
 
-    bool IsIndicator ( char indicator ) => Current == indicator && IsBlankOrEnd( PeekAt( 1 ) );
+    bool IsIndicator ( char indicator ) => current == indicator && IsBlankOrEnd( PeekAt( 1 ) );
 
-    bool AtDocumentMarker () => Column == 0 && IsDocumentMarkerAt( pos );
+    bool AtDocumentMarker () => column == 0 && IsDocumentMarkerAt( pos );
 
     bool IsDocumentMarkerAt ( int index )
     {
@@ -151,7 +151,7 @@ sealed class YamlParser
         if ( pos > lineStart && !IsBlank( text[pos - 1] ) )
             throw Error( "Comments must be separated from other tokens by whitespace." );
 
-        while ( !IsBreakOrEnd( Current ) )
+        while ( !IsBreakOrEnd( current ) )
             pos++;
     }
 
@@ -159,16 +159,16 @@ sealed class YamlParser
     void ExpectLineEnd ()
     {
         SkipBlanks();
-        if ( Current == '#' )
+        if ( current == '#' )
             SkipComment();
 
-        if ( IsBreakOrEnd( Current ) )
+        if ( IsBreakOrEnd( current ) )
             return;
 
-        if ( Current == ':' && IsBlankOrEnd( PeekAt( 1 ) ) )
+        if ( current == ':' && IsBlankOrEnd( PeekAt( 1 ) ) )
             throw Error( "Mapping values are not allowed here." );
 
-        throw Error( $"Unexpected '{Current}'." );
+        throw Error( $"Unexpected '{current}'." );
     }
 
     /// <summary>
@@ -180,11 +180,11 @@ sealed class YamlParser
         while ( true )
         {
             SkipBlanks();
-            if ( Current == '#' )
+            if ( current == '#' )
                 SkipComment();
 
-            if ( Current != '\n' )
-                return !AtEnd;
+            if ( current != '\n' )
+                return !atEnd;
 
             Advance();
         }
@@ -209,7 +209,7 @@ sealed class YamlParser
             bool hasDirectives = false;
             seenYamlDirective = false;
             ResetTagHandles();
-            while ( Column == 0 && Current == '%' )
+            while ( column == 0 && current == '%' )
             {
                 if ( documentOpen )
                     throw Error( "Directives must follow a '...' document end marker." );
@@ -220,7 +220,7 @@ sealed class YamlParser
                     throw Error( "Expected '---' after directives." );
             }
 
-            if ( AtDocumentMarker() && Current == '.' )
+            if ( AtDocumentMarker() && current == '.' )
             {
                 if ( hasDirectives )
                     throw Error( "Expected '---' after directives." );
@@ -231,7 +231,7 @@ sealed class YamlParser
                 continue;
             }
 
-            bool explicitStart = AtDocumentMarker() && Current == '-';
+            bool explicitStart = AtDocumentMarker() && current == '-';
             if ( explicitStart )
                 pos += 3;
             else if ( hasDirectives )
@@ -248,7 +248,7 @@ sealed class YamlParser
 
             if ( AtDocumentMarker() )
             {
-                if ( Current == '.' )
+                if ( current == '.' )
                 {
                     pos += 3;
                     ExpectLineEnd();
@@ -308,7 +308,7 @@ sealed class YamlParser
         }
         else
         {
-            while ( !IsBreakOrEnd( Current ) && !( Current == '#' && IsBlank( text[pos - 1] ) ) )
+            while ( !IsBreakOrEnd( current ) && !( current == '#' && IsBlank( text[pos - 1] ) ) )
                 pos++;
         }
 
@@ -318,7 +318,7 @@ sealed class YamlParser
     string ScanNonBlank ()
     {
         int start = pos;
-        while ( !IsBlankOrEnd( Current ) )
+        while ( !IsBlankOrEnd( current ) )
             pos++;
 
         return text[start..pos];
@@ -328,11 +328,11 @@ sealed class YamlParser
     {
         if ( explicitStart )
         {
-            int markerColumn = Column;
+            int markerColumn = column;
             SkipBlanks();
             if ( !IsLineEndOrComment() )
             {
-                if ( Column == markerColumn )
+                if ( column == markerColumn )
                     throw Error( "Expected whitespace after '---'." );
 
                 return ParseBlockNode( -1, inline: true );
@@ -340,29 +340,29 @@ sealed class YamlParser
         }
 
         if ( !SkipToContent() || AtDocumentMarker() )
-            return EmptyScalar( line, Column );
+            return EmptyScalar( line, column );
 
         return ParseBlockNode( -1, inline: false );
     }
 
-    YamlScalar EmptyScalar ( int nodeLine, int nodeColumn ) => new( "", YamlScalarStyle.Plain ) { Line = nodeLine, Column = nodeColumn + 1 };
+    YamlScalar EmptyScalar ( int nodeLine, int nodeColumn ) => new( "", YamlScalarStyle.Plain ) { line = nodeLine, column = nodeColumn + 1 };
 
     void ApplyProperties ( YamlNode node, string? anchor, string? tag, int propertiesLine, int propertiesColumn )
     {
         if ( tag != null )
         {
-            if ( node.Tag != null )
+            if ( node.tag != null )
                 throw Error( "A node can only have one tag.", propertiesLine, propertiesColumn );
 
-            node.Tag = tag;
+            node.tag = tag;
         }
 
         if ( anchor != null )
         {
-            if ( node.Anchor != null )
+            if ( node.anchor != null )
                 throw Error( "A node can only have one anchor.", propertiesLine, propertiesColumn );
 
-            node.Anchor = anchor;
+            node.anchor = anchor;
             anchors[anchor] = node;
         }
     }
@@ -386,7 +386,7 @@ sealed class YamlParser
     {
         int startPos = pos;
         int startLine = line;
-        int startColumn = Column;
+        int startColumn = column;
         string? anchor = null;
         string? tag = null;
         bool hasProperties = ParseProperties( ref anchor, ref tag, flow: false );
@@ -394,14 +394,14 @@ sealed class YamlParser
         if ( hasProperties && IsLineEndOrComment() )
             return ParsePropertiesLineContent( parentIndent, allowIndentlessSequence, anchor, tag, startLine, startColumn );
 
-        char c = Current;
+        char c = current;
         if ( c == '-' && IsBlankOrEnd( PeekAt( 1 ) ) )
         {
             if ( inline || hasProperties )
                 throw Error( "A block sequence cannot start on this line." );
 
             CheckNoTabBefore( pos );
-            return ParseBlockSequence( Column );
+            return ParseBlockSequence( column );
         }
 
         if ( c == '?' && IsBlankOrEnd( PeekAt( 1 ) ) )
@@ -410,7 +410,7 @@ sealed class YamlParser
                 throw Error( "A block mapping cannot start on this line." );
 
             CheckNoTabBefore( pos );
-            return ParseBlockMapping( Column, null );
+            return ParseBlockMapping( column, null );
         }
 
         if ( c == ':' && IsBlankOrEnd( PeekAt( 1 ) ) )
@@ -418,7 +418,7 @@ sealed class YamlParser
             if ( inline )
                 throw Error( "Mapping values are not allowed here." );
 
-            var emptyKey = EmptyScalar( line, Column );
+            var emptyKey = EmptyScalar( line, column );
             ApplyProperties( emptyKey, anchor, tag, startLine, startColumn );
             return ParseBlockMapping( startColumn, emptyKey );
         }
@@ -431,10 +431,10 @@ sealed class YamlParser
         }
 
         int nodeLine = line;
-        int nodeColumn = Column;
+        int nodeColumn = column;
         var candidate = ParseSingleLineNode( parentIndent, hasProperties, out string? plainText );
         if ( plainText != null )
-            candidate = new YamlScalar( plainText, YamlScalarStyle.Plain ) { Line = nodeLine, Column = nodeColumn + 1 };
+            candidate = new YamlScalar( plainText, YamlScalarStyle.Plain ) { line = nodeLine, column = nodeColumn + 1 };
 
         SkipBlanks();
         if ( IsIndicator( ':' ) )
@@ -454,7 +454,7 @@ sealed class YamlParser
         {
             string folded = ContinuePlain( plainText, parentIndent, flow: false );
             if ( !ReferenceEquals( folded, plainText ) )
-                candidate = new YamlScalar( folded, YamlScalarStyle.Plain ) { Line = nodeLine, Column = nodeColumn + 1 };
+                candidate = new YamlScalar( folded, YamlScalarStyle.Plain ) { line = nodeLine, column = nodeColumn + 1 };
         }
 
         ApplyProperties( candidate, anchor, tag, startLine, startColumn );
@@ -468,11 +468,11 @@ sealed class YamlParser
         ExpectLineEnd();
         if ( SkipToContent() && !AtDocumentMarker() )
         {
-            bool indented = Column > parentIndent;
-            bool indentlessSequence = allowIndentlessSequence && Column == parentIndent && IsIndicator( '-' );
+            bool indented = column > parentIndent;
+            bool indentlessSequence = allowIndentlessSequence && column == parentIndent && IsIndicator( '-' );
             if ( indented || indentlessSequence )
             {
-                var node = indentlessSequence ? ParseBlockSequence( Column ) : ParseBlockNode( parentIndent, inline: false );
+                var node = indentlessSequence ? ParseBlockSequence( column ) : ParseBlockNode( parentIndent, inline: false );
                 ApplyProperties( node, anchor, tag, startLine, startColumn );
                 return node;
             }
@@ -491,8 +491,8 @@ sealed class YamlParser
     {
         plainText = null;
         int nodeLine = line;
-        int nodeColumn = Column;
-        switch ( Current )
+        int nodeColumn = column;
+        switch ( current )
         {
             case '[' or '{':
                 return ParseFlowCollection( parentIndent );
@@ -507,14 +507,14 @@ sealed class YamlParser
                 return ParseAlias();
         }
 
-        if ( Current == '-' && IsBlankOrEnd( PeekAt( 1 ) ) )
+        if ( current == '-' && IsBlankOrEnd( PeekAt( 1 ) ) )
             throw Error( "Block sequence entries are not allowed here." );
 
-        if ( Current is '|' or '>' )
+        if ( current is '|' or '>' )
             throw Error( "A block scalar cannot be a mapping key." );
 
         if ( !CanStartPlain( flow: false ) )
-            throw Error( Current == '\0' ? "Unexpected end of input." : $"Unexpected '{Current}'." );
+            throw Error( current == '\0' ? "Unexpected end of input." : $"Unexpected '{current}'." );
 
         plainText = ScanPlainLine( flow: false );
         return EmptyScalar( nodeLine, nodeColumn );
@@ -522,7 +522,7 @@ sealed class YamlParser
 
     YamlMap ParseBlockMapping ( int indent, YamlNode? firstKey )
     {
-        var map = new YamlMap { Line = firstKey?.Line ?? line, Column = indent + 1 };
+        var map = new YamlMap { line = firstKey?.line ?? line, column = indent + 1 };
         var key = firstKey;
         while ( true )
         {
@@ -534,7 +534,7 @@ sealed class YamlParser
             {
                 pos++;
                 key = ParseIndicatorContent( indent, allowIndentlessSequence: true );
-                bool hasValue = SkipToContent() && !AtDocumentMarker() && Column == indent && IsIndicator( ':' );
+                bool hasValue = SkipToContent() && !AtDocumentMarker() && column == indent && IsIndicator( ':' );
                 if ( hasValue )
                 {
                     pos++;
@@ -542,13 +542,13 @@ sealed class YamlParser
                 }
                 else
                 {
-                    value = EmptyScalar( key.Line, key.Column - 1 );
+                    value = EmptyScalar( key.line, key.column - 1 );
                 }
             }
             else
             {
                 if ( key == null && IsIndicator( ':' ) )
-                    key = EmptyScalar( line, Column );
+                    key = EmptyScalar( line, column );
                 else
                     key ??= ParseImplicitKey( indent );
 
@@ -559,10 +559,10 @@ sealed class YamlParser
             AddEntry( map, key, value );
             key = null;
 
-            if ( !SkipToContent() || AtDocumentMarker() || Column < indent )
+            if ( !SkipToContent() || AtDocumentMarker() || column < indent )
                 return map;
 
-            if ( Column > indent )
+            if ( column > indent )
                 throw Error( "Bad indentation of a mapping entry." );
         }
     }
@@ -571,7 +571,7 @@ sealed class YamlParser
     {
         EnterNode();
         int startLine = line;
-        int startColumn = Column;
+        int startColumn = column;
         string? anchor = null;
         string? tag = null;
         bool hasProperties = ParseProperties( ref anchor, ref tag, flow: false );
@@ -580,7 +580,7 @@ sealed class YamlParser
 
         var key = ParseSingleLineNode( indent, hasProperties, out string? plainText );
         if ( plainText != null )
-            key = new YamlScalar( plainText, YamlScalarStyle.Plain ) { Line = key.Line, Column = key.Column };
+            key = new YamlScalar( plainText, YamlScalarStyle.Plain ) { line = key.line, column = key.column };
 
         SkipBlanks();
         if ( line != startLine )
@@ -602,7 +602,7 @@ sealed class YamlParser
     YamlNode ParseImplicitValue ( int indent )
     {
         int valueLine = line;
-        int valueColumn = Column;
+        int valueColumn = column;
         SkipBlanks();
         if ( !IsLineEndOrComment() )
             return ParseBlockNode( indent, inline: true, allowIndentlessSequence: true );
@@ -611,10 +611,10 @@ sealed class YamlParser
         if ( !SkipToContent() || AtDocumentMarker() )
             return EmptyScalar( valueLine, valueColumn );
 
-        if ( Column > indent )
+        if ( column > indent )
             return ParseBlockNode( indent, inline: false, allowIndentlessSequence: true );
 
-        if ( Column == indent && IsIndicator( '-' ) )
+        if ( column == indent && IsIndicator( '-' ) )
             return ParseBlockSequence( indent );
 
         return EmptyScalar( valueLine, valueColumn );
@@ -624,7 +624,7 @@ sealed class YamlParser
     YamlNode ParseIndicatorContent ( int indent, bool allowIndentlessSequence = false )
     {
         int indicatorLine = line;
-        int indicatorColumn = Column - 1;
+        int indicatorColumn = column - 1;
         SkipBlanks();
         if ( !IsLineEndOrComment() )
             return ParseBlockNode( indent, inline: false );
@@ -633,10 +633,10 @@ sealed class YamlParser
         if ( !SkipToContent() || AtDocumentMarker() )
             return EmptyScalar( indicatorLine, indicatorColumn );
 
-        if ( allowIndentlessSequence && Column == indent && IsIndicator( '-' ) )
+        if ( allowIndentlessSequence && column == indent && IsIndicator( '-' ) )
             return ParseBlockSequence( indent );
 
-        if ( Column <= indent )
+        if ( column <= indent )
             return EmptyScalar( indicatorLine, indicatorColumn );
 
         return ParseBlockNode( indent, inline: false, allowIndentlessSequence );
@@ -644,17 +644,17 @@ sealed class YamlParser
 
     YamlList ParseBlockSequence ( int indent )
     {
-        var list = new YamlList { Line = line, Column = indent + 1 };
+        var list = new YamlList { line = line, column = indent + 1 };
         while ( true )
         {
             CheckNoTabBefore( pos );
             pos++;
             list.Add( ParseIndicatorContent( indent ) );
 
-            if ( !SkipToContent() || AtDocumentMarker() || Column < indent )
+            if ( !SkipToContent() || AtDocumentMarker() || column < indent )
                 return list;
 
-            if ( Column > indent )
+            if ( column > indent )
                 throw Error( "Bad indentation of a sequence entry." );
 
             if ( !IsIndicator( '-' ) )
@@ -664,8 +664,8 @@ sealed class YamlParser
 
     void AddEntry ( YamlMap map, YamlNode key, YamlNode value )
     {
-        if ( key is YamlScalar scalar && map.ContainsKey( scalar.Value ) )
-            throw Error( $"Duplicate key '{scalar.Value}'.", key.Line, key.Column - 1 );
+        if ( key is YamlScalar scalar && map.ContainsKey( scalar.value ) )
+            throw Error( $"Duplicate key '{scalar.value}'.", key.line, key.column - 1 );
 
         map.Add( key, value );
     }
@@ -673,11 +673,11 @@ sealed class YamlParser
     bool ParseProperties ( ref string? anchor, ref string? tag, bool flow )
     {
         bool any = false;
-        while ( Current is '&' or '!' )
+        while ( current is '&' or '!' )
         {
             int propertyLine = line;
-            int propertyColumn = Column;
-            if ( Current == '&' )
+            int propertyColumn = column;
+            if ( current == '&' )
             {
                 if ( anchor != null )
                     throw Error( "A node can only have one anchor." );
@@ -693,7 +693,7 @@ sealed class YamlParser
                 tag = ScanTag();
             }
 
-            if ( !IsBlankOrEnd( Current ) && !( flow && IsFlowIndicator( Current ) ) )
+            if ( !IsBlankOrEnd( current ) && !( flow && IsFlowIndicator( current ) ) )
                 throw Error( "Expected whitespace after an anchor or tag.", propertyLine, propertyColumn );
 
             SkipBlanks();
@@ -706,7 +706,7 @@ sealed class YamlParser
     string ScanAnchorName ()
     {
         int start = pos;
-        while ( !IsBlankOrEnd( Current ) && !IsFlowIndicator( Current ) )
+        while ( !IsBlankOrEnd( current ) && !IsFlowIndicator( current ) )
             pos++;
 
         if ( pos == start )
@@ -718,7 +718,7 @@ sealed class YamlParser
     YamlNode ParseAlias ()
     {
         int aliasLine = line;
-        int aliasColumn = Column;
+        int aliasColumn = column;
         pos++;
         string name = ScanAnchorName();
         if ( !anchors.TryGetValue( name, out var node ) )
@@ -730,15 +730,15 @@ sealed class YamlParser
     string ScanTag ()
     {
         int tagLine = line;
-        int tagColumn = Column;
+        int tagColumn = column;
         pos++;
-        if ( Current == '<' )
+        if ( current == '<' )
         {
             pos++;
             int start = pos;
-            while ( Current != '>' )
+            while ( current != '>' )
             {
-                if ( IsBlankOrEnd( Current ) )
+                if ( IsBlankOrEnd( current ) )
                     throw Error( "Unterminated verbatim tag.", tagLine, tagColumn );
 
                 pos++;
@@ -754,10 +754,10 @@ sealed class YamlParser
 
         string handle = "!";
         int wordStart = pos;
-        while ( char.IsAsciiLetterOrDigit( Current ) || Current == '-' )
+        while ( char.IsAsciiLetterOrDigit( current ) || current == '-' )
             pos++;
 
-        if ( Current == '!' )
+        if ( current == '!' )
         {
             handle = "!" + text[wordStart..pos] + "!";
             pos++;
@@ -768,9 +768,9 @@ sealed class YamlParser
         }
 
         int suffixStart = pos;
-        while ( !IsBlankOrEnd( Current ) && !IsFlowIndicator( Current ) )
+        while ( !IsBlankOrEnd( current ) && !IsFlowIndicator( current ) )
         {
-            if ( Current == '!' )
+            if ( current == '!' )
                 throw Error( "Invalid '!' in tag.", tagLine, tagColumn );
 
             pos++;
@@ -827,7 +827,7 @@ sealed class YamlParser
 
     bool CanStartPlain ( bool flow )
     {
-        char c = Current;
+        char c = current;
         if ( IsBlankOrEnd( c ) )
             return false;
 
@@ -847,7 +847,7 @@ sealed class YamlParser
         int end = pos;
         while ( true )
         {
-            char c = Current;
+            char c = current;
             if ( IsBreakOrEnd( c ) )
                 break;
 
@@ -880,21 +880,21 @@ sealed class YamlParser
         {
             var state = Save();
             SkipBlanks();
-            if ( Current != '\n' )
+            if ( current != '\n' )
             {
                 Restore( state );
                 break;
             }
 
             int breaks = 0;
-            while ( Current == '\n' )
+            while ( current == '\n' )
             {
                 Advance();
                 breaks++;
                 SkipBlanks();
             }
 
-            bool ends = AtEnd || Current == '#' || IndentOfCurrentLine() <= parentIndent || IsDocumentMarkerAt( lineStart );
+            bool ends = atEnd || current == '#' || IndentOfCurrentLine() <= parentIndent || IsDocumentMarkerAt( lineStart );
             string next = ends ? "" : ScanPlainLine( flow );
             if ( next.Length == 0 )
             {
@@ -917,16 +917,16 @@ sealed class YamlParser
     YamlScalar ParseDoubleQuoted ( int parentIndent )
     {
         int startLine = line;
-        int startColumn = Column;
+        int startColumn = column;
         pos++;
         var builder = new StringBuilder();
         int keep = 0;
         while ( true )
         {
-            if ( AtEnd )
+            if ( atEnd )
                 throw Error( "Unterminated double-quoted string.", startLine, startColumn );
 
-            char c = Current;
+            char c = current;
             if ( c == '"' )
             {
                 pos++;
@@ -940,7 +940,7 @@ sealed class YamlParser
                     pos++;
                     Advance();
                     SkipQuotedLinePrefix( parentIndent, startLine, startColumn );
-                    while ( Current == '\n' )
+                    while ( current == '\n' )
                     {
                         Advance();
                         builder.Append( '\n' );
@@ -970,13 +970,13 @@ sealed class YamlParser
                 keep = builder.Length;
         }
 
-        return new YamlScalar( builder.ToString(), YamlScalarStyle.DoubleQuoted ) { Line = startLine, Column = startColumn + 1 };
+        return new YamlScalar( builder.ToString(), YamlScalarStyle.DoubleQuoted ) { line = startLine, column = startColumn + 1 };
     }
 
     void AppendEscape ( StringBuilder builder )
     {
         int escapeLine = line;
-        int escapeColumn = Column;
+        int escapeColumn = column;
         char e = PeekAt( 1 );
         pos += 2;
         switch ( e )
@@ -1024,16 +1024,16 @@ sealed class YamlParser
     YamlScalar ParseSingleQuoted ( int parentIndent )
     {
         int startLine = line;
-        int startColumn = Column;
+        int startColumn = column;
         pos++;
         var builder = new StringBuilder();
         int keep = 0;
         while ( true )
         {
-            if ( AtEnd )
+            if ( atEnd )
                 throw Error( "Unterminated single-quoted string.", startLine, startColumn );
 
-            char c = Current;
+            char c = current;
             if ( c == '\'' )
             {
                 if ( PeekAt( 1 ) != '\'' )
@@ -1062,14 +1062,14 @@ sealed class YamlParser
                 keep = builder.Length;
         }
 
-        return new YamlScalar( builder.ToString(), YamlScalarStyle.SingleQuoted ) { Line = startLine, Column = startColumn + 1 };
+        return new YamlScalar( builder.ToString(), YamlScalarStyle.SingleQuoted ) { line = startLine, column = startColumn + 1 };
     }
 
     // A single line break inside a quoted scalar folds to a space; each further empty line is a '\n'.
     void FoldQuotedLines ( StringBuilder builder, int parentIndent, int startLine, int startColumn )
     {
         int breaks = 0;
-        while ( Current == '\n' )
+        while ( current == '\n' )
         {
             Advance();
             breaks++;
@@ -1088,25 +1088,25 @@ sealed class YamlParser
             throw Error( "Document marker inside a quoted string.", startLine, startColumn );
 
         SkipBlanks();
-        if ( AtEnd )
+        if ( atEnd )
             throw Error( "Unterminated quoted string.", startLine, startColumn );
 
-        if ( Current != '\n' && IndentOfCurrentLine() <= parentIndent )
+        if ( current != '\n' && IndentOfCurrentLine() <= parentIndent )
             throw Error( "Quoted string continuation lines must be indented." );
     }
 
     YamlScalar ParseBlockScalar ( int parentIndent )
     {
         int startLine = line;
-        int startColumn = Column;
-        bool literal = Current == '|';
+        int startColumn = column;
+        bool literal = current == '|';
         pos++;
 
         int indentIndicator = 0;
         char chomping = ' ';
         for ( int i = 0; i < 2; i++ )
         {
-            char c = Current;
+            char c = current;
             if ( c is >= '1' and <= '9' && indentIndicator == 0 )
             {
                 indentIndicator = c - '0';
@@ -1123,18 +1123,18 @@ sealed class YamlParser
             }
         }
 
-        if ( !IsBlankOrEnd( Current ) )
-            throw Error( $"Invalid block scalar header character '{Current}'." );
+        if ( !IsBlankOrEnd( current ) )
+            throw Error( $"Invalid block scalar header character '{current}'." );
 
         ExpectLineEnd();
 
         int contentIndent = indentIndicator > 0 ? Math.Max( parentIndent, 0 ) + indentIndicator : -1;
         var lines = new List< string >();
         int maxLeadingEmptyIndent = 0;
-        while ( !AtEnd )
+        while ( !atEnd )
         {
             Advance();
-            if ( AtEnd )
+            if ( atEnd )
                 break;
 
             int spaces = IndentOfCurrentLine();
@@ -1185,7 +1185,7 @@ sealed class YamlParser
         }
 
         string value = literal ? JoinLiteral( lines, chomping ) : JoinFolded( lines, chomping );
-        return new YamlScalar( value, literal ? YamlScalarStyle.Literal : YamlScalarStyle.Folded ) { Line = startLine, Column = startColumn + 1 };
+        return new YamlScalar( value, literal ? YamlScalarStyle.Literal : YamlScalarStyle.Folded ) { line = startLine, column = startColumn + 1 };
     }
 
     static int LastContentLine ( List< string > lines )
@@ -1277,18 +1277,18 @@ sealed class YamlParser
     {
         EnterNode();
         int startLine = line;
-        int startColumn = Column;
-        bool isSequence = Current == '[';
+        int startColumn = column;
+        bool isSequence = current == '[';
         char close = isSequence ? ']' : '}';
         YamlNode collection = isSequence
-            ? new YamlList { Line = startLine, Column = startColumn + 1 }
-            : new YamlMap { Line = startLine, Column = startColumn + 1 };
+            ? new YamlList { line = startLine, column = startColumn + 1 }
+            : new YamlMap { line = startLine, column = startColumn + 1 };
         pos++;
 
         while ( true )
         {
             SkipFlowSpace( blockIndent, startLine, startColumn );
-            if ( Current == close )
+            if ( current == close )
             {
                 pos++;
                 break;
@@ -1296,13 +1296,13 @@ sealed class YamlParser
 
             ParseFlowEntry( collection, close, blockIndent, startLine, startColumn );
             SkipFlowSpace( blockIndent, startLine, startColumn );
-            if ( Current == ',' )
+            if ( current == ',' )
             {
                 pos++;
                 continue;
             }
 
-            if ( Current == close )
+            if ( current == close )
             {
                 pos++;
                 break;
@@ -1320,10 +1320,10 @@ sealed class YamlParser
         while ( true )
         {
             SkipBlanks();
-            if ( Current == '#' )
+            if ( current == '#' )
                 SkipComment();
 
-            if ( Current != '\n' )
+            if ( current != '\n' )
                 break;
 
             Advance();
@@ -1332,34 +1332,34 @@ sealed class YamlParser
 
             // A closing bracket may sit at the block's indentation, JSON style.
             SkipBlanks();
-            bool closing = Current is ']' or '}';
+            bool closing = current is ']' or '}';
             if ( !IsLineEndOrComment() && !closing && IndentOfCurrentLine() <= blockIndent )
                 throw Error( "Flow collection lines must be indented more than the enclosing block." );
         }
 
-        if ( AtEnd )
+        if ( atEnd )
             throw Error( "Unterminated flow collection.", startLine, startColumn );
     }
 
     void ParseFlowEntry ( YamlNode collection, char close, int blockIndent, int startLine, int startColumn )
     {
         int entryLine = line;
-        int entryColumn = Column;
+        int entryColumn = column;
         YamlNode key;
         YamlNode? value = null;
 
-        if ( Current == '?' && ( IsBlankOrEnd( PeekAt( 1 ) ) || IsFlowIndicator( PeekAt( 1 ) ) ) )
+        if ( current == '?' && ( IsBlankOrEnd( PeekAt( 1 ) ) || IsFlowIndicator( PeekAt( 1 ) ) ) )
         {
             pos++;
             SkipFlowSpace( blockIndent, startLine, startColumn );
-            key = IsFlowValueIndicator() || Current == ',' || Current == close
-                ? EmptyScalar( line, Column )
+            key = IsFlowValueIndicator() || current == ',' || current == close
+                ? EmptyScalar( line, column )
                 : ParseFlowNode( blockIndent, startLine, startColumn, out _ );
 
             SkipFlowSpace( blockIndent, startLine, startColumn );
-            value = ParseFlowValue( close, blockIndent, startLine, startColumn, adjacent: false ) ?? EmptyScalar( line, Column );
+            value = ParseFlowValue( close, blockIndent, startLine, startColumn, adjacent: false ) ?? EmptyScalar( line, column );
         }
-        else if ( Current == ',' )
+        else if ( current == ',' )
         {
             throw Error( "Unexpected ',' in flow collection." );
         }
@@ -1367,9 +1367,9 @@ sealed class YamlParser
         {
             bool emptyKey = IsFlowValueIndicator();
             bool adjacent = false;
-            key = emptyKey ? EmptyScalar( line, Column ) : ParseFlowNode( blockIndent, startLine, startColumn, out adjacent );
+            key = emptyKey ? EmptyScalar( line, column ) : ParseFlowNode( blockIndent, startLine, startColumn, out adjacent );
             SkipFlowSpace( blockIndent, startLine, startColumn );
-            if ( collection is YamlList && Current == ':' && line != entryLine )
+            if ( collection is YamlList && current == ':' && line != entryLine )
                 throw Error( "Implicit keys in a flow sequence must be on a single line." );
 
             value = ParseFlowValue( close, blockIndent, startLine, startColumn, adjacent );
@@ -1383,27 +1383,27 @@ sealed class YamlParser
                 return;
             }
 
-            var pair = new YamlMap { Line = entryLine, Column = entryColumn + 1 };
+            var pair = new YamlMap { line = entryLine, column = entryColumn + 1 };
             pair.Add( key, value );
             list.Add( pair );
             return;
         }
 
-        AddEntry( ( YamlMap )collection, key, value ?? EmptyScalar( key.Line, key.Column - 1 ) );
+        AddEntry( ( YamlMap )collection, key, value ?? EmptyScalar( key.line, key.column - 1 ) );
     }
 
-    bool IsFlowValueIndicator () => Current == ':' && ( IsBlankOrEnd( PeekAt( 1 ) ) || IsFlowIndicator( PeekAt( 1 ) ) );
+    bool IsFlowValueIndicator () => current == ':' && ( IsBlankOrEnd( PeekAt( 1 ) ) || IsFlowIndicator( PeekAt( 1 ) ) );
 
     /// <summary>Parses ": value" if present. A ':' right after a quoted or flow key needs no space ("{"a":1}").</summary>
     YamlNode? ParseFlowValue ( char close, int blockIndent, int startLine, int startColumn, bool adjacent )
     {
-        if ( !( IsFlowValueIndicator() || adjacent && Current == ':' ) )
+        if ( !( IsFlowValueIndicator() || adjacent && current == ':' ) )
             return null;
 
         pos++;
         SkipFlowSpace( blockIndent, startLine, startColumn );
-        if ( Current == ',' || Current == close )
-            return EmptyScalar( line, Column );
+        if ( current == ',' || current == close )
+            return EmptyScalar( line, column );
 
         return ParseFlowNode( blockIndent, startLine, startColumn, out _ );
     }
@@ -1412,18 +1412,18 @@ sealed class YamlParser
     {
         EnterNode();
         int propertiesLine = line;
-        int propertiesColumn = Column;
+        int propertiesColumn = column;
         string? anchor = null;
         string? tag = null;
         bool hasProperties = ParseProperties( ref anchor, ref tag, flow: true );
         if ( hasProperties )
             SkipFlowSpace( blockIndent, startLine, startColumn );
 
-        allowsAdjacentValue = Current is '"' or '\'' or '[' or '{';
+        allowsAdjacentValue = current is '"' or '\'' or '[' or '{';
         int nodeLine = line;
-        int nodeColumn = Column;
+        int nodeColumn = column;
         YamlNode node;
-        switch ( Current )
+        switch ( current )
         {
             case '[' or '{':
                 node = ParseFlowCollection( blockIndent );
@@ -1441,7 +1441,7 @@ sealed class YamlParser
                 node = ParseAlias();
                 break;
             default:
-                if ( hasProperties && ( Current is ',' or ']' or '}' || IsFlowValueIndicator() ) )
+                if ( hasProperties && ( current is ',' or ']' or '}' || IsFlowValueIndicator() ) )
                 {
                     node = EmptyScalar( propertiesLine, propertiesColumn );
                 }
@@ -1449,11 +1449,11 @@ sealed class YamlParser
                 {
                     string first = ScanPlainLine( flow: true );
                     string value = ContinuePlain( first, blockIndent, flow: true );
-                    node = new YamlScalar( value, YamlScalarStyle.Plain ) { Line = nodeLine, Column = nodeColumn + 1 };
+                    node = new YamlScalar( value, YamlScalarStyle.Plain ) { line = nodeLine, column = nodeColumn + 1 };
                 }
                 else
                 {
-                    throw Error( $"Unexpected '{Current}' in flow collection." );
+                    throw Error( $"Unexpected '{current}' in flow collection." );
                 }
 
                 break;

@@ -35,3 +35,32 @@ resharper_space_within_type_argument_angles = true
 resharper_space_within_type_parameter_angles = true
 resharper_space_within_tuple_parentheses = true
 resharper_space_within_checked_parentheses = true
+
+# Naming (see CLAUDE.md). Rules are listed most specific first.
+dotnet_diagnostic.IDE1006.severity = warning
+dotnet_naming_style.pascal_case.capitalization = pascal_case
+dotnet_naming_style.camel_case.capitalization = camel_case
+dotnet_naming_style.screaming_case.capitalization = all_upper
+dotnet_naming_style.screaming_case.word_separator = _
+
+dotnet_naming_symbols.constants.applicable_kinds = field, local
+dotnet_naming_symbols.constants.required_modifiers = const
+dotnet_naming_rule.constants_are_screaming_case.symbols = constants
+dotnet_naming_rule.constants_are_screaming_case.style = screaming_case
+dotnet_naming_rule.constants_are_screaming_case.severity = warning
+
+dotnet_naming_symbols.static_members.applicable_kinds = field, property
+dotnet_naming_symbols.static_members.required_modifiers = static
+dotnet_naming_rule.static_members_are_pascal_case.symbols = static_members
+dotnet_naming_rule.static_members_are_pascal_case.style = pascal_case
+dotnet_naming_rule.static_members_are_pascal_case.severity = warning
+
+dotnet_naming_symbols.variables.applicable_kinds = field, property, local, parameter
+dotnet_naming_rule.variables_are_camel_case.symbols = variables
+dotnet_naming_rule.variables_are_camel_case.style = camel_case
+dotnet_naming_rule.variables_are_camel_case.severity = warning
+
+dotnet_naming_symbols.types_and_members.applicable_kinds = namespace, class, struct, interface, enum, delegate, method, local_function, event
+dotnet_naming_rule.types_and_members_are_pascal_case.symbols = types_and_members
+dotnet_naming_rule.types_and_members_are_pascal_case.style = pascal_case
+dotnet_naming_rule.types_and_members_are_pascal_case.severity = warning

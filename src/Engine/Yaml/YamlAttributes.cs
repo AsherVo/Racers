@@ -18,7 +18,7 @@ public enum YamlIgnoreCondition
 [AttributeUsage( AttributeTargets.Field | AttributeTargets.Property )]
 public sealed class YamlIgnoreAttribute : Attribute
 {
-    public YamlIgnoreCondition Condition { get; set; } = YamlIgnoreCondition.Always;
+    public YamlIgnoreCondition condition { get; set; } = YamlIgnoreCondition.Always;
 }
 
 /// <summary>Includes a member, even a non-public one, optionally under a different key.</summary>
@@ -27,10 +27,10 @@ public sealed class YamlMemberAttribute : Attribute
 {
     public YamlMemberAttribute ( string? name = null )
     {
-        Name = name;
+        this.name = name;
     }
 
-    public string? Name { get; }
+    public string? name { get; }
 }
 
 /// <summary>Reading fails if the key is missing. Members are otherwise optional and keep their initial value.</summary>
@@ -49,10 +49,10 @@ public sealed class YamlPolymorphicAttribute : Attribute
 {
     public YamlPolymorphicAttribute ( string discriminatorKey = "type" )
     {
-        DiscriminatorKey = discriminatorKey;
+        this.discriminatorKey = discriminatorKey;
     }
 
-    public string DiscriminatorKey { get; }
+    public string discriminatorKey { get; }
 }
 
 /// <summary>Adds a subclass from another assembly to a <see cref="YamlPolymorphicAttribute"/> root.</summary>
@@ -61,11 +61,11 @@ public sealed class YamlDerivedTypeAttribute : Attribute
 {
     public YamlDerivedTypeAttribute ( [DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS )] Type derivedType )
     {
-        DerivedType = derivedType;
+        this.derivedType = derivedType;
     }
 
     [DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS )]
-    public Type DerivedType { get; }
+    public Type derivedType { get; }
 }
 
 /// <summary>The discriminator value for this class under a polymorphic root. Defaults to the class name.</summary>
@@ -74,10 +74,10 @@ public sealed class YamlTypeNameAttribute : Attribute
 {
     public YamlTypeNameAttribute ( string name )
     {
-        Name = name;
+        this.name = name;
     }
 
-    public string Name { get; }
+    public string name { get; }
 }
 
 /// <summary>
@@ -89,11 +89,11 @@ public sealed class YamlConverterAttribute : Attribute
 {
     public YamlConverterAttribute ( [DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS )] Type converterType )
     {
-        ConverterType = converterType;
+        this.converterType = converterType;
     }
 
     [DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS )]
-    public Type ConverterType { get; }
+    public Type converterType { get; }
 }
 
 public interface IYamlConverter
@@ -113,5 +113,5 @@ public sealed record YamlReadOptions
     public static readonly YamlReadOptions Default = new();
 
     /// <summary>When false (the default), keys that don't match a member are errors, which catches typos.</summary>
-    public bool AllowUnknownKeys { get; init; }
+    public bool allowUnknownKeys { get; init; }
 }

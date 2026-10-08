@@ -10,7 +10,7 @@ namespace Engine.Native;
 /// </summary>
 internal static unsafe partial class SDL
 {
-    const string Lib = "SDL3";
+    const string LIB = "SDL3";
 
     // SDL_init.h
     public const uint INIT_VIDEO = 0x20;
@@ -79,249 +79,249 @@ internal static unsafe partial class SDL
     [StructLayout( LayoutKind.Explicit, Size = 128 )]
     public struct Event
     {
-        [FieldOffset( 0 )] public uint Type;
-        [FieldOffset( 0 )] public KeyboardEvent Key;
-        [FieldOffset( 0 )] public MouseMotionEvent Motion;
-        [FieldOffset( 0 )] public MouseButtonEvent Button;
+        [FieldOffset( 0 )] public uint type;
+        [FieldOffset( 0 )] public KeyboardEvent key;
+        [FieldOffset( 0 )] public MouseMotionEvent motion;
+        [FieldOffset( 0 )] public MouseButtonEvent button;
     }
 
     public struct KeyboardEvent
     {
-        public uint Type, Reserved;
-        public ulong Timestamp;
-        public uint WindowId, Which, Scancode, Keycode;
-        public ushort Mod, Raw;
-        public byte Down, Repeat;
+        public uint type, reserved;
+        public ulong timestamp;
+        public uint windowId, which, scancode, keycode;
+        public ushort mod, raw;
+        public byte down, repeat;
     }
 
     public struct MouseMotionEvent
     {
-        public uint Type, Reserved;
-        public ulong Timestamp;
-        public uint WindowId, Which, State;
-        public float X, Y, XRel, YRel;
+        public uint type, reserved;
+        public ulong timestamp;
+        public uint windowId, which, state;
+        public float x, y, xRel, yRel;
     }
 
     public struct MouseButtonEvent
     {
-        public uint Type, Reserved;
-        public ulong Timestamp;
-        public uint WindowId, Which;
-        public byte Button, Down, Clicks, Padding;
-        public float X, Y;
+        public uint type, reserved;
+        public ulong timestamp;
+        public uint windowId, which;
+        public byte button, down, clicks, padding;
+        public float x, y;
     }
 
     public struct Rect
     {
-        public int X, Y, W, H;
+        public int x, y, w, h;
     }
 
     public struct FRect
     {
-        public float X, Y, W, H;
+        public float x, y, w, h;
     }
 
     /// <summary>SDL_Vertex: position, color (floats), normalized texture coordinate.</summary>
     public struct Vertex
     {
-        public float X, Y;
-        public float R, G, B, A;
-        public float U, V;
+        public float x, y;
+        public float r, g, b, a;
+        public float u, v;
     }
 
     // Main / lifecycle
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     public static partial int SDL_RunApp ( int argc, byte** argv, delegate* unmanaged[Cdecl]< int, byte**, int > mainFunction, void* reserved );
 
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     public static partial int SDL_EnterAppMainCallbacks ( int argc, byte** argv,
         delegate* unmanaged[Cdecl]< nint*, int, byte**, int > appInit,
         delegate* unmanaged[Cdecl]< nint, int > appIterate,
         delegate* unmanaged[Cdecl]< nint, Event*, int > appEvent,
         delegate* unmanaged[Cdecl]< nint, int, void > appQuit );
 
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     [return: MarshalAs( UnmanagedType.U1 )]
     public static partial bool SDL_Init ( uint flags );
 
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     public static partial void SDL_Quit ();
 
-    [LibraryImport( Lib, StringMarshalling = StringMarshalling.Utf8 )]
+    [LibraryImport( LIB, StringMarshalling = StringMarshalling.Utf8 )]
     [return: MarshalAs( UnmanagedType.U1 )]
     public static partial bool SDL_SetHint ( string name, string value );
 
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     public static partial byte* SDL_GetError ();
 
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     public static partial byte* SDL_GetPlatform ();
 
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     public static partial byte* SDL_GetBasePath ();
 
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     public static partial ulong SDL_GetTicksNS ();
 
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     public static partial delegate* unmanaged[Cdecl]< void*, int, int, byte*, void > SDL_GetDefaultLogOutputFunction ();
 
     // Events
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     [return: MarshalAs( UnmanagedType.U1 )]
     public static partial bool SDL_PollEvent ( Event* e );
 
     // Window and renderer
-    [LibraryImport( Lib, StringMarshalling = StringMarshalling.Utf8 )]
+    [LibraryImport( LIB, StringMarshalling = StringMarshalling.Utf8 )]
     [return: MarshalAs( UnmanagedType.U1 )]
     public static partial bool SDL_CreateWindowAndRenderer ( string title, int width, int height, ulong windowFlags, out nint window, out nint renderer );
 
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     public static partial void SDL_DestroyWindow ( nint window );
 
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     public static partial uint SDL_GetPrimaryDisplay ();
 
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     [return: MarshalAs( UnmanagedType.U1 )]
     public static partial bool SDL_GetDisplayUsableBounds ( uint displayId, out Rect rect );
 
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     [return: MarshalAs( UnmanagedType.U1 )]
     public static partial bool SDL_GetWindowSize ( nint window, out int w, out int h );
 
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     [return: MarshalAs( UnmanagedType.U1 )]
     public static partial bool SDL_GL_SetAttribute ( int attr, int value );
 
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     public static partial ulong SDL_GetWindowFlags ( nint window );
 
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     [return: MarshalAs( UnmanagedType.U1 )]
     public static partial bool SDL_SetWindowFullscreen ( nint window, [MarshalAs( UnmanagedType.U1 )] bool fullscreen );
 
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     public static partial void SDL_DestroyRenderer ( nint renderer );
 
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     public static partial byte* SDL_GetRendererName ( nint renderer );
 
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     [return: MarshalAs( UnmanagedType.U1 )]
     public static partial bool SDL_SetRenderVSync ( nint renderer, int vsync );
 
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     [return: MarshalAs( UnmanagedType.U1 )]
     public static partial bool SDL_SetRenderLogicalPresentation ( nint renderer, int w, int h, int mode );
 
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     [return: MarshalAs( UnmanagedType.U1 )]
     public static partial bool SDL_GetRenderLogicalPresentationRect ( nint renderer, out FRect rect );
 
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     [return: MarshalAs( UnmanagedType.U1 )]
     public static partial bool SDL_GetRenderOutputSize ( nint renderer, out int w, out int h );
 
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     [return: MarshalAs( UnmanagedType.U1 )]
     public static partial bool SDL_ConvertEventToRenderCoordinates ( nint renderer, Event* e );
 
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     [return: MarshalAs( UnmanagedType.U1 )]
     public static partial bool SDL_SetRenderDrawColorFloat ( nint renderer, float r, float g, float b, float a );
 
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     [return: MarshalAs( UnmanagedType.U1 )]
     public static partial bool SDL_RenderClear ( nint renderer );
 
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     [return: MarshalAs( UnmanagedType.U1 )]
     public static partial bool SDL_RenderFillRect ( nint renderer, in FRect rect );
 
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     [return: MarshalAs( UnmanagedType.U1 )]
     public static partial bool SDL_RenderGeometry ( nint renderer, nint texture, Vertex* vertices, int numVertices, int* indices, int numIndices );
 
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     [return: MarshalAs( UnmanagedType.U1 )]
     public static partial bool SDL_RenderPresent ( nint renderer );
 
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     public static partial nint SDL_RenderReadPixels ( nint renderer, void* rect );
 
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     public static partial nint SDL_GetRenderMetalLayer ( nint renderer );
 
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     [return: MarshalAs( UnmanagedType.U1 )]
     public static partial bool SDL_FlushRenderer ( nint renderer );
 
     // Textures and surfaces
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     public static partial nint SDL_CreateTexture ( nint renderer, uint format, int access, int w, int h );
 
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     public static partial nint SDL_CreateTextureFromSurface ( nint renderer, nint surface );
 
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     public static partial nint SDL_CreateTextureWithProperties ( nint renderer, uint props );
 
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     [return: MarshalAs( UnmanagedType.U1 )]
     public static partial bool SDL_SetTextureBlendMode ( nint texture, uint blendMode );
 
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     public static partial uint SDL_GetTextureProperties ( nint texture );
 
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     [return: MarshalAs( UnmanagedType.U1 )]
     public static partial bool SDL_UpdateTexture ( nint texture, void* rect, void* pixels, int pitch );
 
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     [return: MarshalAs( UnmanagedType.U1 )]
     public static partial bool SDL_GetTextureSize ( nint texture, out float w, out float h );
 
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     [return: MarshalAs( UnmanagedType.U1 )]
     public static partial bool SDL_SetTextureScaleMode ( nint texture, int scaleMode );
 
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     public static partial void SDL_DestroyTexture ( nint texture );
 
-    [LibraryImport( Lib, StringMarshalling = StringMarshalling.Utf8 )]
+    [LibraryImport( LIB, StringMarshalling = StringMarshalling.Utf8 )]
     public static partial nint SDL_LoadPNG ( string file );
 
-    [LibraryImport( Lib, StringMarshalling = StringMarshalling.Utf8 )]
+    [LibraryImport( LIB, StringMarshalling = StringMarshalling.Utf8 )]
     [return: MarshalAs( UnmanagedType.U1 )]
     public static partial bool SDL_SavePNG ( nint surface, string file );
 
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     public static partial void SDL_DestroySurface ( nint surface );
 
     // Properties
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     public static partial uint SDL_CreateProperties ();
 
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     public static partial void SDL_DestroyProperties ( uint props );
 
-    [LibraryImport( Lib, StringMarshalling = StringMarshalling.Utf8 )]
+    [LibraryImport( LIB, StringMarshalling = StringMarshalling.Utf8 )]
     [return: MarshalAs( UnmanagedType.U1 )]
     public static partial bool SDL_SetPointerProperty ( uint props, string name, nint value );
 
-    [LibraryImport( Lib, StringMarshalling = StringMarshalling.Utf8 )]
+    [LibraryImport( LIB, StringMarshalling = StringMarshalling.Utf8 )]
     [return: MarshalAs( UnmanagedType.U1 )]
     public static partial bool SDL_SetNumberProperty ( uint props, string name, long value );
 
-    [LibraryImport( Lib, StringMarshalling = StringMarshalling.Utf8 )]
+    [LibraryImport( LIB, StringMarshalling = StringMarshalling.Utf8 )]
     public static partial long SDL_GetNumberProperty ( uint props, string name, long defaultValue );
 
     // Files and memory
-    [LibraryImport( Lib, StringMarshalling = StringMarshalling.Utf8 )]
+    [LibraryImport( LIB, StringMarshalling = StringMarshalling.Utf8 )]
     public static partial void* SDL_LoadFile ( string file, out nuint dataSize );
 
-    [LibraryImport( Lib )]
+    [LibraryImport( LIB )]
     public static partial void SDL_free ( void* mem );
 
     // Helpers

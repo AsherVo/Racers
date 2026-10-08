@@ -25,7 +25,7 @@ public static class Yaml
         if ( documents.Count > 1 )
         {
             var second = documents[1];
-            throw new YamlException( new YamlError( $"Expected one document, found {documents.Count}.", second.Line, second.Column, Source: source ) );
+            throw new YamlException( new YamlError( $"Expected one document, found {documents.Count}.", second.line, second.column, source: source ) );
         }
 
         return documents.Count == 1 ? documents[0] : new YamlScalar( "", YamlScalarStyle.Plain );
@@ -53,7 +53,7 @@ public static class Yaml
     {
         var context = new YamlReadContext( options, source );
         var value = ReadDocument( node, type, context );
-        if ( context.HasErrors )
+        if ( context.hasErrors )
             throw new YamlException( SortedErrors( context ) );
 
         return value!;
@@ -80,14 +80,14 @@ public static class Yaml
         }
         catch ( YamlException exception )
         {
-            errors = exception.Errors;
+            errors = exception.errors;
             return false;
         }
 
         var context = new YamlReadContext( options, source );
         var result = ReadDocument( node, type, context );
         errors = SortedErrors( context );
-        if ( context.HasErrors )
+        if ( context.hasErrors )
             return false;
 
         value = result!;
@@ -95,11 +95,11 @@ public static class Yaml
     }
 
     static List< YamlError > SortedErrors ( YamlReadContext context ) =>
-        context.Errors.OrderBy( error => error.Line ).ThenBy( error => error.Column ).ToList();
+        context.errors.OrderBy( error => error.line ).ThenBy( error => error.column ).ToList();
 
     static object? ReadDocument ( YamlNode node, [DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS )] Type type, YamlReadContext context )
     {
-        if ( !node.IsNull )
+        if ( !node.isNull )
             return context.Read( node, type );
 
         context.AddError( node, $"Expected a {type.Name}, but the document is empty." );

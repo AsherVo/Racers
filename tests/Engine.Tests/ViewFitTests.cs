@@ -85,7 +85,7 @@ public class ViewFitTests
     {
         var fit = ViewFit.Compute( Config( dynamicSize: true ), 3, 2, 1f );
 
-        Assert.Equal( ( 1, 1 ), ( fit.Width, fit.Height ) );
+        Assert.Equal( ( 1, 1 ), ( fit.width, fit.height ) );
     }
 
     [Fact]

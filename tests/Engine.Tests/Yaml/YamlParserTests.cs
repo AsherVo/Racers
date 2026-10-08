@@ -5,7 +5,7 @@ public class YamlParserTests
 {
     static YamlMap ParseMap ( string text ) => Assert.IsType< YamlMap >( Yaml.Parse( text ) );
 
-    static string ScalarValue ( YamlNode node ) => Assert.IsType< YamlScalar >( node ).Value;
+    static string ScalarValue ( YamlNode node ) => Assert.IsType< YamlScalar >( node ).value;
 
     static YamlException ParseError ( string text ) => Assert.Throws< YamlException >( () => Yaml.ParseAll( text ) );
 
@@ -46,8 +46,8 @@ public class YamlParserTests
         var map = ParseMap( "a: [1, 'two', \"three\", [4]]\nb: {x: 1, y: 2, z}\nc: []\nd: {}\ne: [k: v]\n" );
         var a = Assert.IsType< YamlList >( map["a"] );
         Assert.Equal( 4, a.Count );
-        Assert.Equal( YamlScalarStyle.SingleQuoted, Assert.IsType< YamlScalar >( a[1] ).Style );
-        Assert.True( Assert.IsType< YamlMap >( map["b"] )["z"].IsNull );
+        Assert.Equal( YamlScalarStyle.SingleQuoted, Assert.IsType< YamlScalar >( a[1] ).style );
+        Assert.True( Assert.IsType< YamlMap >( map["b"] )["z"].isNull );
         Assert.Empty( Assert.IsType< YamlList >( map["c"] ) );
         Assert.Empty( Assert.IsType< YamlMap >( map["d"] ) );
         var pair = Assert.IsType< YamlMap >( Assert.Single( Assert.IsType< YamlList >( map["e"] ) ) );
@@ -109,16 +109,16 @@ public class YamlParserTests
     {
         var map = ParseMap( "base: &b {speed: 5}\ncopy: *b\n" );
         Assert.Same( map["base"], map["copy"] );
-        Assert.Equal( "b", map["base"].Anchor );
+        Assert.Equal( "b", map["base"].anchor );
     }
 
     [Fact]
     public void ParsesTagsAndDirectives ()
     {
         var map = ParseMap( "%TAG !e! tag:example.com,2026:\n---\na: !e!point {x: 1}\nb: !local x\nc: !!int 3\n" );
-        Assert.Equal( "tag:example.com,2026:point", map["a"].Tag );
-        Assert.Equal( "!local", map["b"].Tag );
-        Assert.Equal( "tag:yaml.org,2002:int", map["c"].Tag );
+        Assert.Equal( "tag:example.com,2026:point", map["a"].tag );
+        Assert.Equal( "!local", map["b"].tag );
+        Assert.Equal( "tag:yaml.org,2002:int", map["c"].tag );
     }
 
     [Fact]
@@ -133,8 +133,8 @@ public class YamlParserTests
     [Fact]
     public void EmptyInputIsNull ()
     {
-        Assert.True( Yaml.Parse( "" ).IsNull );
-        Assert.True( Yaml.Parse( "# just a comment\n" ).IsNull );
+        Assert.True( Yaml.Parse( "" ).isNull );
+        Assert.True( Yaml.Parse( "# just a comment\n" ).isNull );
         Assert.Empty( Yaml.ParseAll( "" ) );
     }
 
@@ -150,8 +150,8 @@ public class YamlParserTests
     {
         var map = ParseMap( "a: 1\nb:\n  c: [x, y]\n" );
         var c = Assert.IsType< YamlMap >( map["b"] )["c"];
-        Assert.Equal( 3, c.Line );
-        Assert.Equal( 6, c.Column );
+        Assert.Equal( 3, c.line );
+        Assert.Equal( 6, c.column );
     }
 
     [Theory]
@@ -168,9 +168,9 @@ public class YamlParserTests
     [InlineData( "a: 1\u0007\n", 1, 5, "Invalid character" )]
     public void ReportsSyntaxErrorsWithPositions ( string text, int line, int column, string message )
     {
-        var error = Assert.Single( ParseError( text ).Errors );
-        Assert.Contains( message, error.Message );
-        Assert.Equal( ( line, column ), ( error.Line, error.Column ) );
+        var error = Assert.Single( ParseError( text ).errors );
+        Assert.Contains( message, error.message );
+        Assert.Equal( ( line, column ), ( error.line, error.column ) );
     }
 
     [Fact]

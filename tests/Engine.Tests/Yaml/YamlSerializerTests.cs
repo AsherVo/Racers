@@ -50,13 +50,13 @@ public class Weapon
     [YamlMember]
     int secret = 0;
 
-    [YamlIgnore( Condition = YamlIgnoreCondition.WhenNull )]
+    [YamlIgnore( condition = YamlIgnoreCondition.WhenNull )]
     public string? note;
 
-    [YamlIgnore( Condition = YamlIgnoreCondition.WhenDefault )]
+    [YamlIgnore( condition = YamlIgnoreCondition.WhenDefault )]
     public int bonus;
 
-    public int Secret => secret;
+    public int secretValue => secret;
 
     public int computed => damage * 2;
 
@@ -226,7 +226,7 @@ public class YamlSerializerTests
         Assert.Equal( [1L, "two", 3.5, true, null], Assert.IsType< List< object? > >( extra["notes"] ) );
         Assert.IsType< YamlList >( weapon.raw );
         Assert.Equal( "Laser Beam", weapon.displayName );
-        Assert.Equal( 99, weapon.Secret );
+        Assert.Equal( 99, weapon.secretValue );
         Assert.Equal( 42, weapon.cachedValue );
         Assert.Equal( "hello", weapon.note );
         Assert.Equal( 3, weapon.bonus );
@@ -253,7 +253,7 @@ public class YamlSerializerTests
     public void WritesMembersInDeclarationOrder ()
     {
         string written = Yaml.Serialize( new Weapon() );
-        var keys = Assert.IsType< YamlMap >( Yaml.Parse( written ) ).Keys.Select( key => ( ( YamlScalar )key ).Value );
+        var keys = Assert.IsType< YamlMap >( Yaml.Parse( written ) ).keys.Select( key => ( ( YamlScalar )key ).value );
         Assert.Equal( [ "name", "damage", "element", "targets", "offset", "aim", "levels", "tags", "resistances", "stats", "combos", "extra", "raw",
             "display_name", "secret", "range" ], keys );
     }
@@ -307,13 +307,13 @@ public class YamlSerializerTests
     public void DeserializeThrowsWithAllErrors ()
     {
         var exception = Assert.Throws< YamlException >( () => Yaml.Deserialize< Weapon >( "damage: x\nrange: y\n" ) );
-        Assert.Equal( 2, exception.Errors.Count );
+        Assert.Equal( 2, exception.errors.Count );
     }
 
     [Fact]
     public void UnknownKeysCanBeAllowed ()
     {
-        var weapon = Yaml.Deserialize< Weapon >( "name: Axe\nunused: 1\n", new YamlReadOptions { AllowUnknownKeys = true } );
+        var weapon = Yaml.Deserialize< Weapon >( "name: Axe\nunused: 1\n", new YamlReadOptions { allowUnknownKeys = true } );
         Assert.Equal( "Axe", weapon.name );
     }
 
@@ -321,7 +321,7 @@ public class YamlSerializerTests
     public void RequiredMembersMustBePresent ()
     {
         Assert.False( Yaml.TryDeserialize< Requirements >( "optional: 1\n", out _, out var errors ) );
-        Assert.Contains( "Missing required key 'id'", Assert.Single( errors ).Message );
+        Assert.Contains( "Missing required key 'id'", Assert.Single( errors ).message );
         Assert.Equal( 7, Yaml.Deserialize< Requirements >( "id: a\n" ).optional );
     }
 
@@ -335,21 +335,21 @@ public class YamlSerializerTests
     public void ReportsValueErrors ( string text, string message )
     {
         Assert.False( Yaml.TryDeserialize< Weapon >( text, out _, out var errors ) );
-        Assert.Contains( message, Assert.Single( errors ).Message );
+        Assert.Contains( message, Assert.Single( errors ).message );
     }
 
     [Fact]
     public void EmptyDocumentIsAnError ()
     {
         Assert.False( Yaml.TryDeserialize< Weapon >( "# nothing\n", out _, out var errors ) );
-        Assert.Contains( "document is empty", Assert.Single( errors ).Message );
+        Assert.Contains( "document is empty", Assert.Single( errors ).message );
     }
 
     [Fact]
     public void SyntaxErrorsAreReportedByTryDeserialize ()
     {
         Assert.False( Yaml.TryDeserialize< Weapon >( "name: [", out _, out var errors ) );
-        Assert.Contains( "Unterminated", Assert.Single( errors ).Message );
+        Assert.Contains( "Unterminated", Assert.Single( errors ).message );
     }
 
     [Fact]
@@ -398,7 +398,7 @@ public class YamlSerializerTests
     public void ReportsPolymorphicErrors ( string text, string message )
     {
         Assert.False( Yaml.TryDeserialize< Scene >( text, out _, out var errors ) );
-        Assert.Equal( message, Assert.Single( errors ).Message );
+        Assert.Equal( message, Assert.Single( errors ).message );
     }
 
     [Fact]

@@ -9,95 +9,95 @@ public sealed class RacersGame : Game
 {
     public static readonly GameOptions Options = new();
 
-    const int Lanes = 6;
+    const int LANES = 6;
 
     struct Car
     {
-        public Vector2 Position;
-        public float Speed, Hue;
-        public int Lane, Number;
+        public Vector2 position;
+        public float speed, hue;
+        public int lane, number;
     }
 
-    readonly List< Car > _cars = [];
-    readonly Random _random = new( 1234 );
-    Texture _carTexture = null!;
-    Font _titleFont = null!, _smallFont = null!;
-    RiveFile _rive = null!;
-    RiveInstance _background = null!, _inset = null!;
-    RectangleF _backgroundRect;
-    float _insetSpin;
-    string _stats = "";
-    double _nextReport;
-    SpriteBatch? _batch; // read in Update, after the previous frame's End() has flushed everything
-    int _frames;
+    readonly List< Car > cars = [];
+    readonly Random random = new( 1234 );
+    Texture carTexture = null!;
+    Font titleFont = null!, smallFont = null!;
+    RiveFile rive = null!;
+    RiveInstance background = null!, inset = null!;
+    RectangleF backgroundRect;
+    float insetSpin;
+    string stats = "";
+    double nextReport;
+    SpriteBatch? batch; // read in Update, after the previous frame's End() has flushed everything
+    int frames;
 
     protected override void Load ()
     {
-        _carTexture = Content.LoadTexture( "car_1.png", TextureFilter.PixelArt );
-        _titleFont = Content.LoadFont( "Crates.ttf", 30, Graphics.PixelScale );
-        _smallFont = Content.LoadFont( "Crates.ttf", 8, Graphics.PixelScale );
+        carTexture = content.LoadTexture( "car_1.png", TextureFilter.PixelArt );
+        titleFont = content.LoadFont( "Crates.ttf", 30, graphics.pixelScale );
+        smallFont = content.LoadFont( "Crates.ttf", 8, graphics.pixelScale );
 
-        _rive = Content.LoadRive( "cloudyroad.riv" );
+        rive = content.LoadRive( "cloudyroad.riv" );
 
         // Cover the screen with the background, rendered at the resolution it's shown at.
-        var probe = _rive.CreateInstance( "Background" );
-        var artboard = probe.Size;
+        var probe = rive.CreateInstance( "Background" );
+        var artboard = probe.size;
         probe.Dispose();
-        float cover = MathF.Max( Graphics.Width / artboard.X, Graphics.Height / artboard.Y );
-        _background = _rive.CreateInstance( "Background", resolution: MathF.Min( cover * Graphics.PixelScale, 4096f / MathF.Max( artboard.X, artboard.Y ) ) );
+        float cover = MathF.Max( graphics.width / artboard.X, graphics.height / artboard.Y );
+        background = rive.CreateInstance( "Background", resolution: MathF.Min( cover * graphics.pixelScale, 4096f / MathF.Max( artboard.X, artboard.Y ) ) );
         FitBackground();
-        Log.Info( $"Rive artboard 'Background' is {artboard.X}x{artboard.Y}; texture {_background.Texture.Width}x{_background.Texture.Height}" );
+        Log.Info( $"Rive artboard 'Background' is {artboard.X}x{artboard.Y}; texture {background.texture.width}x{background.texture.height}" );
 
         // A second, independent instance of the same artboard, drawn small.
-        _inset = _rive.CreateInstance( "Background", resolution: 0.35f * cover * Graphics.PixelScale );
+        inset = rive.CreateInstance( "Background", resolution: 0.35f * cover * graphics.pixelScale );
 
-        for ( int lane = 0; lane < Lanes; lane++ )
+        for ( int lane = 0; lane < LANES; lane++ )
             for ( int i = 0; i < 3; i++ )
-                Spawn( lane, _random.NextSingle() * Graphics.Width );
+                Spawn( lane, random.NextSingle() * graphics.width );
     }
 
     void FitBackground ()
     {
-        var artboard = _background.Size;
-        float cover = MathF.Max( Graphics.Width / artboard.X, Graphics.Height / artboard.Y );
+        var artboard = background.size;
+        float cover = MathF.Max( graphics.width / artboard.X, graphics.height / artboard.Y );
         var size = artboard * cover;
-        _backgroundRect = new RectangleF( ( Graphics.Width - size.X ) / 2, ( Graphics.Height - size.Y ) / 2, size.X, size.Y );
+        backgroundRect = new RectangleF( ( graphics.width - size.X ) / 2, ( graphics.height - size.Y ) / 2, size.X, size.Y );
     }
 
     protected override void OnResize ()
     {
         FitBackground();
-        foreach ( ref var car in CollectionsMarshal.AsSpan( _cars ) )
-            car.Position.Y = LaneY( car.Lane );
+        foreach ( ref var car in CollectionsMarshal.AsSpan( cars ) )
+            car.position.Y = LaneY( car.lane );
     }
 
     protected override void Unload ()
     {
-        _background.Dispose();
-        _inset.Dispose();
-        _rive.Dispose();
-        _carTexture.Dispose();
-        _titleFont.Dispose();
-        _smallFont.Dispose();
+        background.Dispose();
+        inset.Dispose();
+        rive.Dispose();
+        carTexture.Dispose();
+        titleFont.Dispose();
+        smallFont.Dispose();
     }
 
-    float LaneY ( int lane ) => Graphics.Height * ( 0.58f - 0.09f * lane );
+    float LaneY ( int lane ) => graphics.height * ( 0.58f - 0.09f * lane );
 
-    void Spawn ( int lane, float x ) => _cars.Add( new Car
+    void Spawn ( int lane, float x ) => cars.Add( new Car
     {
-        Position = new Vector2( x, LaneY( lane ) ),
-        Speed = 30f + _random.NextSingle() * 80f,
-        Hue = _random.NextSingle(),
-        Lane = lane,
-        Number = _cars.Count + 1,
+        position = new Vector2( x, LaneY( lane ) ),
+        speed = 30f + random.NextSingle() * 80f,
+        hue = random.NextSingle(),
+        lane = lane,
+        number = cars.Count + 1,
     } );
 
     protected override void OnPointer ( PointerEvent e )
     {
-        if ( e.Action == PointerAction.Down )
+        if ( e.action == PointerAction.Down )
         {
-            int lane = Math.Clamp( ( int )MathF.Round( ( 0.58f - e.Position.Y / Graphics.Height ) / 0.09f ), 0, Lanes - 1 );
-            Spawn( lane, e.Position.X );
+            int lane = Math.Clamp( ( int )MathF.Round( ( 0.58f - e.position.Y / graphics.height ) / 0.09f ), 0, LANES - 1 );
+            Spawn( lane, e.position.X );
         }
     }
 
@@ -109,72 +109,72 @@ public sealed class RacersGame : Game
 
     protected override void Update ( GameTime time )
     {
-        float wrap = Graphics.Width + 60;
-        foreach ( ref var car in CollectionsMarshal.AsSpan( _cars ) )
+        float wrap = graphics.width + 60;
+        foreach ( ref var car in CollectionsMarshal.AsSpan( cars ) )
         {
-            car.Position.X += car.Speed * time.DeltaSeconds;
-            if ( car.Position.X > Graphics.Width + 30 )
-                car.Position.X -= wrap;
+            car.position.X += car.speed * time.deltaSeconds;
+            if ( car.position.X > graphics.width + 30 )
+                car.position.X -= wrap;
         }
 
-        _insetSpin += 0.3f * time.DeltaSeconds;
+        insetSpin += 0.3f * time.deltaSeconds;
 
-        _frames++;
-        if ( time.TotalSeconds >= _nextReport )
+        frames++;
+        if ( time.totalSeconds >= nextReport )
         {
-            if ( _nextReport > 0 )
-                _stats = $"{_frames / 2f:0} fps  {_cars.Count} cars  {_batch?.DrawCalls} draw calls";
-            _frames = 0;
-            _nextReport = time.TotalSeconds + 2;
+            if ( nextReport > 0 )
+                stats = $"{frames / 2f:0} fps  {cars.Count} cars  {batch?.drawCalls} draw calls";
+            frames = 0;
+            nextReport = time.totalSeconds + 2;
         }
     }
 
     protected override void Draw ( SpriteBatch batch )
     {
         // 1. Rive, opaque, behind everything.
-        batch.Draw( _background, _backgroundRect, Color.White );
+        batch.Draw( background, backgroundRect, Color.White );
 
         // 2. Text over Rive, with a translucent drop shadow.
-        const string title = "RACERS";
-        var titleSize = _titleFont.MeasureString( title );
-        var titlePos = new Vector2( ( Graphics.Width - titleSize.X ) / 2, Graphics.Height - 12 );
-        batch.DrawString( _titleFont, title, titlePos + new Vector2( 2, -2 ), Color.Black.WithAlpha( 0.45f ) );
-        batch.DrawString( _titleFont, title, titlePos, new Color( 1f, 0.85f, 0.3f ) );
+        const string TITLE = "RACERS";
+        var titleSize = titleFont.MeasureString( TITLE );
+        var titlePos = new Vector2( ( graphics.width - titleSize.X ) / 2, graphics.height - 12 );
+        batch.DrawString( titleFont, TITLE, titlePos + new Vector2( 2, -2 ), Color.Black.WithAlpha( 0.45f ) );
+        batch.DrawString( titleFont, TITLE, titlePos, new Color( 1f, 0.85f, 0.3f ) );
 
         // 3. Cars; halfway through the lanes, 4. a translucent, rotating Rive inset that the
         // remaining lanes then drive over.
-        var carOrigin = new Vector2( _carTexture.Width / 2f, _carTexture.Height / 2f );
-        for ( int lane = 0; lane < Lanes; lane++ )
+        var carOrigin = new Vector2( carTexture.width / 2f, carTexture.height / 2f );
+        for ( int lane = 0; lane < LANES; lane++ )
         {
-            if ( lane == Lanes / 2 )
+            if ( lane == LANES / 2 )
                 DrawInset( batch );
 
-            foreach ( ref readonly var car in CollectionsMarshal.AsSpan( _cars ) )
+            foreach ( ref readonly var car in CollectionsMarshal.AsSpan( cars ) )
             {
-                if ( car.Lane == lane )
-                    batch.Draw( _carTexture, car.Position, null, Color.FromHsv( car.Hue, 0.5f, 1f ), 0f, carOrigin, Vector2.One );
+                if ( car.lane == lane )
+                    batch.Draw( carTexture, car.position, null, Color.FromHsv( car.hue, 0.5f, 1f ), 0f, carOrigin, Vector2.One );
             }
         }
 
         // 5. Number tags, all together on top so they share one batch.
-        foreach ( ref readonly var car in CollectionsMarshal.AsSpan( _cars ) )
+        foreach ( ref readonly var car in CollectionsMarshal.AsSpan( cars ) )
         {
-            string tag = car.Number.ToString();
-            var tagPos = car.Position + new Vector2( -_smallFont.MeasureString( tag ).X / 2, 24 );
-            batch.DrawString( _smallFont, tag, tagPos, Color.White.WithAlpha( 0.8f ) );
+            string tag = car.number.ToString();
+            var tagPos = car.position + new Vector2( -smallFont.MeasureString( tag ).X / 2, 24 );
+            batch.DrawString( smallFont, tag, tagPos, Color.White.WithAlpha( 0.8f ) );
         }
 
         // 6. HUD text on top of everything.
-        batch.DrawString( _smallFont, _stats, new Vector2( 6, 11 ), Color.Black.WithAlpha( 0.6f ) );
-        batch.DrawString( _smallFont, _stats, new Vector2( 5, 12 ), Color.White );
+        batch.DrawString( smallFont, stats, new Vector2( 6, 11 ), Color.Black.WithAlpha( 0.6f ) );
+        batch.DrawString( smallFont, stats, new Vector2( 5, 12 ), Color.White );
 
-        _batch = batch;
+        this.batch = batch;
     }
 
     void DrawInset ( SpriteBatch batch )
     {
-        float scale = 0.35f * _backgroundRect.Width / _inset.Width;
-        var center = new Vector2( Graphics.Width * 0.72f, Graphics.Height * 0.4f );
-        batch.Draw( _inset, center, Color.White.WithAlpha( 0.75f ), MathF.Sin( _insetSpin ) * 0.35f, _inset.Size / 2, new Vector2( scale ) );
+        float scale = 0.35f * backgroundRect.Width / inset.width;
+        var center = new Vector2( graphics.width * 0.72f, graphics.height * 0.4f );
+        batch.Draw( inset, center, Color.White.WithAlpha( 0.75f ), MathF.Sin( insetSpin ) * 0.35f, inset.size / 2, new Vector2( scale ) );
     }
 }

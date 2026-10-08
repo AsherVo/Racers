@@ -17,14 +17,14 @@ namespace Engine;
 /// </remarks>
 public static unsafe class GameHost
 {
-    static GameRunner? s_runner;
+    static GameRunner? Runner;
 
     public static int Run ( Func< Game > createGame, GameOptions options )
     {
-        if ( s_runner is not null )
+        if ( Runner is not null )
             throw new InvalidOperationException( "A game is already running." );
 
-        s_runner = new GameRunner( createGame(), options );
+        Runner = new GameRunner( createGame(), options );
         return SDL.SDL_RunApp( 0, null, &Main, null );
     }
 
@@ -39,7 +39,7 @@ public static unsafe class GameHost
     {
         try
         {
-            return s_runner!.Init() ? SDL.APP_CONTINUE : SDL.APP_FAILURE;
+            return Runner!.Init() ? SDL.APP_CONTINUE : SDL.APP_FAILURE;
         }
         catch ( Exception ex )
         {
@@ -52,7 +52,7 @@ public static unsafe class GameHost
     {
         try
         {
-            return s_runner!.Iterate() ? SDL.APP_CONTINUE : SDL.APP_SUCCESS;
+            return Runner!.Iterate() ? SDL.APP_CONTINUE : SDL.APP_SUCCESS;
         }
         catch ( Exception ex )
         {
@@ -65,7 +65,7 @@ public static unsafe class GameHost
     {
         try
         {
-            return s_runner!.HandleEvent( ref *e ) ? SDL.APP_CONTINUE : SDL.APP_SUCCESS;
+            return Runner!.HandleEvent( ref *e ) ? SDL.APP_CONTINUE : SDL.APP_SUCCESS;
         }
         catch ( Exception ex )
         {
@@ -78,14 +78,14 @@ public static unsafe class GameHost
     {
         try
         {
-            s_runner?.Shutdown();
+            Runner?.Shutdown();
         }
         catch ( Exception ex )
         {
             Crash( ex );
         }
 
-        s_runner = null;
+        Runner = null;
     }
 
     static int Crash ( Exception ex )

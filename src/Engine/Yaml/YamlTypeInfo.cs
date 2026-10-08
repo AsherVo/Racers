@@ -44,58 +44,58 @@ sealed class YamlTypeInfo
 
     const BindingFlags DECLARED_MEMBERS = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
 
-    static readonly ConcurrentDictionary< Type, YamlTypeInfo > cache = new();
-    static readonly ConcurrentDictionary< Type, IYamlConverter > converters = new();
+    static readonly ConcurrentDictionary< Type, YamlTypeInfo > Cache = new();
+    static readonly ConcurrentDictionary< Type, IYamlConverter > Converters = new();
 
-    readonly Lazy< YamlMemberInfo[] > members;
-    readonly Lazy< YamlPolymorphism? > polymorphism;
+    readonly Lazy< YamlMemberInfo[] > lazyMembers;
+    readonly Lazy< YamlPolymorphism? > lazyPolymorphism;
 
     public static YamlTypeInfo Get ( [DynamicallyAccessedMembers( MEMBERS )] Type type )
     {
-        if ( cache.TryGetValue( type, out var info ) )
+        if ( Cache.TryGetValue( type, out var info ) )
             return info;
 
-        return cache.GetOrAdd( type, new YamlTypeInfo( type ) );
+        return Cache.GetOrAdd( type, new YamlTypeInfo( type ) );
     }
 
     [UnconditionalSuppressMessage( "Trimming", "IL2062", Justification = TRIM_JUSTIFICATION )]
     [UnconditionalSuppressMessage( "Trimming", "IL2072", Justification = TRIM_JUSTIFICATION )]
     YamlTypeInfo ( [DynamicallyAccessedMembers( MEMBERS )] Type type )
     {
-        Type = type;
-        members = new Lazy< YamlMemberInfo[] >( BuildMembers );
-        polymorphism = new Lazy< YamlPolymorphism? >( () => YamlPolymorphism.Find( Type ) );
-        Kind = DetermineKind( type );
+        this.type = type;
+        lazyMembers = new Lazy< YamlMemberInfo[] >( BuildMembers );
+        lazyPolymorphism = new Lazy< YamlPolymorphism? >( () => YamlPolymorphism.Find( this.type ) );
+        kind = DetermineKind( type );
     }
 
     [DynamicallyAccessedMembers( MEMBERS )]
-    public Type Type { get; }
+    public Type type { get; }
 
-    public YamlTypeKind Kind { get; private set; }
+    public YamlTypeKind kind { get; private set; }
 
     /// <summary>The item type of an array, list or set; the value type of a dictionary; the underlying type of a nullable.</summary>
     [DynamicallyAccessedMembers( MEMBERS )]
-    public Type? ElementType { get; private set; }
+    public Type? elementType { get; private set; }
 
     [DynamicallyAccessedMembers( MEMBERS )]
-    public Type? KeyType { get; private set; }
+    public Type? keyType { get; private set; }
 
     /// <summary>What to store when an item fails to read: null, or a zeroed value for value types.</summary>
-    public object? ElementDefault { get; private set; }
+    public object? elementDefault { get; private set; }
 
-    public IYamlConverter? Converter { get; private set; }
+    public IYamlConverter? converter { get; private set; }
 
-    public Int128 Min { get; private set; }
+    public Int128 min { get; private set; }
 
-    public Int128 Max { get; private set; }
+    public Int128 max { get; private set; }
 
-    public MethodInfo? SetAdd { get; private set; }
+    public MethodInfo? setAdd { get; private set; }
 
-    public YamlMemberInfo[] Members => members.Value;
+    public YamlMemberInfo[] members => lazyMembers.Value;
 
-    public YamlPolymorphism? Polymorphism => polymorphism.Value;
+    public YamlPolymorphism? polymorphism => lazyPolymorphism.Value;
 
-    public string Description => Kind switch
+    public string description => kind switch
     {
         YamlTypeKind.String => "a string",
         YamlTypeKind.Char => "a single character",
@@ -104,27 +104,27 @@ sealed class YamlTypeInfo
         YamlTypeKind.Single or YamlTypeKind.Double or YamlTypeKind.Decimal => "a number",
         YamlTypeKind.Array or YamlTypeKind.List or YamlTypeKind.Set => "a list",
         YamlTypeKind.Dictionary => "a map",
-        _ => "a " + Type.Name,
+        _ => "a " + type.Name,
     };
 
     /// <summary>Creates an empty instance, or throws for types that can't be created (abstract, no parameterless constructor).</summary>
     [UnconditionalSuppressMessage( "AOT", "IL3050", Justification = "Only value types reach Activator without a constructor." )]
     public object CreateInstance ()
     {
-        if ( Type.IsAbstract || Type.IsInterface )
-            throw new InvalidOperationException( $"{Type.FullName} is abstract, so it can't be created from YAML." );
+        if ( type.IsAbstract || type.IsInterface )
+            throw new InvalidOperationException( $"{type.FullName} is abstract, so it can't be created from YAML." );
 
-        if ( Type.IsValueType )
-            return Activator.CreateInstance( Type )!;
+        if ( type.IsValueType )
+            return Activator.CreateInstance( type )!;
 
-        var constructor = Type.GetConstructor( BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, Type.EmptyTypes )
-            ?? throw new InvalidOperationException( $"{Type.FullName} needs a parameterless constructor (it can be private) to be read from YAML." );
+        var constructor = type.GetConstructor( BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, Type.EmptyTypes )
+            ?? throw new InvalidOperationException( $"{type.FullName} needs a parameterless constructor (it can be private) to be read from YAML." );
 
         return constructor.Invoke( BindingFlags.DoNotWrapExceptions, null, null, null );
     }
 
     InvalidOperationException Unsupported ( string reason ) =>
-        new( $"{Type.FullName} can't be converted to YAML: {reason}" );
+        new( $"{type.FullName} can't be converted to YAML: {reason}" );
 
     [UnconditionalSuppressMessage( "Trimming", "IL2062", Justification = TRIM_JUSTIFICATION )]
     [UnconditionalSuppressMessage( "Trimming", "IL2072", Justification = TRIM_JUSTIFICATION )]
@@ -132,7 +132,7 @@ sealed class YamlTypeInfo
     {
         if ( type.GetCustomAttribute< YamlConverterAttribute >() is { } converterAttribute )
         {
-            Converter = CreateConverter( converterAttribute.ConverterType );
+            converter = CreateConverter( converterAttribute.converterType );
             return YamlTypeKind.Converter;
         }
 
@@ -192,16 +192,16 @@ sealed class YamlTypeInfo
             if ( definition == typeof( HashSet<> ) )
             {
                 SetElement( arguments[0] );
-                SetAdd = type.GetMethod( nameof( HashSet< int >.Add ) );
+                setAdd = type.GetMethod( nameof( HashSet< int >.Add ) );
                 return YamlTypeKind.Set;
             }
 
             if ( definition == typeof( Dictionary<,> ) )
             {
-                KeyType = arguments[0];
-                var keyKind = Get( KeyType ).Kind;
+                keyType = arguments[0];
+                var keyKind = Get( keyType ).kind;
                 if ( keyKind is not ( YamlTypeKind.String or YamlTypeKind.Char or YamlTypeKind.Bool or YamlTypeKind.Integer or YamlTypeKind.Enum ) )
-                    throw Unsupported( $"dictionary keys must be strings, numbers, booleans, characters or enums, not {KeyType.Name}." );
+                    throw Unsupported( $"dictionary keys must be strings, numbers, booleans, characters or enums, not {keyType.Name}." );
 
                 SetElement( arguments[1] );
                 return YamlTypeKind.Dictionary;
@@ -222,16 +222,16 @@ sealed class YamlTypeInfo
 
     YamlTypeKind Integer ( Int128 min, Int128 max )
     {
-        Min = min;
-        Max = max;
+        this.min = min;
+        this.max = max;
         return YamlTypeKind.Integer;
     }
 
     void SetElement ( [DynamicallyAccessedMembers( MEMBERS )] Type elementType )
     {
-        ElementType = elementType;
+        this.elementType = elementType;
         Get( elementType );
-        ElementDefault = DefaultOf( elementType );
+        elementDefault = DefaultOf( elementType );
     }
 
     /// <summary>A boxed zero value for non-nullable value types; null otherwise.</summary>
@@ -240,14 +240,14 @@ sealed class YamlTypeInfo
 
     public static IYamlConverter CreateConverter ( [DynamicallyAccessedMembers( MEMBERS )] Type converterType )
     {
-        if ( converters.TryGetValue( converterType, out var existing ) )
+        if ( Converters.TryGetValue( converterType, out var existing ) )
             return existing;
 
         if ( !typeof( IYamlConverter ).IsAssignableFrom( converterType ) )
             throw new InvalidOperationException( $"{converterType.FullName} is used as a YAML converter but doesn't implement IYamlConverter." );
 
         var converter = ( IYamlConverter )Activator.CreateInstance( converterType )!;
-        return converters.GetOrAdd( converterType, converter );
+        return Converters.GetOrAdd( converterType, converter );
     }
 
     // Members in declaration order, base classes first: fields, then properties, for each class in the hierarchy.
@@ -255,7 +255,7 @@ sealed class YamlTypeInfo
     YamlMemberInfo[] BuildMembers ()
     {
         var hierarchy = new List< Type >();
-        for ( var current = Type; current != null && current != typeof( object ) && current != typeof( ValueType ); current = current.BaseType )
+        for ( var current = type; current != null && current != typeof( object ) && current != typeof( ValueType ); current = current.BaseType )
             hierarchy.Add( current );
 
         hierarchy.Reverse();
@@ -273,19 +273,19 @@ sealed class YamlTypeInfo
                 if ( info == null )
                     continue;
 
-                if ( byName.TryGetValue( info.Name, out var existing ) )
+                if ( byName.TryGetValue( info.name, out var existing ) )
                 {
                     throw new InvalidOperationException(
-                        $"{Type.FullName}: members '{existing.Member.Name}' and '{member.Name}' both use the YAML key '{info.Name}'." );
+                        $"{type.FullName}: members '{existing.member.Name}' and '{member.Name}' both use the YAML key '{info.name}'." );
                 }
 
-                byName.Add( info.Name, info );
+                byName.Add( info.name, info );
                 result.Add( info );
             }
         }
 
-        if ( Polymorphism is { } polymorphic && byName.ContainsKey( polymorphic.Key ) )
-            throw new InvalidOperationException( $"{Type.FullName} has a member using the YAML key '{polymorphic.Key}', which is its type discriminator." );
+        if ( polymorphism is { } polymorphic && byName.ContainsKey( polymorphic.key ) )
+            throw new InvalidOperationException( $"{type.FullName} has a member using the YAML key '{polymorphic.key}', which is its type discriminator." );
 
         return result.ToArray();
     }
@@ -298,21 +298,21 @@ sealed class YamlMemberInfo
 
     YamlMemberInfo ( MemberInfo member, string name, [DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS )] Type type )
     {
-        Member = member;
-        Name = name;
-        Type = type;
+        this.member = member;
+        this.name = name;
+        this.type = type;
         field = member as FieldInfo;
         property = member as PropertyInfo;
-        Required = member.IsDefined( typeof( YamlRequiredAttribute ), true );
+        required = member.IsDefined( typeof( YamlRequiredAttribute ), true );
 
         var ignore = member.GetCustomAttribute< YamlIgnoreAttribute >( true );
-        WriteCondition = ignore?.Condition;
-        DefaultValue = YamlTypeInfo.DefaultOf( type );
+        writeCondition = ignore?.condition;
+        defaultValue = YamlTypeInfo.DefaultOf( type );
 
         try
         {
             if ( member.GetCustomAttribute< YamlConverterAttribute >( true ) is { } converterAttribute )
-                Converter = YamlTypeInfo.CreateConverter( converterAttribute.ConverterType );
+                converter = YamlTypeInfo.CreateConverter( converterAttribute.converterType );
             else
                 YamlTypeInfo.Get( type );
         }
@@ -322,22 +322,22 @@ sealed class YamlMemberInfo
         }
     }
 
-    public MemberInfo Member { get; }
+    public MemberInfo member { get; }
 
     /// <summary>The YAML key.</summary>
-    public string Name { get; }
+    public string name { get; }
 
     [DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS )]
-    public Type Type { get; }
+    public Type type { get; }
 
-    public bool Required { get; }
+    public bool required { get; }
 
     /// <summary>Null to always write; otherwise <see cref="YamlIgnoreCondition.WhenNull"/> or <see cref="YamlIgnoreCondition.WhenDefault"/>.</summary>
-    public YamlIgnoreCondition? WriteCondition { get; }
+    public YamlIgnoreCondition? writeCondition { get; }
 
-    public object? DefaultValue { get; }
+    public object? defaultValue { get; }
 
-    public IYamlConverter? Converter { get; }
+    public IYamlConverter? converter { get; }
 
     /// <summary>Returns null for members YAML leaves out; throws for members marked [YamlMember] that can't be used.</summary>
     [UnconditionalSuppressMessage( "Trimming", "IL2072", Justification = "Member types are kept by rooting the game and engine assemblies." )]
@@ -347,11 +347,11 @@ sealed class YamlMemberInfo
             return null;
 
         var ignore = member.GetCustomAttribute< YamlIgnoreAttribute >( true );
-        if ( ignore?.Condition == YamlIgnoreCondition.Always )
+        if ( ignore?.condition == YamlIgnoreCondition.Always )
             return null;
 
         var explicitMember = member.GetCustomAttribute< YamlMemberAttribute >( true );
-        string name = explicitMember?.Name ?? member.Name;
+        string name = explicitMember?.name ?? member.Name;
 
         if ( member is FieldInfo field )
         {
@@ -400,10 +400,10 @@ sealed class YamlMemberInfo
             property!.SetValue( target, value, BindingFlags.DoNotWrapExceptions, null, null, null );
     }
 
-    public bool ShouldWrite ( object? value ) => WriteCondition switch
+    public bool ShouldWrite ( object? value ) => writeCondition switch
     {
         YamlIgnoreCondition.WhenNull => value != null,
-        YamlIgnoreCondition.WhenDefault => !Equals( value, DefaultValue ),
+        YamlIgnoreCondition.WhenDefault => !Equals( value, defaultValue ),
         _ => true,
     };
 }
@@ -411,20 +411,20 @@ sealed class YamlMemberInfo
 /// <summary>The concrete types under a <see cref="YamlPolymorphicAttribute"/> root, by discriminator name.</summary>
 sealed class YamlPolymorphism
 {
-    static readonly ConcurrentDictionary< Type, YamlPolymorphism > roots = new();
+    static readonly ConcurrentDictionary< Type, YamlPolymorphism > Roots = new();
 
     readonly Dictionary< string, Type > typesByName = new( StringComparer.Ordinal );
     readonly Dictionary< Type, string > namesByType = new();
 
-    public string Key { get; }
+    public string key { get; }
 
-    public Type Root { get; }
+    public Type root { get; }
 
     [UnconditionalSuppressMessage( "Trimming", "IL2026", Justification = "Polymorphic types live in the rooted game and engine assemblies." )]
     YamlPolymorphism ( Type root, YamlPolymorphicAttribute attribute )
     {
-        Root = root;
-        Key = attribute.DiscriminatorKey;
+        this.root = root;
+        key = attribute.discriminatorKey;
 
         Type?[] assemblyTypes;
         try
@@ -436,13 +436,13 @@ sealed class YamlPolymorphism
             assemblyTypes = exception.Types;
         }
 
-        var listed = root.GetCustomAttributes< YamlDerivedTypeAttribute >( false ).Select( derived => derived.DerivedType );
+        var listed = root.GetCustomAttributes< YamlDerivedTypeAttribute >( false ).Select( derived => derived.derivedType );
         foreach ( var type in assemblyTypes.Concat( listed ) )
         {
             if ( type == null || type.IsAbstract || type.IsInterface || type.ContainsGenericParameters || !root.IsAssignableFrom( type ) )
                 continue;
 
-            string name = type.GetCustomAttribute< YamlTypeNameAttribute >( false )?.Name ?? type.Name;
+            string name = type.GetCustomAttribute< YamlTypeNameAttribute >( false )?.name ?? type.Name;
             if ( typesByName.TryGetValue( name, out var existing ) && existing != type )
                 throw new InvalidOperationException( $"{existing.FullName} and {type.FullName} both use the YAML type name '{name}' under {root.FullName}." );
 
@@ -457,11 +457,11 @@ sealed class YamlPolymorphism
         for ( var current = type; current != null; current = current.BaseType )
         {
             if ( current.GetCustomAttribute< YamlPolymorphicAttribute >( false ) is { } attribute )
-                return roots.GetOrAdd( current, root => new YamlPolymorphism( root, attribute ) );
+                return Roots.GetOrAdd( current, root => new YamlPolymorphism( root, attribute ) );
         }
 
         if ( type.IsInterface && type.GetCustomAttribute< YamlPolymorphicAttribute >( false ) is { } interfaceAttribute )
-            return roots.GetOrAdd( type, root => new YamlPolymorphism( root, interfaceAttribute ) );
+            return Roots.GetOrAdd( type, root => new YamlPolymorphism( root, interfaceAttribute ) );
 
         return null;
     }

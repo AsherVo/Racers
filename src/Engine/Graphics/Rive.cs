@@ -6,13 +6,13 @@ namespace Engine;
 /// <summary>A loaded .riv file. Create instances from it to play its artboards.</summary>
 public sealed class RiveFile : IDisposable
 {
-    readonly RiveRuntime _runtime;
-    nint _handle;
+    readonly RiveRuntime runtime;
+    nint handle;
 
     internal RiveFile ( RiveRuntime runtime, nint handle )
     {
-        _runtime = runtime;
-        _handle = handle;
+        this.runtime = runtime;
+        this.handle = handle;
     }
 
     /// <summary>
@@ -26,24 +26,24 @@ public sealed class RiveFile : IDisposable
     /// (2 on Retina) for artboards drawn at their natural size; lower it for large, soft content.</param>
     public RiveInstance CreateInstance ( string? artboard = null, string? stateMachine = null, float resolution = 1f )
     {
-        ObjectDisposedException.ThrowIf( _handle == 0, this );
+        ObjectDisposedException.ThrowIf( handle == 0, this );
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero( resolution );
 
-        nint instance = EngineNative.en_rive_instance_create( _handle, artboard, stateMachine, out float width, out float height );
+        nint instance = EngineNative.en_rive_instance_create( handle, artboard, stateMachine, out float width, out float height );
         if ( instance == 0 )
             throw new ArgumentException( $"No artboard '{artboard ?? "(default)"}' with state machine '{stateMachine ?? "(default)"}'." );
 
-        return _runtime.Add( new RiveInstance( _runtime, instance, width, height, resolution ) );
+        return runtime.Add( new RiveInstance( runtime, instance, width, height, resolution ) );
     }
 
     public void Dispose ()
     {
-        if ( _handle == 0 )
+        if ( handle == 0 )
             return;
 
-        _runtime.Remove( this );
-        EngineNative.en_rive_file_destroy( _handle );
-        _handle = 0;
+        runtime.Remove( this );
+        EngineNative.en_rive_file_destroy( handle );
+        handle = 0;
     }
 }
 
@@ -53,37 +53,37 @@ public sealed class RiveFile : IDisposable
 /// </summary>
 public sealed class RiveInstance : IDisposable
 {
-    readonly RiveRuntime _runtime;
-    readonly nint[] _targets;
-    readonly Texture[] _textures;
-    nint _handle;
-    int _current;
-    bool _dirty = true;
+    readonly RiveRuntime runtime;
+    readonly nint[] targets;
+    readonly Texture[] textures;
+    nint handle;
+    int current;
+    bool dirty = true;
 
     /// <summary>Artboard size, in artboard units.</summary>
-    public float Width { get; }
-    public float Height { get; }
-    public Vector2 Size => new( Width, Height );
+    public float width { get; }
+    public float height { get; }
+    public Vector2 size => new( width, height );
 
     /// <summary>The most recently rendered frame (premultiplied alpha).</summary>
-    public Texture Texture => _textures[_current];
+    public Texture texture => textures[current];
 
     /// <summary>When true, the engine stops advancing the state machine and keeps the last frame.</summary>
-    public bool Paused { get; set; }
+    public bool paused { get; set; }
 
     internal RiveInstance ( RiveRuntime runtime, nint handle, float width, float height, float resolution )
     {
-        _runtime = runtime;
-        _handle = handle;
-        Width = width;
-        Height = height;
+        this.runtime = runtime;
+        this.handle = handle;
+        this.width = width;
+        this.height = height;
 
         int w = Math.Max( 1, ( int )MathF.Ceiling( width * resolution ) );
         int h = Math.Max( 1, ( int )MathF.Ceiling( height * resolution ) );
-        _targets = new nint[runtime.BuffersPerInstance];
-        _textures = new Texture[runtime.BuffersPerInstance];
-        for ( int i = 0; i < _targets.Length; i++ )
-            ( _targets[i], _textures[i] ) = runtime.CreateTarget( w, h );
+        targets = new nint[runtime.buffersPerInstance];
+        textures = new Texture[runtime.buffersPerInstance];
+        for ( int i = 0; i < targets.Length; i++ )
+            ( targets[i], textures[i] ) = runtime.CreateTarget( w, h );
 
         // Draw the first frame now so the texture is valid even before the next engine update.
         Advance( 0f );
@@ -93,19 +93,19 @@ public sealed class RiveInstance : IDisposable
     }
 
     /// <summary>Sets a number input on the state machine. Returns false if there's no such input.</summary>
-    public bool SetNumber ( string name, float value ) => EngineNative.en_rive_instance_set_number( Live, name, value ) != 0;
+    public bool SetNumber ( string name, float value ) => EngineNative.en_rive_instance_set_number( live, name, value ) != 0;
 
     /// <summary>Sets a boolean input on the state machine. Returns false if there's no such input.</summary>
-    public bool SetBool ( string name, bool value ) => EngineNative.en_rive_instance_set_bool( Live, name, value ? 1 : 0 ) != 0;
+    public bool SetBool ( string name, bool value ) => EngineNative.en_rive_instance_set_bool( live, name, value ? 1 : 0 ) != 0;
 
     /// <summary>Fires a trigger input on the state machine. Returns false if there's no such input.</summary>
-    public bool Fire ( string name ) => EngineNative.en_rive_instance_fire( Live, name ) != 0;
+    public bool Fire ( string name ) => EngineNative.en_rive_instance_fire( live, name ) != 0;
 
     /// <summary>Replaces the text of a named text run. Returns false if there's no such run.</summary>
     public bool SetText ( string run, string text )
     {
-        _dirty = true;
-        return EngineNative.en_rive_instance_set_text( Live, run, text ) != 0;
+        dirty = true;
+        return EngineNative.en_rive_instance_set_text( live, run, text ) != 0;
     }
 
     /// <summary>Pointer events for the state machine's listeners, in artboard coordinates. Return true on a hit.</summary>
@@ -114,48 +114,48 @@ public sealed class RiveInstance : IDisposable
     public bool PointerUp ( Vector2 position ) => Pointer( 2, position );
 
     bool Pointer ( int action, Vector2 position ) =>
-        EngineNative.en_rive_instance_pointer( Live, action, position.X, position.Y ) != 0;
+        EngineNative.en_rive_instance_pointer( live, action, position.X, position.Y ) != 0;
 
-    nint Live
+    nint live
     {
         get
         {
-            ObjectDisposedException.ThrowIf( _handle == 0, this );
-            return _handle;
+            ObjectDisposedException.ThrowIf( handle == 0, this );
+            return handle;
         }
     }
 
     /// <summary>Returns true if the frame changed and needs rendering.</summary>
     internal bool Advance ( float seconds )
     {
-        if ( Paused )
-            return _dirty;
+        if ( paused )
+            return dirty;
 
-        bool changed = EngineNative.en_rive_instance_advance( _handle, seconds ) != 0;
-        return changed || _dirty;
+        bool changed = EngineNative.en_rive_instance_advance( handle, seconds ) != 0;
+        return changed || dirty;
     }
 
     internal void Render ()
     {
-        _current = ( _current + 1 ) % _targets.Length;
-        EngineNative.en_rive_render( _runtime.Context, _handle, _targets[_current] );
-        _dirty = false;
+        current = ( current + 1 ) % targets.Length;
+        EngineNative.en_rive_render( runtime.context, handle, targets[current] );
+        dirty = false;
     }
 
     public void Dispose ()
     {
-        if ( _handle == 0 )
+        if ( handle == 0 )
             return;
 
-        _runtime.Remove( this );
-        for ( int i = 0; i < _targets.Length; i++ )
+        runtime.Remove( this );
+        for ( int i = 0; i < targets.Length; i++ )
         {
-            _textures[i].Dispose();
-            EngineNative.en_rive_target_destroy( _targets[i] );
+            textures[i].Dispose();
+            EngineNative.en_rive_target_destroy( targets[i] );
         }
 
-        EngineNative.en_rive_instance_destroy( _handle );
-        _handle = 0;
+        EngineNative.en_rive_instance_destroy( handle );
+        handle = 0;
     }
 }
 
@@ -169,25 +169,25 @@ public sealed class RiveInstance : IDisposable
 /// </remarks>
 internal sealed unsafe class RiveRuntime : IDisposable
 {
-    readonly nint _renderer;
-    readonly int _backend;
-    readonly List< RiveInstance > _instances = [];
-    readonly List< RiveFile > _files = [];
-    bool _rendering;
+    readonly nint renderer;
+    readonly int backend;
+    readonly List< RiveInstance > instances = [];
+    readonly List< RiveFile > files = [];
+    bool rendering;
 
-    public nint Context { get; private set; }
+    public nint context { get; private set; }
 
     /// <summary>
     /// On Metal, Rive renders on its own queue while SDL may still be sampling earlier frames, so
     /// each instance rotates through a few textures instead of overwriting the one on screen. On
     /// WebGL both share one context, so GL orders the work and one texture is enough.
     /// </summary>
-    public int BuffersPerInstance => _backend == EngineNative.RiveMetal ? 3 : 1;
+    public int buffersPerInstance => backend == EngineNative.RIVE_METAL ? 3 : 1;
 
     RiveRuntime ( nint renderer, int backend )
     {
-        _renderer = renderer;
-        _backend = backend;
+        this.renderer = renderer;
+        this.backend = backend;
     }
 
     public static RiveRuntime Create ( nint renderer )
@@ -206,13 +206,13 @@ internal sealed unsafe class RiveRuntime : IDisposable
         nint layer = 0;
         switch ( backend )
         {
-            case EngineNative.RiveMetal:
+            case EngineNative.RIVE_METAL:
                 layer = SDL.SDL_GetRenderMetalLayer( renderer );
                 if ( layer == 0 )
                     throw new PlatformNotSupportedException( $"Rive needs SDL's Metal renderer, not '{rendererName}'." );
                 break;
 
-            case EngineNative.RiveWebGL:
+            case EngineNative.RIVE_WEBGL:
                 if ( rendererName != "opengles2" )
                     throw new PlatformNotSupportedException( $"Rive needs SDL's opengles2 renderer, not '{rendererName}'." );
                 break;
@@ -223,9 +223,9 @@ internal sealed unsafe class RiveRuntime : IDisposable
 
         var runtime = new RiveRuntime( renderer, backend );
         runtime.BeginRender();
-        runtime.Context = EngineNative.en_rive_context_create( layer );
+        runtime.context = EngineNative.en_rive_context_create( layer );
         runtime.EndRender();
-        if ( runtime.Context == 0 )
+        if ( runtime.context == 0 )
             throw new InvalidOperationException( "Couldn't create the Rive render context." );
 
         return runtime;
@@ -235,22 +235,22 @@ internal sealed unsafe class RiveRuntime : IDisposable
     {
         nint file;
         fixed ( byte* p = bytes )
-            file = EngineNative.en_rive_file_load( Context, p, bytes.Length );
+            file = EngineNative.en_rive_file_load( context, p, bytes.Length );
 
         if ( file == 0 )
             throw new InvalidDataException( $"'{name}' isn't a Rive file this runtime can read." );
 
         var riveFile = new RiveFile( this, file );
-        _files.Add( riveFile );
+        files.Add( riveFile );
         return riveFile;
     }
 
     public ( nint Target, Texture Texture ) CreateTarget ( int width, int height ) =>
-        _backend == EngineNative.RiveMetal ? CreateMetalTarget( width, height ) : CreateWebGLTarget( width, height );
+        backend == EngineNative.RIVE_METAL ? CreateMetalTarget( width, height ) : CreateWebGLTarget( width, height );
 
     ( nint, Texture ) CreateMetalTarget ( int width, int height )
     {
-        nint target = EngineNative.en_rive_target_create( Context, width, height, 0, out nint pixelBuffer );
+        nint target = EngineNative.en_rive_target_create( context, width, height, 0, out nint pixelBuffer );
         if ( target == 0 )
             throw new InvalidOperationException( $"Couldn't create a {width}x{height} Rive render target." );
 
@@ -260,7 +260,7 @@ internal sealed unsafe class RiveRuntime : IDisposable
         SDL.SDL_SetNumberProperty( props, SDL.PROP_TEXTURE_CREATE_WIDTH_NUMBER, width );
         SDL.SDL_SetNumberProperty( props, SDL.PROP_TEXTURE_CREATE_HEIGHT_NUMBER, height );
         SDL.SDL_SetPointerProperty( props, SDL.PROP_TEXTURE_CREATE_METAL_PIXELBUFFER_POINTER, pixelBuffer );
-        nint texture = SDL.SDL_CreateTextureWithProperties( _renderer, props );
+        nint texture = SDL.SDL_CreateTextureWithProperties( renderer, props );
         SDL.SDL_DestroyProperties( props );
 
         if ( texture == 0 )
@@ -275,13 +275,13 @@ internal sealed unsafe class RiveRuntime : IDisposable
     ( nint, Texture ) CreateWebGLTarget ( int width, int height )
     {
         // SDL allocates the texture (it would reallocate one it was handed anyway); Rive draws into it.
-        nint handle = SDL.SDL_CreateTexture( _renderer, SDL.PIXELFORMAT_ABGR8888, SDL.TEXTUREACCESS_STATIC, width, height );
+        nint handle = SDL.SDL_CreateTexture( renderer, SDL.PIXELFORMAT_ABGR8888, SDL.TEXTUREACCESS_STATIC, width, height );
         if ( handle == 0 )
             throw new InvalidOperationException( $"SDL_CreateTexture failed: {SDL.GetError()}" );
 
         var texture = new Texture( handle, TextureFilter.Linear, premultiplied: true );
         uint glTexture = ( uint )SDL.SDL_GetNumberProperty( SDL.SDL_GetTextureProperties( handle ), SDL.PROP_TEXTURE_OPENGLES2_TEXTURE_NUMBER, 0 );
-        nint target = EngineNative.en_rive_target_create( Context, width, height, glTexture, out _ );
+        nint target = EngineNative.en_rive_target_create( context, width, height, glTexture, out _ );
         if ( glTexture == 0 || target == 0 )
         {
             texture.Dispose();
@@ -293,23 +293,23 @@ internal sealed unsafe class RiveRuntime : IDisposable
 
     public RiveInstance Add ( RiveInstance instance )
     {
-        _instances.Add( instance );
+        instances.Add( instance );
         return instance;
     }
 
-    public void Remove ( RiveInstance instance ) => _instances.Remove( instance );
+    public void Remove ( RiveInstance instance ) => instances.Remove( instance );
 
-    public void Remove ( RiveFile file ) => _files.Remove( file );
+    public void Remove ( RiveFile file ) => files.Remove( file );
 
     /// <summary>Starts a run of renders. On WebGL, SDL submits its queued GL work first.</summary>
     public void BeginRender ()
     {
-        if ( _rendering )
+        if ( rendering )
             return;
 
-        if ( _backend == EngineNative.RiveWebGL )
-            SDL.SDL_FlushRenderer( _renderer );
-        _rendering = true;
+        if ( backend == EngineNative.RIVE_WEBGL )
+            SDL.SDL_FlushRenderer( renderer );
+        rendering = true;
     }
 
     /// <summary>
@@ -318,20 +318,20 @@ internal sealed unsafe class RiveRuntime : IDisposable
     /// </summary>
     public void EndRender ()
     {
-        if ( !_rendering )
+        if ( !rendering )
             return;
 
-        if ( Context != 0 )
-            EngineNative.en_rive_finish( Context );
-        if ( _backend == EngineNative.RiveWebGL )
-            SDL.SDL_FlushRenderer( _renderer );
-        _rendering = false;
+        if ( context != 0 )
+            EngineNative.en_rive_finish( context );
+        if ( backend == EngineNative.RIVE_WEBGL )
+            SDL.SDL_FlushRenderer( renderer );
+        rendering = false;
     }
 
     /// <summary>Advances every instance and re-renders the ones that changed.</summary>
     public void Update ( float seconds )
     {
-        foreach ( var instance in _instances )
+        foreach ( var instance in instances )
         {
             if ( instance.Advance( seconds ) )
             {
@@ -345,16 +345,16 @@ internal sealed unsafe class RiveRuntime : IDisposable
 
     public void Dispose ()
     {
-        if ( Context == 0 )
+        if ( context == 0 )
             return;
 
         // Everything that holds GPU resources goes before the context that made them.
-        for ( int i = _instances.Count - 1; i >= 0; i-- )
-            _instances[i].Dispose();
-        for ( int i = _files.Count - 1; i >= 0; i-- )
-            _files[i].Dispose();
+        for ( int i = instances.Count - 1; i >= 0; i-- )
+            instances[i].Dispose();
+        for ( int i = files.Count - 1; i >= 0; i-- )
+            files[i].Dispose();
 
-        EngineNative.en_rive_context_destroy( Context );
-        Context = 0;
+        EngineNative.en_rive_context_destroy( context );
+        context = 0;
     }
 }

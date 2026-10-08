@@ -8,17 +8,17 @@ namespace Engine;
 /// </summary>
 public sealed unsafe class ContentManager ( Graphics graphics, string root )
 {
-    readonly nint renderer = graphics.Renderer;
+    readonly nint renderer = graphics.renderer;
 
-    public string Root { get; } = root;
+    public string root { get; } = root;
 
-    public byte[] LoadBytes ( string path ) => ReadFile( Root + path );
+    public byte[] LoadBytes ( string path ) => ReadFile( root + path );
 
     public string LoadText ( string path ) => System.Text.Encoding.UTF8.GetString( LoadBytes( path ) );
 
     /// <exception cref="YamlException">The file isn't valid YAML or doesn't match <typeparamref name="T"/>; it lists every problem.</exception>
     public T LoadYaml< [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS )] T > ( string path ) =>
-        ReadYaml< T >( Root, path );
+        ReadYaml< T >( root, path );
 
     /// <summary>Reads YAML without a renderer, for settings needed before the window opens.</summary>
     internal static T ReadYaml< [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers( YamlTypeInfo.MEMBERS )] T > ( string root, string path ) =>
@@ -41,16 +41,16 @@ public sealed unsafe class ContentManager ( Graphics graphics, string root )
     }
 
     /// <param name="size">Pixel height in game pixels.</param>
-    /// <param name="density">Atlas pixels per game pixel. <see cref="Graphics.PixelScale"/> keeps text sharp
+    /// <param name="density">Atlas pixels per game pixel. <see cref="Graphics.pixelScale"/> keeps text sharp
     /// at the window's current scale.</param>
     public Font LoadFont ( string path, float size, float density = 2f ) =>
         Font.Bake( renderer, LoadBytes( path ), size, density );
 
-    public RiveFile LoadRive ( string path ) => graphics.Rive.Load( LoadBytes( path ), path );
+    public RiveFile LoadRive ( string path ) => graphics.rive.Load( LoadBytes( path ), path );
 
     public Texture LoadTexture ( string path, TextureFilter filter = TextureFilter.Linear )
     {
-        string full = Root + path;
+        string full = root + path;
         nint surface = SDL.SDL_LoadPNG( full );
         if ( surface == 0 )
             throw new FileNotFoundException( $"SDL_LoadPNG failed for '{full}': {SDL.GetError()}" );

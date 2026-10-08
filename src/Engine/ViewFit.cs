@@ -3,7 +3,7 @@ using Engine.Native;
 namespace Engine;
 
 /// <summary>How a <see cref="GameConfig"/> maps the game onto the window: its resolution and SDL presentation mode.</summary>
-internal readonly record struct ViewFit ( int Width, int Height, int Presentation )
+internal readonly record struct ViewFit ( int width, int height, int presentation )
 {
     /// <summary>Largest share of the screen a new desktop window takes.</summary>
     const float MAX_SCREEN_FILL = 0.9f;

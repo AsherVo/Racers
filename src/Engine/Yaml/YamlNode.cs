@@ -11,18 +11,18 @@ namespace Engine;
 public abstract class YamlNode
 {
     /// <summary>1-based position in the source text; 0 for nodes built in code.</summary>
-    public int Line { get; init; }
+    public int line { get; init; }
 
-    public int Column { get; init; }
+    public int column { get; init; }
 
     /// <summary>The resolved tag, e.g. <c>tag:yaml.org,2002:str</c> for <c>!!str</c>, or null if untagged.</summary>
-    public string? Tag { get; set; }
+    public string? tag { get; set; }
 
-    public string? Anchor { get; set; }
+    public string? anchor { get; set; }
 
-    public bool IsNull => this is YamlScalar scalar && scalar.IsNullValue;
+    public bool isNull => this is YamlScalar scalar && scalar.isNullValue;
 
-    public abstract string KindName { get; }
+    public abstract string kindName { get; }
 
     public override string ToString () => YamlWriter.Write( this );
 }
@@ -46,30 +46,30 @@ public sealed class YamlScalar : YamlNode
 
     public YamlScalar ( string value, YamlScalarStyle style = YamlScalarStyle.Any )
     {
-        Value = value;
-        Style = style;
+        this.value = value;
+        this.style = style;
     }
 
     public static YamlScalar Null () => new( "null", YamlScalarStyle.Plain );
 
-    public string Value { get; }
+    public string value { get; }
 
-    public YamlScalarStyle Style { get; }
+    public YamlScalarStyle style { get; }
 
-    public override string KindName => IsNullValue ? "null" : "scalar";
+    public override string kindName => isNullValue ? "null" : "scalar";
 
     /// <summary>
     /// True for the core schema's null forms (empty, <c>~</c>, <c>null</c>) when they are written plain
     /// and untagged, or for anything tagged <c>!!null</c>.
     /// </summary>
-    public bool IsNullValue
+    public bool isNullValue
     {
         get
         {
-            if ( Tag == NULL_TAG )
+            if ( tag == NULL_TAG )
                 return true;
 
-            return Tag == null && IsImplicit && YamlScalarResolver.IsNull( Value );
+            return tag == null && isImplicit && YamlScalarResolver.IsNull( value );
         }
     }
 
@@ -77,13 +77,13 @@ public sealed class YamlScalar : YamlNode
     /// True when the scalar's type comes from its content (plain and untagged). Every other scalar, including
     /// one built with <see cref="YamlScalarStyle.Any"/>, is a string.
     /// </summary>
-    public bool IsImplicit => Tag == null && Style == YamlScalarStyle.Plain;
+    public bool isImplicit => tag == null && style == YamlScalarStyle.Plain;
 
-    public bool TryGetBool ( out bool value ) => YamlScalarResolver.TryParseBool( Value, out value );
+    public bool TryGetBool ( out bool value ) => YamlScalarResolver.TryParseBool( this.value, out value );
 
-    public bool TryGetInt64 ( out long value ) => YamlScalarResolver.TryParseInt64( Value, out value );
+    public bool TryGetInt64 ( out long value ) => YamlScalarResolver.TryParseInt64( this.value, out value );
 
-    public bool TryGetDouble ( out double value ) => YamlScalarResolver.TryParseDouble( Value, out value );
+    public bool TryGetDouble ( out double value ) => YamlScalarResolver.TryParseDouble( this.value, out value );
 
     /// <summary>
     /// Resolves the scalar with the YAML 1.2 core schema: null, <see cref="bool"/>, <see cref="long"/>,
@@ -91,11 +91,11 @@ public sealed class YamlScalar : YamlNode
     /// </summary>
     public object? Resolve ()
     {
-        if ( IsNullValue )
+        if ( isNullValue )
             return null;
 
-        if ( !IsImplicit )
-            return Value;
+        if ( !isImplicit )
+            return value;
 
         if ( TryGetBool( out bool b ) )
             return b;
@@ -103,10 +103,10 @@ public sealed class YamlScalar : YamlNode
         if ( TryGetInt64( out long l ) )
             return l;
 
-        if ( YamlScalarResolver.IsFloat( Value ) && TryGetDouble( out double d ) )
+        if ( YamlScalarResolver.IsFloat( value ) && TryGetDouble( out double d ) )
             return d;
 
-        return Value;
+        return value;
     }
 }
 
@@ -122,7 +122,7 @@ public sealed class YamlList : YamlNode, IReadOnlyList< YamlNode >
             Add( item );
     }
 
-    public override string KindName => "list";
+    public override string kindName => "list";
 
     public int Count => items.Count;
 
@@ -156,7 +156,7 @@ public sealed class YamlMap : YamlNode, IReadOnlyList< KeyValuePair< YamlNode, Y
     readonly List< KeyValuePair< YamlNode, YamlNode > > entries = new();
     readonly Dictionary< string, int > scalarKeyIndices = new( StringComparer.Ordinal );
 
-    public override string KindName => "map";
+    public override string kindName => "map";
 
     public int Count => entries.Count;
 
@@ -169,9 +169,9 @@ public sealed class YamlMap : YamlNode, IReadOnlyList< KeyValuePair< YamlNode, Y
         set => Set( key, value );
     }
 
-    public IEnumerable< YamlNode > Keys => entries.Select( entry => entry.Key );
+    public IEnumerable< YamlNode > keys => entries.Select( entry => entry.Key );
 
-    public IEnumerable< YamlNode > Values => entries.Select( entry => entry.Value );
+    public IEnumerable< YamlNode > values => entries.Select( entry => entry.Value );
 
     public bool ContainsKey ( string key ) => scalarKeyIndices.ContainsKey( key );
 
@@ -199,8 +199,8 @@ public sealed class YamlMap : YamlNode, IReadOnlyList< KeyValuePair< YamlNode, Y
         ArgumentNullException.ThrowIfNull( key );
         ArgumentNullException.ThrowIfNull( value );
 
-        if ( key is YamlScalar scalar && !scalarKeyIndices.TryAdd( scalar.Value, entries.Count ) )
-            throw new ArgumentException( $"Duplicate key '{scalar.Value}'.", nameof( key ) );
+        if ( key is YamlScalar scalar && !scalarKeyIndices.TryAdd( scalar.value, entries.Count ) )
+            throw new ArgumentException( $"Duplicate key '{scalar.value}'.", nameof( key ) );
 
         entries.Add( new( key, value ) );
     }
@@ -244,7 +244,7 @@ public sealed class YamlMap : YamlNode, IReadOnlyList< KeyValuePair< YamlNode, Y
         for ( int i = 0; i < entries.Count; i++ )
         {
             if ( entries[i].Key is YamlScalar scalar )
-                scalarKeyIndices[scalar.Value] = i;
+                scalarKeyIndices[scalar.value] = i;
         }
     }
 }

@@ -11,44 +11,44 @@ namespace Engine;
 /// </summary>
 public sealed class YamlReadContext
 {
-    readonly List< YamlError > errors = new();
+    readonly List< YamlError > errorList = new();
     readonly List< PathSegment > path = new();
     int depth;
 
-    readonly record struct PathSegment ( string? Key, int Index );
+    readonly record struct PathSegment ( string? key, int index );
 
     public YamlReadContext ( YamlReadOptions? options = null, string? source = null )
     {
-        Options = options ?? YamlReadOptions.Default;
-        Source = source;
+        this.options = options ?? YamlReadOptions.Default;
+        this.source = source;
     }
 
-    public YamlReadOptions Options { get; }
+    public YamlReadOptions options { get; }
 
-    public string? Source { get; }
+    public string? source { get; }
 
-    public IReadOnlyList< YamlError > Errors => errors;
+    public IReadOnlyList< YamlError > errors => errorList;
 
-    public bool HasErrors => errors.Count > 0;
+    public bool hasErrors => errorList.Count > 0;
 
     /// <summary>The key path being read, e.g. <c>rootNode.children[2].speed</c>.</summary>
-    public string CurrentPath
+    public string currentPath
     {
         get
         {
             var builder = new StringBuilder();
             foreach ( var segment in path )
             {
-                if ( segment.Key == null )
+                if ( segment.key == null )
                 {
-                    builder.Append( '[' ).Append( segment.Index ).Append( ']' );
+                    builder.Append( '[' ).Append( segment.index ).Append( ']' );
                     continue;
                 }
 
                 if ( builder.Length > 0 )
                     builder.Append( '.' );
 
-                builder.Append( segment.Key );
+                builder.Append( segment.key );
             }
 
             return builder.ToString();
@@ -56,7 +56,7 @@ public sealed class YamlReadContext
     }
 
     public void AddError ( YamlNode node, string message ) =>
-        errors.Add( new YamlError( message, node.Line, node.Column, CurrentPath, Source ) );
+        errorList.Add( new YamlError( message, node.line, node.column, currentPath, source ) );
 
     public void PushPath ( string key ) => path.Add( new PathSegment( key, 0 ) );
 
@@ -72,8 +72,8 @@ public sealed class YamlReadContext
 
     internal static string Describe ( YamlNode node ) => node switch
     {
-        YamlScalar { IsNullValue: true } => "null",
-        YamlScalar scalar => scalar.Value.Length > 40 ? $"'{scalar.Value[..40]}...'" : $"'{scalar.Value}'",
+        YamlScalar { isNullValue: true } => "null",
+        YamlScalar scalar => scalar.value.Length > 40 ? $"'{scalar.value[..40]}...'" : $"'{scalar.value}'",
         YamlList => "a list",
         _ => "a map",
     };
@@ -82,9 +82,9 @@ public sealed class YamlReadContext
 
     internal bool TryGetText ( YamlNode node, string expected, out string text )
     {
-        if ( node is YamlScalar { IsNullValue: false } scalar )
+        if ( node is YamlScalar { isNullValue: false } scalar )
         {
-            text = scalar.Value;
+            text = scalar.value;
             return true;
         }
 
@@ -110,7 +110,7 @@ public sealed class YamlReadContext
     public string? ReadString ( YamlNode node )
     {
         if ( node is YamlScalar scalar )
-            return scalar.IsNullValue ? null : scalar.Value;
+            return scalar.isNullValue ? null : scalar.value;
 
         Expected( node, "a string" );
         return null;
@@ -181,10 +181,10 @@ public sealed class YamlReadContext
 
     public float ReadSingle ( YamlNode node )
     {
-        int errorCount = errors.Count;
+        int errorCount = errorList.Count;
         double value = ReadDouble( node );
         float single = ( float )value;
-        if ( errors.Count == errorCount && float.IsInfinity( single ) && !double.IsInfinity( value ) )
+        if ( errorList.Count == errorCount && float.IsInfinity( single ) && !double.IsInfinity( value ) )
         {
             AddError( node, $"{value} is out of range for a float." );
             return 0;

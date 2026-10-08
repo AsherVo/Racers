@@ -4,37 +4,37 @@ namespace Engine;
 
 public sealed unsafe class Graphics : IDisposable
 {
-    internal nint Renderer { get; }
+    internal nint renderer { get; }
 
     /// <summary>Resolution the game draws in, in game pixels. (0, 0) is the bottom-left corner.</summary>
-    public int Width { get; private set; }
-    public int Height { get; private set; }
+    public int width { get; private set; }
+    public int height { get; private set; }
 
     /// <summary>Output pixels per game pixel at the current window size; a density for sharp fonts and Rive.</summary>
-    public float PixelScale { get; private set; } = 1f;
+    public float pixelScale { get; private set; } = 1f;
 
     /// <summary>1x1 white texture for drawing solid rectangles.</summary>
-    public Texture Pixel { get; }
+    public Texture pixel { get; }
 
-    RiveRuntime? _rive;
+    RiveRuntime? lazyRive;
 
     /// <summary>Created on first use, so games without Rive never load it.</summary>
-    internal RiveRuntime Rive => _rive ??= RiveRuntime.Create( Renderer );
+    internal RiveRuntime rive => lazyRive ??= RiveRuntime.Create( renderer );
 
     /// <summary>Advances and renders Rive instances; runs between the game's Update and Draw.</summary>
-    internal void UpdateRive ( float seconds ) => _rive?.Update( seconds );
+    internal void UpdateRive ( float seconds ) => lazyRive?.Update( seconds );
 
     internal Graphics ( nint renderer )
     {
-        Renderer = renderer;
-        Pixel = CreateSolid( renderer );
+        this.renderer = renderer;
+        pixel = CreateSolid( renderer );
     }
 
     internal void SetView ( int width, int height, float pixelScale )
     {
-        Width = width;
-        Height = height;
-        PixelScale = pixelScale;
+        this.width = width;
+        this.height = height;
+        this.pixelScale = pixelScale;
     }
 
     static Texture CreateSolid ( nint renderer )
@@ -50,7 +50,7 @@ public sealed unsafe class Graphics : IDisposable
 
     public void Dispose ()
     {
-        _rive?.Dispose();
-        Pixel.Dispose();
+        lazyRive?.Dispose();
+        pixel.Dispose();
     }
 }

@@ -44,7 +44,7 @@ public class YamlWriterTests
     {
         string written = WriteValue( String( value ) );
         Assert.Equal( expected, written );
-        Assert.Equal( value, Assert.IsType< YamlScalar >( Assert.IsType< YamlMap >( Yaml.Parse( written ) )["a"] ).Value );
+        Assert.Equal( value, Assert.IsType< YamlScalar >( Assert.IsType< YamlMap >( Yaml.Parse( written ) )["a"] ).value );
     }
 
     [Fact]
@@ -99,7 +99,7 @@ public class YamlWriterTests
         var key = new YamlList { new YamlScalar( "x" ) };
         var map = new YamlMap();
         map.Add( key, new YamlScalar( "v" ) );
-        map.Add( "tagged", new YamlScalar( "1", YamlScalarStyle.Plain ) { Tag = "tag:yaml.org,2002:str" } );
+        map.Add( "tagged", new YamlScalar( "1", YamlScalarStyle.Plain ) { tag = "tag:yaml.org,2002:str" } );
 
         string written = Yaml.Write( map );
         Assert.Equal( "? - x\n: v\ntagged: !!str 1\n", written );

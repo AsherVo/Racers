@@ -14,41 +14,41 @@ namespace Engine;
 /// </remarks>
 public sealed unsafe class Font : IDisposable
 {
-    const int FirstChar = 32, CharCount = 95;
-    const char Fallback = '?';
+    const int FIRST_CHAR = 32, CHAR_COUNT = 95;
+    const char FALLBACK = '?';
 
-    readonly EngineNative.Glyph[] _glyphs;
-    readonly float[] _kerning;
+    readonly EngineNative.Glyph[] glyphs;
+    readonly float[] kerning;
 
-    public Texture Texture { get; }
+    public Texture texture { get; }
 
     /// <summary>Pixel height the font was loaded at, in virtual-resolution pixels.</summary>
-    public float Size { get; }
+    public float size { get; }
 
     /// <summary>Distance from the top of a line to the baseline.</summary>
-    public float Ascent { get; }
+    public float ascent { get; }
 
     /// <summary>Distance between baselines of consecutive lines.</summary>
-    public float LineHeight { get; }
+    public float lineHeight { get; }
 
     /// <summary>Atlas pixels per virtual pixel.</summary>
-    internal float Density { get; }
+    internal float density { get; }
 
     Font ( Texture texture, EngineNative.Glyph[] glyphs, float[] kerning, EngineNative.FontMetrics metrics, float size, float density )
     {
-        Texture = texture;
-        _glyphs = glyphs;
-        _kerning = kerning;
-        Size = size;
-        Density = density;
-        Ascent = metrics.Ascent / density;
-        LineHeight = ( metrics.Ascent - metrics.Descent + metrics.LineGap ) / density;
+        this.texture = texture;
+        this.glyphs = glyphs;
+        this.kerning = kerning;
+        this.size = size;
+        this.density = density;
+        ascent = metrics.ascent / density;
+        lineHeight = ( metrics.ascent - metrics.descent + metrics.lineGap ) / density;
     }
 
     internal static Font Bake ( nint renderer, ReadOnlySpan< byte > ttf, float size, float density )
     {
-        var glyphs = new EngineNative.Glyph[CharCount];
-        var kerning = new float[CharCount * CharCount];
+        var glyphs = new EngineNative.Glyph[CHAR_COUNT];
+        var kerning = new float[CHAR_COUNT * CHAR_COUNT];
         EngineNative.FontMetrics metrics;
 
         for ( int dim = 256; dim <= 4096; dim *= 2 )
@@ -60,7 +60,7 @@ public sealed unsafe class Font : IDisposable
             fixed ( EngineNative.Glyph* glyphPtr = glyphs )
             fixed ( float* kerningPtr = kerning )
             {
-                result = EngineNative.en_font_bake( ttfPtr, ttf.Length, size * density, FirstChar, CharCount,
+                result = EngineNative.en_font_bake( ttfPtr, ttf.Length, size * density, FIRST_CHAR, CHAR_COUNT,
                     atlasPtr, dim, dim, glyphPtr, kerningPtr, &metrics );
             }
 
@@ -90,12 +90,12 @@ public sealed unsafe class Font : IDisposable
     }
 
     internal int GlyphIndex ( char c ) =>
-        c - FirstChar is var i && ( uint )i < CharCount ? i : Fallback - FirstChar;
+        c - FIRST_CHAR is var i && ( uint )i < CHAR_COUNT ? i : FALLBACK - FIRST_CHAR;
 
-    internal ref readonly EngineNative.Glyph Glyph ( int index ) => ref _glyphs[index];
+    internal ref readonly EngineNative.Glyph Glyph ( int index ) => ref glyphs[index];
 
     /// <summary>Kerning between two glyph indices, in virtual pixels.</summary>
-    internal float Kerning ( int left, int right ) => _kerning[left * CharCount + right] / Density;
+    internal float Kerning ( int left, int right ) => kerning[left * CHAR_COUNT + right] / density;
 
     /// <summary>Size of the text's layout box: the widest line by the number of lines.</summary>
     public Vector2 MeasureString ( ReadOnlySpan< char > text )
@@ -116,14 +116,14 @@ public sealed unsafe class Font : IDisposable
             int i = GlyphIndex( c );
             if ( prev >= 0 )
                 x += Kerning( prev, i );
-            x += _glyphs[i].XAdvance / Density;
+            x += glyphs[i].xAdvance / density;
             prev = i;
         }
 
-        return new Vector2( MathF.Max( width, x ), lines * LineHeight );
+        return new Vector2( MathF.Max( width, x ), lines * lineHeight );
     }
 
-    internal static RectangleF Source ( in EngineNative.Glyph g ) => RectangleF.FromLTRB( g.X0, g.Y0, g.X1, g.Y1 );
+    internal static RectangleF Source ( in EngineNative.Glyph g ) => RectangleF.FromLTRB( g.x0, g.y0, g.x1, g.y1 );
 
-    public void Dispose () => Texture.Dispose();
+    public void Dispose () => texture.Dispose();
 }

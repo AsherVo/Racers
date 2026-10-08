@@ -47,7 +47,7 @@ sealed class YamlWriter
         anchorsWritten.Clear();
         AssignAnchors( root );
 
-        if ( IsEmptyPlain( root ) && root.Tag == null && !anchorNames.ContainsKey( root ) )
+        if ( IsEmptyPlain( root ) && root.tag == null && !anchorNames.ContainsKey( root ) )
             return;
 
         WriteValue( root, 0, Position.Root );
@@ -62,14 +62,14 @@ sealed class YamlWriter
         var usedNames = new HashSet< string >( StringComparer.Ordinal );
         foreach ( var ( node, count ) in visits )
         {
-            if ( count > 1 && node.Anchor is { } anchor && IsValidAnchorName( anchor ) && usedNames.Add( anchor ) )
+            if ( count > 1 && node.anchor is { } anchor && IsValidAnchorName( anchor ) && usedNames.Add( anchor ) )
                 anchorNames[node] = anchor;
         }
 
         int next = 1;
         foreach ( var ( node, count ) in visits )
         {
-            bool needsAnchor = count > 1 && ( node is not YamlScalar || node.Anchor != null );
+            bool needsAnchor = count > 1 && ( node is not YamlScalar || node.anchor != null );
             if ( !needsAnchor || anchorNames.ContainsKey( node ) )
                 continue;
 
@@ -121,7 +121,7 @@ sealed class YamlWriter
     static bool IsValidAnchorName ( string name ) =>
         name.Length > 0 && !name.Any( c => c is ' ' or '\t' or '\n' or '\r' or ',' or '[' or ']' or '{' or '}' );
 
-    static bool IsEmptyPlain ( YamlNode node ) => node is YamlScalar { Style: YamlScalarStyle.Plain, Value: "" };
+    static bool IsEmptyPlain ( YamlNode node ) => node is YamlScalar { style: YamlScalarStyle.Plain, value: "" };
 
     void Indent ( int indent ) => output.Append( ' ', indent );
 
@@ -141,7 +141,7 @@ sealed class YamlWriter
             anchor = "&" + name;
         }
 
-        string? tag = node.Tag == null ? null : FormatTag( node.Tag );
+        string? tag = node.tag == null ? null : FormatTag( node.tag );
         return anchor != null && tag != null ? anchor + " " + tag : anchor ?? tag;
     }
 
@@ -314,15 +314,15 @@ sealed class YamlWriter
             return;
         }
 
-        WriteLiteral( scalar.Value, Math.Max( parentIndent, 0 ) + INDENT );
+        WriteLiteral( scalar.value, Math.Max( parentIndent, 0 ) + INDENT );
     }
 
     /// <summary>The scalar as a single-line token, or null if it should be a literal block.</summary>
     static string? InlineScalar ( YamlScalar scalar, bool isKey )
     {
-        string value = scalar.Value;
+        string value = scalar.value;
         bool literal = !isKey && IsLiteralSafe( value );
-        switch ( scalar.Style )
+        switch ( scalar.style )
         {
             case YamlScalarStyle.Plain:
                 if ( IsPlainSafe( value, isKey ) )

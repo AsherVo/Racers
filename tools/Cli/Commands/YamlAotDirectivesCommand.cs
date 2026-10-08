@@ -11,23 +11,23 @@ namespace Cli;
 /// </summary>
 sealed class YamlAotDirectivesCommand : ICommand
 {
-    static readonly Type[] collectionDefinitions = [typeof( List<> ), typeof( HashSet<> ), typeof( Dictionary<,> )];
+    static readonly Type[] CollectionDefinitions = [typeof( List<> ), typeof( HashSet<> ), typeof( Dictionary<,> )];
 
-    public string Name => "yaml aot-directives";
+    public string name => "yaml aot-directives";
 
-    public string Summary => "Write NativeAOT rd.xml directives for the collections YAML may create.";
+    public string summary => "Write NativeAOT rd.xml directives for the collections YAML may create.";
 
-    public string Usage => "yaml aot-directives --out <rd.xml> <assembly.dll>...";
+    public string usage => "yaml aot-directives --out <rd.xml> <assembly.dll>...";
 
     public int Run ( string[] args )
     {
         var arguments = new Arguments( args, valueOptions: ["out"], flags: [] );
         string output = arguments.Value( "out" ) ?? throw new UsageException( "--out is required." );
-        if ( arguments.Positional.Count == 0 )
+        if ( arguments.positional.Count == 0 )
             throw new UsageException( "Give at least one assembly." );
 
         var context = new AssemblyLoadContext( "yaml-aot-directives", isCollectible: true );
-        var directories = arguments.Positional.Select( path => Path.GetDirectoryName( Path.GetFullPath( path ) )! ).Distinct().ToList();
+        var directories = arguments.positional.Select( path => Path.GetDirectoryName( Path.GetFullPath( path ) )! ).Distinct().ToList();
         context.Resolving += ( loadContext, name ) =>
         {
             var candidate = directories.Select( directory => Path.Combine( directory, name.Name + ".dll" ) ).FirstOrDefault( File.Exists );
@@ -36,7 +36,7 @@ sealed class YamlAotDirectivesCommand : ICommand
 
         var collections = new HashSet< Type >();
         var visited = new HashSet< Type >();
-        foreach ( string path in arguments.Positional )
+        foreach ( string path in arguments.positional )
         {
             var assembly = context.LoadFromAssemblyPath( Path.GetFullPath( path ) );
             foreach ( var type in LoadableTypes( assembly ) )
@@ -77,7 +77,7 @@ sealed class YamlAotDirectivesCommand : ICommand
             return;
 
         var definition = type.GetGenericTypeDefinition();
-        if ( collectionDefinitions.Any( collection => collection.FullName == definition.FullName ) )
+        if ( CollectionDefinitions.Any( collection => collection.FullName == definition.FullName ) )
             collections.Add( type );
 
         foreach ( var argument in type.GetGenericArguments() )

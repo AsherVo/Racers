@@ -20,6 +20,6 @@ internal static partial class SDL
             return;
 
         NativeLibrary.SetDllImportResolver( typeof( SDL ).Assembly, static ( name, _, _ ) =>
-            name == Lib ? NativeLibrary.GetMainProgramHandle() : 0 );
+            name == LIB ? NativeLibrary.GetMainProgramHandle() : 0 );
     }
 }

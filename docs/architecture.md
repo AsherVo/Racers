@@ -78,7 +78,7 @@ and drawing. On return it resets the clock so no time is skipped.
 
 ### Window, resolution and input
 
-Each game has a `config.yaml` in its content folder (`GameOptions.ConfigPath`), mapped to `GameConfig`. The
+Each game has a `config.yaml` in its content folder (`GameOptions.configPath`), mapped to `GameConfig`. The
 runner reads it right after `SDL_Init`, before the window exists:
 
 ```yaml
@@ -90,7 +90,7 @@ dynamicSize: false      # true: the resolution follows the window
 dynamicPixelScale: 4    # with dynamicSize: window points per game pixel
 ```
 
-`ViewFit` turns the config and the window's size into the game's resolution (`Graphics.Width/Height`) and an
+`ViewFit` turns the config and the window's size into the game's resolution (`Graphics.width/height`) and an
 SDL logical presentation mode:
 
 | | Fixed size | `dynamicSize` |
@@ -101,16 +101,16 @@ SDL logical presentation mode:
 | Desktop window opens at | the largest whole multiple that fits 90% of the screen | resolution × `dynamicPixelScale`, shrunk to fit |
 
 SDL fills the letterbox with the clear color, so each frame clears the whole window black and then fills only
-the game's area with `GameOptions.ClearColor`. On `SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED` the runner refits and,
-if the resolution or `Graphics.PixelScale` (output pixels per game pixel) changed, calls `Game.OnResize`.
-`PixelScale` is the density to bake fonts and render Rive at for sharp output.
+the game's area with `GameOptions.clearColor`. On `SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED` the runner refits and,
+if the resolution or `Graphics.pixelScale` (output pixels per game pixel) changed, calls `Game.OnResize`.
+`pixelScale` is the density to bake fonts and render Rive at for sharp output.
 
 Windows are resizable and high-DPI. On mobile they're fullscreen, and in the browser they fill the
 page. Alt+Enter (Option+Return) toggles borderless fullscreen on desktop.
 
 Mobile orientation and fullscreen come from SDL, not from the Android manifest or iOS Info.plist. A
 resizable SDL window asks for "any" orientation, and Android 15+ ignores fullscreen themes. So the
-runner sets `SDL_HINT_ORIENTATIONS` from `GameOptions.Orientation` before `SDL_Init`, and creates
+runner sets `SDL_HINT_ORIENTATIONS` from `GameOptions.orientation` before `SDL_Init`, and creates
 fullscreen windows on mobile.
 
 Pointer events are converted to game pixels (`SDL_ConvertEventToRenderCoordinates`, then y flipped
@@ -196,7 +196,7 @@ first. Classes need a parameterless constructor, which can be private.
 
 | Attribute | Effect |
 |---|---|
-| `[YamlIgnore]` | Never read or written. `Condition = WhenNull / WhenDefault` only omits it from output. |
+| `[YamlIgnore]` | Never read or written. `condition = WhenNull / WhenDefault` only omits it from output. |
 | `[YamlMember("key")]` | Renames a member, or includes a non-public one. |
 | `[YamlRequired]` | A missing key is an error. Otherwise missing members keep their initial value. |
 | `[YamlPolymorphic("type")]` | On a base class or interface: the `type` key chooses a concrete subclass, by class name or `[YamlTypeName]`. Subclasses are found in the base's assembly, plus any listed with `[YamlDerivedType]`. |
@@ -222,7 +222,7 @@ items/sword.yaml:12:3: components[0].valeu: Unknown key 'valeu' for Knob0.
 items/sword.yaml:18:11: onHit.children[0].type: Unknown BehaviorNode type 'GainSheild'. Expected one of: ...
 ```
 
-Unknown keys are errors by default, which catches typos. `YamlReadOptions.AllowUnknownKeys` turns that off.
+Unknown keys are errors by default, which catches typos. `YamlReadOptions.allowUnknownKeys` turns that off.
 
 ### Reflection under AOT
 
@@ -246,7 +246,7 @@ Mono targets (Android, and the browser, which falls back to its interpreter) don
 `SpriteBatch` is the only drawing API games see. Every draw is a textured quad: a sprite, a glyph,
 or a Rive artboard. Quads are built on the CPU (position, rotation, origin, scale, source rectangle,
 tint) into a vertex array and submitted with `SDL_RenderGeometry`. The batch flushes when the
-texture changes, or when it reaches 4,096 quads. `DrawCalls` reports how many submits the last frame
+texture changes, or when it reaches 4,096 quads. `drawCalls` reports how many submits the last frame
 made.
 
 Positions are in game pixels with y up, and rotations are counter-clockwise. SDL's y points down, so
@@ -288,7 +288,7 @@ selects SDL's pixel-art scaling for crisp upscaled sprites. `Linear` is the defa
 - The atlas becomes a texture of white texels with coverage as alpha, so the draw color tints the
   text.
 - `SpriteBatch.DrawString` lays out glyphs with advance and kerning, handles `\n`, and draws each
-  glyph as a quad scaled by `1 / density`. Baking at `Graphics.PixelScale` keeps text sharp at the
+  glyph as a quad scaled by `1 / density`. Baking at `Graphics.pixelScale` keeps text sharp at the
   window's scale.
 
 Text is ordinary quads, so it batches with itself and layers with everything else.
@@ -313,8 +313,8 @@ ContentManager.LoadRive ──► RiveFile ──CreateInstance(artboard, stateM
   - inputs (`SetNumber`, `SetBool`, `Fire`)
   - text runs (`SetText`)
   - pointer events, in artboard units
-  - `Paused`
-  - `Texture`, its most recent frame
+  - `paused`
+  - `texture`, its most recent frame
 
   `resolution` is texture pixels per artboard unit. Choose it for the size the artboard will be
   shown at.
@@ -395,7 +395,7 @@ target functions, plus `en_rive_backend()` so `RiveRuntime` knows which texture 
 
 - **Rive on Metal** waits on the GPU once per frame, because it can't share SDL's command queue.
 - **Rive and font resolution** is fixed when the instance or font is created. The sample uses the
-  `Graphics.PixelScale` it starts with, so text and Rive soften if the window grows later.
+  `Graphics.pixelScale` it starts with, so text and Rive soften if the window grows later.
 - **YAML** comments are lost when a parsed file is written back. `DateTime` members aren't supported.
 - **Fonts** cover printable ASCII only, and kerning comes only from the font's `kern` table (not GPOS).
 - **Draw calls:** sprites and glyphs each have their own texture. A shared atlas would let

@@ -3,11 +3,11 @@ namespace Cli;
 interface ICommand
 {
     /// <summary>The words that invoke the command, e.g. "yaml validate".</summary>
-    string Name { get; }
+    string name { get; }
 
-    string Summary { get; }
+    string summary { get; }
 
-    string Usage { get; }
+    string usage { get; }
 
     /// <returns>The process exit code.</returns>
     int Run ( string[] args );
@@ -32,7 +32,7 @@ static class CommandRunner
 
         var command = commands
             .Where( candidate => Matches( candidate, args ) )
-            .MaxBy( candidate => candidate.Name.Length );
+            .MaxBy( candidate => candidate.name.Length );
 
         if ( command == null )
         {
@@ -41,10 +41,10 @@ static class CommandRunner
             return ExitCode.USAGE;
         }
 
-        var rest = args.Skip( command.Name.Split( ' ' ).Length ).ToArray();
+        var rest = args.Skip( command.name.Split( ' ' ).Length ).ToArray();
         if ( rest.Any( arg => arg is "--help" or "-h" ) )
         {
-            Console.WriteLine( $"{command.Summary}\n\nUsage: cli {command.Usage}" );
+            Console.WriteLine( $"{command.summary}\n\nUsage: cli {command.usage}" );
             return ExitCode.SUCCESS;
         }
 
@@ -55,23 +55,23 @@ static class CommandRunner
         catch ( UsageException exception )
         {
             Console.Error.WriteLine( $"error: {exception.Message}" );
-            Console.Error.WriteLine( $"Usage: cli {command.Usage}" );
+            Console.Error.WriteLine( $"Usage: cli {command.usage}" );
             return ExitCode.USAGE;
         }
     }
 
     static bool Matches ( ICommand command, string[] args )
     {
-        string[] words = command.Name.Split( ' ' );
+        string[] words = command.name.Split( ' ' );
         return args.Length >= words.Length && words.Select( ( word, i ) => word == args[i] ).All( match => match );
     }
 
     static void PrintHelp ( IReadOnlyList< ICommand > commands )
     {
         Console.WriteLine( "Usage: cli <command> [arguments]   (cli <command> --help for details)\n\nCommands:" );
-        int width = commands.Max( command => command.Name.Length );
+        int width = commands.Max( command => command.name.Length );
         foreach ( var command in commands )
-            Console.WriteLine( $"  {command.Name.PadRight( width )}  {command.Summary}" );
+            Console.WriteLine( $"  {command.name.PadRight( width )}  {command.summary}" );
     }
 }
 
@@ -80,7 +80,7 @@ sealed class UsageException ( string message ) : Exception( message );
 /// <summary>Positional arguments plus <c>--name value</c> options and <c>--flag</c> switches.</summary>
 sealed class Arguments
 {
-    readonly List< string > positional = new();
+    readonly List< string > positionalList = new();
     readonly List< ( string Name, string? Value ) > options = new();
 
     /// <param name="valueOptions">Options that take a value, as <c>--name value</c> or <c>--name=value</c>.</param>
@@ -92,7 +92,7 @@ sealed class Arguments
             string arg = args[i];
             if ( !arg.StartsWith( "--", StringComparison.Ordinal ) )
             {
-                positional.Add( arg );
+                positionalList.Add( arg );
                 continue;
             }
 
@@ -118,7 +118,7 @@ sealed class Arguments
         }
     }
 
-    public IReadOnlyList< string > Positional => positional;
+    public IReadOnlyList< string > positional => positionalList;
 
     public bool Flag ( string name ) => options.Any( option => option.Name == name );
 
