@@ -1,6 +1,6 @@
 title: Resource Racers
-resolutionX: 200
+resolutionX: 400
 resolutionY: 225
-pixelPerfect: true
+pixelPerfect: false
 dynamicSize: false
 dynamicPixelScale: 4

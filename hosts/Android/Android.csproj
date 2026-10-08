@@ -14,6 +14,17 @@
     <InvariantGlobalization>true</InvariantGlobalization>
   </PropertyGroup>
 
+  <!-- Without these, builds fall back to the legacy Xamarin SDK folder, which lacks the API level this targets,
+       and to the system's default JDK, which can be older than the 17 the Android tools need. -->
+  <PropertyGroup Condition="'$(AndroidSdkDirectory)' == ''">
+    <AndroidSdkDirectory Condition="'$(ANDROID_HOME)' != ''">$(ANDROID_HOME)</AndroidSdkDirectory>
+    <AndroidSdkDirectory Condition="'$(ANDROID_HOME)' == '' and $([MSBuild]::IsOSPlatform('OSX'))">$(HOME)/Library/Android/sdk</AndroidSdkDirectory>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(JavaSdkDirectory)' == ''">
+    <JavaSdkDirectory Condition="'$(JAVA_HOME)' != ''">$(JAVA_HOME)</JavaSdkDirectory>
+    <JavaSdkDirectory Condition="'$(JAVA_HOME)' == '' and $([MSBuild]::IsOSPlatform('OSX'))">$(HOME)/Library/Java/jdk-17</JavaSdkDirectory>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\..\src\Racers\Racers.Game.csproj" />
     <PackageReference Include="SDL3-CS.Android" />
