@@ -11,6 +11,8 @@ public static unsafe class Log
 {
     public static void Info ( string message ) => Write( SDL.LOG_PRIORITY_INFO, message );
 
+    public static void Warning ( string message ) => Write( SDL.LOG_PRIORITY_WARN, message );
+
     public static void Error ( string message ) => Write( SDL.LOG_PRIORITY_ERROR, "ERROR: " + message );
 
     static void Write ( int priority, string message )

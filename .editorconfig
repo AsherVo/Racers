@@ -64,3 +64,11 @@ dotnet_naming_symbols.types_and_members.applicable_kinds = namespace, class, str
 dotnet_naming_rule.types_and_members_are_pascal_case.symbols = types_and_members
 dotnet_naming_rule.types_and_members_are_pascal_case.style = pascal_case
 dotnet_naming_rule.types_and_members_are_pascal_case.severity = warning
+
+[src/Racers/**.cs]
+dotnet_diagnostic.CS8618.severity = none
+dotnet_diagnostic.CS8603.severity = none
+dotnet_diagnostic.CS8601.severity = none
+dotnet_diagnostic.CS8625.severity = none
+dotnet_diagnostic.IL2067.severity = none
+dotnet_diagnostic.IL2075.severity = none

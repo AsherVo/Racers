@@ -25,7 +25,7 @@ public abstract class Game
     protected internal virtual void OnResize () { }
 }
 
-public readonly record struct GameTime ( double totalSeconds, float deltaSeconds );
+public readonly record struct GameTime ( double totalSeconds, float dt );
 
 public enum PointerAction { Down, Move, Up }
 

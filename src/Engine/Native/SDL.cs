@@ -56,6 +56,7 @@ internal static unsafe partial class SDL
     // SDL_log.h
     public const int LOG_CATEGORY_APPLICATION = 0;
     public const int LOG_PRIORITY_INFO = 4;
+    public const int LOG_PRIORITY_WARN = 5;
     public const int LOG_PRIORITY_ERROR = 6;
 
     // SDL_main.h
