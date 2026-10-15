@@ -16,6 +16,9 @@ public sealed class RacersGame : Game
     SpriteBatch? batch; // read in Update, after the previous frame's End() has flushed everything
     int frames;
 
+    uint canvas;
+    uint debugCanvas;
+
     World world;
 
     protected override void Load ()
@@ -26,8 +29,19 @@ public sealed class RacersGame : Game
 
         world = new World();
         world.Start( new RenderSystem() );
-        
+
+        canvas = world.Create( "Canvas",
+            new Canvas {},
+            new SortOrder { value = 0 }
+        );
+
+        debugCanvas = world.Create( "Debug Canvas",
+            new Canvas {},
+            new SortOrder { value = 9999 }
+        );
+
         world.Create( "Test Sprite",
+            new OnCanvas { relation = canvas },
             new Sprite { path = "car_1.png" },
             new Position { value = new Vector2( 10, 10 ) }
         );

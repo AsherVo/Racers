@@ -15,6 +15,7 @@ public class RenderSystem : WorldManipulator, ISystem, IDrawSystem
 		sprites = new FilterBuilder()
 			.Include< Sprite >()
 			.Include< Position >()
+			.Exclude< Hidden >() 
 			.ToFilter();
 
 		Start( sprites );

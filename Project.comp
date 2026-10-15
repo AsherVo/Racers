@@ -1,0 +1,18 @@
+compee: 1
+data: src/Racers/Content/data
+build:
+  command: dotnet build hosts/Desktop -nologo -v:q -clp:NoSummary
+  validate: tools/cli.sh yaml validate src/Racers/Content --quiet
+  run: hosts/Desktop/bin/Debug/net10.0/Racers
+blocks:
+  - name: Meta
+    properties:
+      - name: Group
+        type: select
+        width: 150
+        options:
+          group: Groups
+      - name: Enabled
+        type: boolean
+        width: 74
+rows: [Groups, Misc]
