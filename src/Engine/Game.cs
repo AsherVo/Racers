@@ -1,5 +1,3 @@
-using System.Numerics;
-
 namespace Engine;
 
 /// <summary>Base class for a game. The engine calls these hooks; hosts never touch them directly.</summary>

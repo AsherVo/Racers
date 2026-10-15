@@ -1,5 +1,4 @@
 using System.Drawing;
-using System.Numerics;
 using Engine.Native;
 
 namespace Engine;
@@ -53,7 +52,7 @@ public sealed unsafe class SpriteBatch
 
     /// <summary>Stretches a texture to fill <paramref name="destination"/>, whose X and Y are its bottom-left corner.</summary>
     public void Draw ( Texture texture, RectangleF destination, Color color ) =>
-        Draw( texture, destination.Location.ToVector2(), null, color, 0f, new Vector2( 0f, texture.height ),
+        Draw( texture, new Vector2( destination.X, destination.Y ), null, color, 0f, new Vector2( 0f, texture.height ),
             new Vector2( destination.Width / texture.width, destination.Height / texture.height ) );
 
     /// <param name="rect">X and Y are the bottom-left corner.</param>
@@ -125,8 +124,8 @@ public sealed unsafe class SpriteBatch
         float u1 = src.Right / texture.width, v1 = src.Bottom / texture.height;
 
         // Quad corners relative to the origin, scaled, turned y-up (texture rows run down), then rotated and translated.
-        float x0 = -origin.X * scale.X, y0 = origin.Y * scale.Y;
-        float x1 = ( src.Width - origin.X ) * scale.X, y1 = ( origin.Y - src.Height ) * scale.Y;
+        float x0 = -origin.x * scale.x, y0 = origin.y * scale.y;
+        float x1 = ( src.Width - origin.x ) * scale.x, y1 = ( origin.y - src.Height ) * scale.y;
         var ( sin, cos ) = rotation == 0f ? ( 0f, 1f ) : MathF.SinCos( rotation );
         if ( texture.premultiplied )
             color = new Color( color.r * color.a, color.g * color.a, color.b * color.a, color.a );
@@ -142,8 +141,8 @@ public sealed unsafe class SpriteBatch
         // SDL's y runs down from the top, so the game's y is flipped on the way out.
         SDL.Vertex Vertex ( float x, float y, float u, float tv ) => new()
         {
-            x = position.X + x * cos - y * sin,
-            y = height - ( position.Y + x * sin + y * cos ),
+            x = position.x + x * cos - y * sin,
+            y = height - ( position.y + x * sin + y * cos ),
             r = color.r,
             g = color.g,
             b = color.b,

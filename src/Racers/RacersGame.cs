@@ -1,5 +1,4 @@
 using RectangleF = System.Drawing.RectangleF;
-using System.Numerics;
 using System.Runtime.InteropServices;
 using Engine;
 using MintECS;
@@ -77,8 +76,8 @@ public sealed class RacersGame : Game
     {
         if ( e.action == PointerAction.Down )
         {
-            // int lane = Math.Clamp( ( int )MathF.Round( ( 0.58f - e.position.Y / graphics.height ) / 0.09f ), 0, LANES - 1 );
-            // Spawn( lane, e.position.X );
+            // int lane = Math.Clamp( ( int )MathF.Round( ( 0.58f - e.position.y / graphics.height ) / 0.09f ), 0, LANES - 1 );
+            // Spawn( lane, e.position.x );
         }
     }
 

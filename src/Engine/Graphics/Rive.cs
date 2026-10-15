@@ -1,4 +1,3 @@
-using System.Numerics;
 using Engine.Native;
 
 namespace Engine;
@@ -126,7 +125,7 @@ public sealed class RiveInstance : IDisposable
     public bool PointerUp ( Vector2 position ) => Pointer( 2, position );
 
     bool Pointer ( int action, Vector2 position ) =>
-        EngineNative.en_rive_instance_pointer( live, action, position.X, position.Y ) != 0;
+        EngineNative.en_rive_instance_pointer( live, action, position.x, position.y ) != 0;
 
     nint live
     {

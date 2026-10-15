@@ -2,7 +2,6 @@ using Engine;
 using Racers;
 
 using RectangleF = System.Drawing.RectangleF;
-using System.Numerics;
 using System.Collections.Generic;
 
 namespace MintECS;
@@ -83,21 +82,21 @@ public class RenderSystem : WorldManipulator, ISystem, IDrawSystem
 				{
 					var position = Get< Position >( drawEntity );
 					var texture = Toolbox.I.load.Texture( sprite.path );
-					var pivot = new Vector2( rect.width * rect.pivot.X, rect.height * ( 1f - rect.pivot.Y ) );
+					var pivot = new Vector2( rect.width * rect.pivot.x, rect.height * ( 1f - rect.pivot.y ) );
 					batch.Draw( texture, position, null, color, 0f, pivot, Vector2.One );
 				}
 
 				if ( Has< DrawSolid >( drawEntity ) )
 				{
 					var position = Get< Position >( drawEntity );
-					var bottomLeft = position.value - new Vector2( rect.width * rect.pivot.X, rect.height * rect.pivot.Y );
-					batch.FillRectangle( new RectangleF( bottomLeft.X, bottomLeft.Y, rect.width, rect.height ), color );
+					var bottomLeft = position.value - new Vector2( rect.width * rect.pivot.x, rect.height * rect.pivot.y );
+					batch.FillRectangle( new RectangleF( bottomLeft.x, bottomLeft.y, rect.width, rect.height ), color );
 				}
 
 				if ( riveInstances.TryGetValue( drawEntity, out var rive ) )
 				{
 					var position = Get< Position >( drawEntity );
-					var pivot = new Vector2( rive.width * rect.pivot.X, rive.height * ( 1f - rect.pivot.Y ) );
+					var pivot = new Vector2( rive.width * rect.pivot.x, rive.height * ( 1f - rect.pivot.y ) );
 					var scale = new Vector2( rect.width / rive.width, rect.height / rive.height );
 					batch.Draw( rive, position, color, 0f, pivot, scale );
 				}
@@ -107,9 +106,9 @@ public class RenderSystem : WorldManipulator, ISystem, IDrawSystem
 					var position = Get< Position >( drawEntity );
 					var font = Toolbox.I.load.Font( drawText.font, drawText.fontSize );
 					var size = font.MeasureString( drawText.text );
-					rect.width = size.X;
-					rect.height = size.Y;
-					var topLeft = position.value + new Vector2( -rect.width * rect.pivot.X, rect.height * ( 1f - rect.pivot.Y ) );
+					rect.width = size.x;
+					rect.height = size.y;
+					var topLeft = position.value + new Vector2( -rect.width * rect.pivot.x, rect.height * ( 1f - rect.pivot.y ) );
 					batch.DrawString( font, drawText.text, topLeft, color );
 				}
 			}	
@@ -147,7 +146,7 @@ public class RenderSystem : WorldManipulator, ISystem, IDrawSystem
 		var riveFile = Toolbox.I.load.Rive( drawRive.path );
 
 		var artboardSize = riveFile.ArtboardSize( drawRive.artboard );
-		float fit = MathF.Max( rect.width / artboardSize.X, rect.height / artboardSize.Y );
+		float fit = MathF.Max( rect.width / artboardSize.x, rect.height / artboardSize.y );
 
 		float resolution = fit * Toolbox.I.game.graphics.pixelScale;
 		riveInstances[ entity ] = riveFile.CreateInstance( drawRive.artboard, drawRive.stateMachine, resolution );

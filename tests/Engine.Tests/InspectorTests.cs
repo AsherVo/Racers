@@ -1,5 +1,4 @@
 using System.Net.Sockets;
-using System.Numerics;
 using System.Text;
 using System.Text.Json;
 
@@ -29,7 +28,7 @@ public class InspectorTests
         Assert.True( node.expandable );
         Assert.True( node.valueIsSummary );
         Assert.Null( node.children );
-        Assert.Equal( "{name: Red, speed: 3, position: {X: 0.0, Y: 0.0}, tags: []}", node.value );
+        Assert.Equal( "{name: Red, speed: 3, position: {x: 0.0, y: 0.0}, tags: []}", node.value );
     }
 
     [Fact]
@@ -43,7 +42,7 @@ public class InspectorTests
         Assert.False( node.children[0].expandable );
 
         var position = node.children[2];
-        Assert.Equal( "{X: 1.0, Y: 2.5}", position.value );
+        Assert.Equal( "{x: 1.0, y: 2.5}", position.value );
         Assert.Equal( ["1.0", "2.5"], position.children!.Select( child => child.value ) );
 
         // Empty, so nothing to expand, and not asked for.

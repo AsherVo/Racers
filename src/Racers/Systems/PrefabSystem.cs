@@ -1,5 +1,4 @@
 using RectangleF = System.Drawing.RectangleF;
-using System.Numerics;
 using System.Runtime.InteropServices;
 using Engine;
 using MintECS;
@@ -98,8 +97,8 @@ public class PrefabSystem : WorldManipulator, ISystem
                 color = color
             },
             new Rect {
-                width = size.X,
-                height = size.Y
+                width = size.x,
+                height = size.y
             }
         );
 
@@ -149,8 +148,8 @@ public class PrefabSystem : WorldManipulator, ISystem
                 artboard = artboard
             },
             new Rect {
-                width = width != 0f ? width : artboardSize.X,
-                height = height != 0f ? height : artboardSize.Y
+                width = width != 0f ? width : artboardSize.x,
+                height = height != 0f ? height : artboardSize.y
             }
         );
     }
