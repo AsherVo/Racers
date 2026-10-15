@@ -1,6 +1,6 @@
 Meta:
-  Enabled: false
+  Enabled: true
 
 Sprite:
   Path: car_2
-  Color: 1F1F1F
+  Color: B6AF00

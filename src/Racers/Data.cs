@@ -49,12 +49,12 @@ public partial class Data
     }
 
     public bool Exists ( string id )
-    {
-        if ( !GroupsById.ContainsKey( id ) )
-            return false;
+        => GroupsById.ContainsKey( id );
 
+    public bool IsEnabled ( string id )
+    {
         Load( id );
-        
+
         if ( !data[ id ].TryGetValue( META_BLOCK, out var meta ) )
             return false;
 
@@ -67,7 +67,7 @@ public partial class Data
 
         foreach ( var ( id, idGroup ) in GroupsById )
         {
-            if ( idGroup == group && Exists( id ) )
+            if ( idGroup == group && Exists( id ) && IsEnabled( id ) )
                 result.Add( id );
         }
 
