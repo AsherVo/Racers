@@ -67,11 +67,12 @@ calls `Init()`, then calls `Frame()` from `requestAnimationFrame`.
 1. Measures `dt` and clamps it to 0.1 s, so a debugger break or a backgrounded tab doesn't produce a
    huge step.
 2. Calls `Game.Update(time)`.
-3. Calls `Graphics.UpdateRive(dt)`: advances every Rive instance and re-renders the ones that
+3. Answers the inspector's latest request, if a tool is connected (see [Inspector](#inspector)).
+4. Calls `Graphics.UpdateRive(dt)`: advances every Rive instance and re-renders the ones that
    changed. It runs after `Update`, so inputs the game just set take effect this frame.
-4. Clears, then `SpriteBatch.Begin` → `Game.Draw(batch)` → `SpriteBatch.End`.
-5. Saves a PNG at frame 90 if `ENGINE_CAPTURE` is set (an automated check that works on any platform).
-6. Presents.
+5. Clears, then `SpriteBatch.Begin` → `Game.Draw(batch)` → `SpriteBatch.End`.
+6. Saves a PNG at frame 90 if `ENGINE_CAPTURE` is set (an automated check that works on any platform).
+7. Presents.
 
 When the app enters the background (`SDL_EVENT_WILL_ENTER_BACKGROUND`) the runner stops updating
 and drawing. On return it resets the clock so no time is skipped.
@@ -238,6 +239,37 @@ reads data classes' setters. `hosts/Directory.Build.targets` handles this in two
    or property of the data assemblies, as rd.xml directives (`obj/.../yaml.rd.xml`).
 
 Mono targets (Android, and the browser, which falls back to its interpreter) don't need step 2.
+
+## Inspector
+
+`Engine.Inspector` lets a development tool look inside the running game. Compee uses it for its World
+pane. When the tool starts the game it sets `ENGINE_INSPECTOR` to the path of a Unix domain socket it is
+listening on. `GameRunner.Init` connects to it before `Game.Load`. Without the variable, nothing connects,
+and each frame costs one null check.
+
+Anything implementing `IInspectable` can be registered with `Inspector.Register`. MintECS's `World` registers
+itself in its constructor (`src/Racers/ECS/World.Inspect.cs`). A source returns a tree of `InspectorNode`s,
+each with a key, a label, an optional muted note, a value, and children. Children are filled in only for rows
+the tool has expanded (`InspectorQuery`), so a large world is still cheap to send. The tool identifies a row by
+its *path*, the keys from the root joined with `/`, with `%` and `/` in a key escaped (`InspectorQuery.Join`).
+`InspectorNode.Describe` turns any object into rows through the same mapping as the YAML writer, so a
+component looks the way its data would in a file.
+
+The protocol is one JSON object per line in each direction:
+
+```
+game → tool   {"hello":"engine","protocol":1,"pid":4242}
+tool → game   {"id":7,"expanded":["world-0","world-0/3","world-0/3/Sprite"]}
+game → tool   {"id":7,"frame":512,"roots":[{"k":"world-0","l":"World 0","v":"3 entities","s":true,"x":true,"c":[…]}]}
+```
+
+Node fields: `k` key, `l` label, `n` note, `v` value, `s` the value is a summary, `x` expandable, `c` children.
+Fields that are absent or false are omitted.
+
+Requests are read on a background thread and replies written on another, so a slow tool can't stall a
+frame. The game thread only takes the latest request, at most once per frame, and builds the reply between
+`Update` and drawing, when the world is consistent. If replies pile up, the extras are dropped. Sources are
+held weakly, and one that throws shows up as a row with the error instead of breaking the tree.
 
 ## Rendering
 

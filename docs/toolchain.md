@@ -58,6 +58,9 @@ Problems print as `file:line:column: key.path: message`. The exit code is 1 if a
 
 **Debug capture:** set `ENGINE_CAPTURE=/path/frame.png` and the engine saves frame 90 as a PNG on any platform.
 
+**Inspector:** set `ENGINE_INSPECTOR=/path/to.sock` and the game connects to a tool listening there, which
+can then browse its ECS worlds. Compee sets it when it runs the game (see [architecture.md](architecture.md#inspector)).
+
 ## Build gotchas
 
 These cost real time. Each one is handled in the project files, build scripts or code, with a

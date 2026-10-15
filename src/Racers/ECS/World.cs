@@ -9,7 +9,7 @@ static class EmptyMessages< T > where T : Message
 	public static readonly List< T > list = new();
 }
 
-public class World
+public partial class World
 {
 	private static int idAt;
 
@@ -44,6 +44,7 @@ public class World
 		idAt++;
         
 		Log.Info( $"World {id} created." );
+		Inspector.Register( this );
 	}
 
 	
@@ -641,7 +642,7 @@ public class World
 	    );
 
 	    foreach ( var entity in filter.entities )
-	    	filter.onAdd?.Invoke( entity, this );
+	    	filter.onAdd?.Invoke( entity );
 
 	    filter.isBeingModified = false;
     }
@@ -654,7 +655,7 @@ public class World
     	filter.isBeingModified = true;
 
     	foreach ( var entity in filter.entities)
-	        filter.onRemove?.Invoke( entity, this );
+	        filter.onRemove?.Invoke( entity );
 
     	filter.entities.Clear();
         foreach ( var type in filter.watchedTypes )
@@ -749,10 +750,10 @@ public class World
 	    toRemove.ExceptWith( newEntities );
 
 	    foreach ( var entity in toRemove)
-	        filter.onRemove?.Invoke( entity, this );
+	        filter.onRemove?.Invoke( entity );
 
 	    foreach ( var entity in toAdd )
-	        filter.onAdd?.Invoke( entity, this );
+	        filter.onAdd?.Invoke( entity );
 
 	    filter.isBeingModified = false;
     }
@@ -771,7 +772,7 @@ public class World
     	filter.isBeingModified = true;
 
     	filter.entities.Add( addedEntity );
-    	filter.onAdd?.Invoke( addedEntity, this );
+    	filter.onAdd?.Invoke( addedEntity );
 
     	filter.isBeingModified = false;
     }
@@ -790,7 +791,7 @@ public class World
     	filter.isBeingModified = true;
 
     	filter.entities.Remove( removedEntity );
-    	filter.onRemove?.Invoke( removedEntity, this );
+    	filter.onRemove?.Invoke( removedEntity );
 
     	filter.isBeingModified = false;
     }

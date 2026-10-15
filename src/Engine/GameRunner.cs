@@ -79,6 +79,7 @@ public sealed unsafe class GameRunner ( Game game, GameOptions options )
         game.content = new ContentManager( game.graphics, contentRoot );
         batch = new SpriteBatch( game.graphics );
 
+        Inspector.Start();
         game.Load();
         lastTicks = SDL.SDL_GetTicksNS();
         return true;
@@ -110,6 +111,7 @@ public sealed unsafe class GameRunner ( Game game, GameOptions options )
         dt = MathF.Min( dt, 0.1f );
         totalSeconds += dt;
         game.Update( new GameTime( totalSeconds, dt ) );
+        Inspector.Pump();
         game.graphics.UpdateRive( dt );
 
         // RenderClear covers the whole window, so the bars around the game stay black.
@@ -253,6 +255,7 @@ public sealed unsafe class GameRunner ( Game game, GameOptions options )
 
     public void Shutdown ()
     {
+        Inspector.Stop();
         game.Unload();
         game.graphics?.Dispose();
         if ( renderer != 0 ) SDL.SDL_DestroyRenderer( renderer );

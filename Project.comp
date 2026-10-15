@@ -15,4 +15,18 @@ blocks:
       - name: Enabled
         type: boolean
         width: 74
+  - name: Sprite
+    properties:
+      - name: Path
+        type: asset
+        width: 181
+        root: src/Racers/Content/sprites
+  - name: Rive
+    properties:
+      - name: Path
+        type: asset
+        width: 192
+        root: src/Racers/Content/rives
+      - name: Artboard
+        width: 178
 rows: [Groups, Misc]
