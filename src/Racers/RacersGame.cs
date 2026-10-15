@@ -41,14 +41,17 @@ public sealed class RacersGame : Game
             new SortOrder { value = 9999 }
         );
 
-        var car = world.Get< PrefabSystem >().CreateSprite( "Test Sprite", "car_1", canvas );
+
+        var prefab = world.Get< PrefabSystem >();
+
+        var rive = prefab.CreateFromData( "CloudyRoad", canvas );
+        world.GetOrAdd< SortOrder >( rive ).value = -100;
+
+        var car = prefab.CreateFromData( "Car", canvas );
         world.Get< Position >( car ).value = new Vector2( 10, 10 );
 
         var solid = world.Get< PrefabSystem >().CreateSolid( "Test Solid", 40, 20, new Color( 1f, 0.3f, 0.3f ), canvas );
         world.Get< Position >( solid ).value = new Vector2( 80, 10 );
-
-        var rive = world.Get< PrefabSystem >().CreateRive( "Test Rive", "cloudyroad", "Background", canvas );
-        world.GetOrAdd< SortOrder >( rive ).value = -100;
 
         statsShadow = world.Get< PrefabSystem >().CreateText( "Stats Shadow", "", "Crates", 8, Color.Black.WithAlpha( 0.6f ), debugCanvas );
         world.Get< Position >( statsShadow ).value = new Vector2( 6, 11 );

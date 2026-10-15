@@ -10,4 +10,37 @@
     <ProjectReference Include="..\Engine\Engine.csproj" />
   </ItemGroup>
 
+  <!-- Maps each data ID to its group (the folder it sits in), since not every platform can list Content folders at runtime. -->
+  <Target Name="GenerateDataGroups" BeforeTargets="BeforeCompile">
+    <ItemGroup>
+      <DataFile Include="$(GameContentDir)data/*/*.yaml" />
+      <DataFile>
+        <Group>$([System.IO.Path]::GetFileName($([System.IO.Path]::GetDirectoryName('%(FullPath)'))))</Group>
+      </DataFile>
+    </ItemGroup>
+
+    <PropertyGroup>
+      <DataGroupsPath>$(IntermediateOutputPath)DataGroups.g.cs</DataGroupsPath>
+      <DataGroupsText>
+// &lt;auto-generated /&gt;
+namespace Racers%3B
+
+public partial class Data
+{
+    static readonly Dictionary&lt; string, string &gt; GroupsById = new()
+    {
+@(DataFile->'        { &quot;%(Filename)&quot;, &quot;%(Group)&quot; },', '%0A')
+    }%3B
+}
+      </DataGroupsText>
+    </PropertyGroup>
+
+    <WriteLinesToFile File="$(DataGroupsPath)" Lines="$(DataGroupsText)" Overwrite="true" WriteOnlyWhenDifferent="true" />
+
+    <ItemGroup>
+      <Compile Include="$(DataGroupsPath)" />
+      <FileWrites Include="$(DataGroupsPath)" />
+    </ItemGroup>
+  </Target>
+
 </Project>

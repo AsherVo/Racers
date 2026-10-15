@@ -234,6 +234,12 @@ public partial class World
     	return component;	    	
     }
 
+    public void AddBatch ( uint entity, params Component[] components )
+    {
+    	foreach ( var component in components )
+    		Add( entity, component );  	
+    }
+
     public void Remove< T >( uint entity ) where T : Component
     	=> Remove( entity, typeof( T ) );
 

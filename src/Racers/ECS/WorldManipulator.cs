@@ -44,6 +44,9 @@ public class WorldManipulator
 	protected T Add< T >( uint entity, T component ) where T : Component
 		=> world.Add( entity, component );
 
+	protected void AddBatch ( uint entity, params Component[] components )
+		=> world.AddBatch( entity, components );
+
 	protected void Remove< T >( uint entity ) where T : Component
 		=> world.Remove< T >( entity );
 

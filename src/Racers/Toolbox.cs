@@ -12,16 +12,19 @@ public class Toolbox
 
     public RacersGame game;
     public Loader load;
+    public Data data;
 
     public static void Setup ( RacersGame game )
     {
         I = new Toolbox();
         I.game = game;
         I.load = new Loader();
+        I.data = new Data();
     }
 
     public void Cleanup ()
     {
         load.Dispose();
+        data.Dispose();
     }   
 }
