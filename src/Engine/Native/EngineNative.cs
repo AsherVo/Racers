@@ -43,6 +43,9 @@ internal static unsafe partial class EngineNative
     public static partial void en_rive_file_destroy ( nint file );
 
     [LibraryImport( LIB, StringMarshalling = StringMarshalling.Utf8 )]
+    public static partial int en_rive_artboard_size ( nint file, string? artboard, out float width, out float height );
+
+    [LibraryImport( LIB, StringMarshalling = StringMarshalling.Utf8 )]
     public static partial nint en_rive_instance_create ( nint file, string? artboard, string? stateMachine, out float width, out float height );
 
     [LibraryImport( LIB )]

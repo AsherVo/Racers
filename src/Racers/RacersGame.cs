@@ -10,14 +10,16 @@ public sealed class RacersGame : Game
 {
     public static readonly GameOptions Options = new();
     
-    Font debugFont;
-    string stats = "";
+    // Debug Reporting
     double nextReport;
     SpriteBatch? batch; // read in Update, after the previous frame's End() has flushed everything
     int frames;
 
+    // World
     uint canvas;
     uint debugCanvas;
+    uint statsText;
+    uint statsShadow;
 
     World world;
 
@@ -25,9 +27,8 @@ public sealed class RacersGame : Game
     {
         Toolbox.Setup( this );
 
-        debugFont = Toolbox.I.load.Font( "Crates.ttf", 8 );
-
         world = new World();
+        world.Start( new PrefabSystem() );
         world.Start( new RenderSystem() );
 
         canvas = world.Create( "Canvas",
@@ -40,20 +41,24 @@ public sealed class RacersGame : Game
             new SortOrder { value = 9999 }
         );
 
-        world.Create( "Test Sprite",
-            new OnCanvas { relation = canvas },
-            new Sprite { path = "car_1.png" },
-            new Position { value = new Vector2( 10, 10 ) }
-        );
-    }
+        var car = world.Get< PrefabSystem >().CreateSprite( "Test Sprite", "car_1", canvas );
+        world.Get< Position >( car ).value = new Vector2( 10, 10 );
 
-    // void FitBackground ()
-    // {
-    //     var artboard = background.size;
-    //     float cover = MathF.Max( graphics.width / artboard.X, graphics.height / artboard.Y );
-    //     var size = artboard * cover;
-    //     backgroundRect = new RectangleF( ( graphics.width - size.X ) / 2, ( graphics.height - size.Y ) / 2, size.X, size.Y );
-    // }
+        var solid = world.Get< PrefabSystem >().CreateSolid( "Test Solid", 40, 20, new Color( 1f, 0.3f, 0.3f ), canvas );
+        world.Get< Position >( solid ).value = new Vector2( 80, 10 );
+
+        var rive = world.Get< PrefabSystem >().CreateRive( "Test Rive", "cloudyroad", "Background", canvas );
+        world.GetOrAdd< SortOrder >( rive ).value = -100;
+
+        statsShadow = world.Get< PrefabSystem >().CreateText( "Stats Shadow", "", "Crates", 8, Color.Black.WithAlpha( 0.6f ), debugCanvas );
+        world.Get< Position >( statsShadow ).value = new Vector2( 6, 11 );
+        world.Get< Rect >( statsShadow ).pivot = new Vector2( 0, 1 );
+
+        statsText = world.Get< PrefabSystem >().CreateText( "Stats", "", "Crates", 8, Color.White, debugCanvas );
+        world.Get< Position >( statsText ).value = new Vector2( 5, 12 );
+        world.Get< Rect >( statsText ).pivot = new Vector2( 0, 1 );
+        world.Add( statsText, new SortOrder { value = 1 } );
+    }
 
     protected override void OnResize ()
     {
@@ -88,7 +93,11 @@ public sealed class RacersGame : Game
         if ( time.totalSeconds >= nextReport )
         {
             if ( nextReport > 0 )
-                stats = $"{frames / 2f:0} fps {batch?.drawCalls} draw calls";
+            {
+                var stats = $"{frames / 2f:0} fps {batch?.drawCalls} draw calls";
+                world.Get< DrawText >( statsText ).text = stats;
+                world.Get< DrawText >( statsShadow ).text = stats;
+            }
             frames = 0;
             nextReport = time.totalSeconds + 2;
         }
@@ -97,51 +106,6 @@ public sealed class RacersGame : Game
     protected override void Draw ( SpriteBatch batch )
     {
         world.Draw( batch );
-
-        // // 1. Rive, opaque, behind everything.
-        // batch.Draw( background, backgroundRect, Color.White );
-
-        // // 2. Text over Rive, with a translucent drop shadow.
-        // const string TITLE = "RACERS";
-        // var titleSize = titleFont.MeasureString( TITLE );
-        // var titlePos = new Vector2( ( graphics.width - titleSize.X ) / 2, graphics.height - 12 );
-        // batch.DrawString( titleFont, TITLE, titlePos + new Vector2( 2, -2 ), Color.Black.WithAlpha( 0.45f ) );
-        // batch.DrawString( titleFont, TITLE, titlePos, new Color( 1f, 0.85f, 0.3f ) );
-
-        // // 3. Cars; halfway through the lanes, 4. a translucent, rotating Rive inset that the
-        // // remaining lanes then drive over.
-        // var carOrigin = new Vector2( carTexture.width / 2f, carTexture.height / 2f );
-        // for ( int lane = 0; lane < LANES; lane++ )
-        // {
-        //     if ( lane == LANES / 2 )
-        //         DrawInset( batch );
-
-        //     foreach ( ref readonly var car in CollectionsMarshal.AsSpan( cars ) )
-        //     {
-        //         if ( car.lane == lane )
-        //             batch.Draw( carTexture, car.position, null, Color.FromHsv( car.hue, 0.5f, 1f ), 0f, carOrigin, Vector2.One );
-        //     }
-        // }
-
-        // // 5. Number tags, all together on top so they share one batch.
-        // foreach ( ref readonly var car in CollectionsMarshal.AsSpan( cars ) )
-        // {
-        //     string tag = car.number.ToString();
-        //     var tagPos = car.position + new Vector2( -smallFont.MeasureString( tag ).X / 2, 24 );
-        //     batch.DrawString( smallFont, tag, tagPos, Color.White.WithAlpha( 0.8f ) );
-        // }
-
-        // // 6. HUD text on top of everything.
-        batch.DrawString( debugFont, stats, new Vector2( 6, 11 ), Color.Black.WithAlpha( 0.6f ) );
-        batch.DrawString( debugFont, stats, new Vector2( 5, 12 ), Color.White );
-
         this.batch = batch;
     }
-
-    // void DrawInset ( SpriteBatch batch )
-    // {
-    //     float scale = 0.35f * backgroundRect.Width / inset.width;
-    //     var center = new Vector2( graphics.width * 0.72f, graphics.height * 0.4f );
-    //     batch.Draw( inset, center, Color.White.WithAlpha( 0.75f ), MathF.Sin( insetSpin ) * 0.35f, inset.size / 2, new Vector2( scale ) );
-    // }
 }

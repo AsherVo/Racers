@@ -8,6 +8,15 @@ namespace Racers;
 
 public class Loader
 {
+    const string SPRITE_PATH = "sprites/";
+    const string SPRITE_SUFFIX = ".png";
+
+    const string RIVES_PATH = "rives/";
+    const string RIVE_SUFFIX = ".riv";
+
+    const string FONTS_PATH = "fonts/";
+    const string FONT_SUFFIX = ".ttf";
+
     Dictionary< string, Texture > textures;
     Dictionary< string, RiveFile > rives;
     Dictionary< string, Dictionary< int, Font > > fonts;
@@ -49,7 +58,8 @@ public class Loader
         if ( !fonts[ path ].ContainsKey( fontSize ) )
         {
             var game = Toolbox.I.game;
-            fonts[ path ][ fontSize ] = game.content.LoadFont( path, fontSize, game.graphics.pixelScale );
+            var usePath = $"{ FONTS_PATH }/{ path }{ FONT_SUFFIX }";
+            fonts[ path ][ fontSize ] = game.content.LoadFont( usePath, fontSize, game.graphics.pixelScale );
         }
 
         return fonts[ path ][ fontSize ];
@@ -58,7 +68,10 @@ public class Loader
     public RiveFile Rive ( string path )
     {
         if ( !rives.ContainsKey( path ) )
-            rives[ path ] = Toolbox.I.game.content.LoadRive( path );
+        {
+            var usePath = $"{ RIVES_PATH }/{ path }{ RIVE_SUFFIX }";
+            rives[ path ] = Toolbox.I.game.content.LoadRive( usePath );
+        }
 
         return rives[ path ];
     }
@@ -66,7 +79,10 @@ public class Loader
     public Texture Texture ( string path )
     {
         if ( !textures.ContainsKey( path ) )
-            textures[ path ] = Toolbox.I.game.content.LoadTexture( path, TextureFilter.PixelArt );
+        {
+            var usePath = $"{ SPRITE_PATH }/{ path }{ SPRITE_SUFFIX }";
+            textures[ path ] = Toolbox.I.game.content.LoadTexture( usePath, TextureFilter.PixelArt );
+        }
 
         return textures[ path ];
     }

@@ -76,6 +76,9 @@ EN_API void en_rive_context_destroy(EnRiveContext*);
 EN_API EnRiveFile* en_rive_file_load(EnRiveContext*, const uint8_t* bytes, int length);
 EN_API void en_rive_file_destroy(EnRiveFile*);
 
+/* Writes an artboard's size (null name = the default artboard) without instantiating it. Returns 0 if there's no such artboard. */
+EN_API int en_rive_artboard_size(EnRiveFile*, const char* artboard, float* width, float* height);
+
 /*
  * Instantiates an artboard (null name = the default artboard) and a state machine (null name =
  * the default, else the first, else the first linear animation). Binds the artboard's default

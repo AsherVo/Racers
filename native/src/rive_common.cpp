@@ -16,6 +16,17 @@ EnRiveFile* en_rive_file_load(EnRiveContext* ctx, const uint8_t* bytes, int leng
 
 void en_rive_file_destroy(EnRiveFile* file) { delete file; }
 
+int en_rive_artboard_size(EnRiveFile* file, const char* artboardName, float* width, float* height)
+{
+    Artboard* artboard = artboardName ? file->file->artboard(artboardName) : file->file->artboard();
+    if (!artboard)
+        return 0;
+
+    *width = artboard->width();
+    *height = artboard->height();
+    return 1;
+}
+
 EnRiveInstance* en_rive_instance_create(EnRiveFile* file, const char* artboardName, const char* stateMachineName,
                                         float* width, float* height)
 {

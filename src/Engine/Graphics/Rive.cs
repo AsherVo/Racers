@@ -15,6 +15,18 @@ public sealed class RiveFile : IDisposable
         this.handle = handle;
     }
 
+    /// <summary>An artboard's size in artboard units, read from the file without instantiating it.</summary>
+    /// <param name="artboard">Artboard name, or null for the file's default artboard.</param>
+    public Vector2 ArtboardSize ( string? artboard = null )
+    {
+        ObjectDisposedException.ThrowIf( handle == 0, this );
+
+        if ( EngineNative.en_rive_artboard_size( handle, artboard, out float width, out float height ) == 0 )
+            throw new ArgumentException( $"No artboard '{artboard ?? "(default)"}'." );
+
+        return new Vector2( width, height );
+    }
+
     /// <summary>
     /// Instantiates an artboard and starts its state machine. Instances keep what they need from
     /// the file, so the file can be disposed while they're alive.

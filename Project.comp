@@ -1,9 +1,14 @@
 compee: 1
 data: src/Racers/Content/data
 build:
-  command: dotnet build hosts/Desktop -nologo -v:q -clp:NoSummary
   validate: tools/cli.sh yaml validate src/Racers/Content --quiet
-  run: hosts/Desktop/bin/Debug/net10.0/Racers
+  targets:
+    - name: macOS
+      command: dotnet build hosts/Desktop -nologo -v:q -clp:NoSummary
+      run: hosts/Desktop/bin/Debug/net10.0/Racers
+    - name: Web
+      command: dotnet publish hosts/Browser -c Debug -o artifacts/browser-debug -nologo -v:q -clp:NoSummary
+      serve: artifacts/browser-debug/wwwroot
 blocks:
   - name: Meta
     properties:
@@ -21,12 +26,14 @@ blocks:
         type: asset
         width: 181
         root: src/Racers/Content/sprites
+        extensions: false
   - name: Rive
     properties:
       - name: Path
         type: asset
         width: 192
         root: src/Racers/Content/rives
+        extensions: false
       - name: Artboard
         width: 178
-rows: [Groups, Misc]
+rows: [Groups, Misc, Car, CloudyRoad]

@@ -26,8 +26,8 @@ public struct RelationFilter
 
 public class Filter
 {
-	public System.Action< uint, World > onAdd;
-	public System.Action< uint, World > onRemove;
+	public System.Action< uint > onAdd;
+	public System.Action< uint > onRemove;
 
 	public readonly System.Type[] include;
 	public readonly System.Type[] exclude;
