@@ -3,6 +3,7 @@ using System.Numerics;
 using System.Runtime.InteropServices;
 using Engine;
 using MintECS;
+using Vo;
 
 namespace Racers;
 
@@ -46,6 +47,10 @@ public class PrefabSystem : WorldManipulator, ISystem
             AddSprite( actor,
                 data.GetString( spriteBlock, "Path" )
             );
+
+            var colorHex = data.GetString( spriteBlock, "Color" );
+            if ( colorHex != null )
+                Add( actor, new DrawColor { color = Utils.HexToColor( colorHex ) } );
         }
 
         return actor;

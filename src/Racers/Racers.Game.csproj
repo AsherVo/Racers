@@ -10,35 +10,33 @@
     <ProjectReference Include="..\Engine\Engine.csproj" />
   </ItemGroup>
 
-  <!-- Maps each data ID to its group (the folder it sits in), since not every platform can list Content folders at runtime. -->
+  <!--
+    Maps each data ID to its group (the folder it sits in), ordered by Project.comp's rows, since not every platform
+    can list Content folders at runtime. tools/DataGroups writes it; design-time builds reuse the last one.
+  -->
   <Target Name="GenerateDataGroups" BeforeTargets="BeforeCompile">
-    <ItemGroup>
-      <DataFile Include="$(GameContentDir)data/*/*.yaml" />
-      <DataFile>
-        <Group>$([System.IO.Path]::GetFileName($([System.IO.Path]::GetDirectoryName('%(FullPath)'))))</Group>
-      </DataFile>
-    </ItemGroup>
-
     <PropertyGroup>
       <DataGroupsPath>$(IntermediateOutputPath)DataGroups.g.cs</DataGroupsPath>
-      <DataGroupsText>
-// &lt;auto-generated /&gt;
-namespace Racers%3B
-
-public partial class Data
-{
-    static readonly Dictionary&lt; string, string &gt; GroupsById = new()
-    {
-@(DataFile->'        { &quot;%(Filename)&quot;, &quot;%(Group)&quot; },', '%0A')
-    }%3B
-}
-      </DataGroupsText>
     </PropertyGroup>
 
-    <WriteLinesToFile File="$(DataGroupsPath)" Lines="$(DataGroupsText)" Overwrite="true" WriteOnlyWhenDifferent="true" />
+    <MSBuild Projects="$(MSBuildThisFileDirectory)../../tools/DataGroups/DataGroups.csproj" Targets="Restore"
+             Properties="Configuration=$(Configuration);MSBuildRestoreSessionId=$([System.Guid]::NewGuid())"
+             RemoveProperties="RuntimeIdentifier;SelfContained;PublishAot;_IsPublishing;TargetFramework;Platform"
+             Condition="'$(DesignTimeBuild)' != 'true'" />
+
+    <MSBuild Projects="$(MSBuildThisFileDirectory)../../tools/DataGroups/DataGroups.csproj" Targets="Build"
+             Properties="Configuration=$(Configuration)"
+             RemoveProperties="RuntimeIdentifier;SelfContained;PublishAot;_IsPublishing;TargetFramework;Platform"
+             Condition="'$(DesignTimeBuild)' != 'true'">
+      <Output TaskParameter="TargetOutputs" ItemName="_DataGroupsTool" />
+    </MSBuild>
+
+    <Exec Command="&quot;$(DOTNET_HOST_PATH)&quot; &quot;@(_DataGroupsTool)&quot; &quot;$(MSBuildThisFileDirectory)../../Project.comp&quot; &quot;$(DataGroupsPath)&quot;"
+          StandardOutputImportance="low"
+          Condition="'$(DesignTimeBuild)' != 'true'" />
 
     <ItemGroup>
-      <Compile Include="$(DataGroupsPath)" />
+      <Compile Include="$(DataGroupsPath)" Condition="Exists('$(DataGroupsPath)')" />
       <FileWrites Include="$(DataGroupsPath)" />
     </ItemGroup>
   </Target>

@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Writes Racers' Data.GroupsById at build time (see src/Racers/Racers.Game.csproj). It's separate from tools/Cli
+    because the CLI references Racers.Game, so building the CLI from the game's build would be circular.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>DataGroups</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Engine\Engine.csproj" />
+  </ItemGroup>
+
+</Project>

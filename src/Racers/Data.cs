@@ -11,6 +11,9 @@ public partial class Data
     const string DATA_PATH = "data/";
     const string DATA_SUFFIX = ".yaml";
 
+    const string META_BLOCK = "Meta";
+    const string ENABLED_KEY = "Enabled";
+
     Dictionary< string, YamlMap > data;
 
     public Data ()
@@ -46,7 +49,17 @@ public partial class Data
     }
 
     public bool Exists ( string id )
-        => GroupsById.ContainsKey( id );
+    {
+        if ( !GroupsById.ContainsKey( id ) )
+            return false;
+
+        Load( id );
+        
+        if ( !data[ id ].TryGetValue( META_BLOCK, out var meta ) )
+            return false;
+
+        return GetBool( ( YamlMap )meta, ENABLED_KEY );
+    }
 
     public List< string > GetIds ( string group )
     {
@@ -54,19 +67,11 @@ public partial class Data
 
         foreach ( var ( id, idGroup ) in GroupsById )
         {
-            if ( idGroup == group && IsEnabled( id ) )
+            if ( idGroup == group && Exists( id ) )
                 result.Add( id );
         }
 
         return result;
-    }
-
-    bool IsEnabled ( string id )
-    {
-        if ( !TryGetBlock( id, "Meta", out var meta ) || !meta.TryGetValue( "Enabled", out var node ) )
-            return true;
-
-        return !( node is YamlScalar scalar && scalar.TryGetBool( out var enabled ) && !enabled );
     }
 
     public bool HasBlock ( string id, string block )
@@ -103,4 +108,7 @@ public partial class Data
 
     public string GetString ( YamlMap block, string key )
         => block.TryGetValue( key, out var node ) ? ( ( YamlScalar )node ).value : null;
+
+    public bool GetBool ( YamlMap block, string key )
+        => block.TryGetValue( key, out var node ) && node is YamlScalar scalar && scalar.TryGetBool( out bool value ) && value;
 }

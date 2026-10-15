@@ -1,3 +1,4 @@
+using Engine;
 using System;
 using System.Reflection;
 using System.Text;
@@ -43,4 +44,23 @@ public static class Utils
 
         return sb.ToString();
     }
+
+    public static string ColorToHex ( Color color, bool includeAlpha = false )
+    {
+        string hex = ChannelToHex( color.r ) + ChannelToHex( color.g ) + ChannelToHex( color.b );
+        return includeAlpha ? hex + ChannelToHex( color.a ) : hex;
+    }
+
+    public static Color HexToColor ( string color )
+    {
+        float r = HexToChannel( color, 0 );
+        float g = HexToChannel( color, 2 );
+        float b = HexToChannel( color, 4 );
+        float a = color.Length >= 8 ? HexToChannel( color, 6 ) : 1f;
+        return new Color( r, g, b, a );
+    }
+
+    static string ChannelToHex ( float channel ) => ( ( int )MathF.Round( Math.Clamp( channel, 0f, 1f ) * 255f ) ).ToString( "X2" );
+
+    static float HexToChannel ( string hex, int start ) => int.Parse( hex.AsSpan( start, 2 ), NumberStyles.HexNumber ) / 255f;
 }

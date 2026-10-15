@@ -14,12 +14,12 @@ blocks:
     properties:
       - name: Group
         type: select
-        width: 150
+        width: 118
         options:
           group: Groups
       - name: Enabled
         type: boolean
-        width: 74
+        width: 56
   - name: Sprite
     properties:
       - name: Path
@@ -27,6 +27,8 @@ blocks:
         width: 181
         root: src/Racers/Content/sprites
         extensions: false
+      - name: Color
+        type: color
   - name: Rive
     properties:
       - name: Path
@@ -36,4 +38,5 @@ blocks:
         extensions: false
       - name: Artboard
         width: 178
-rows: [Groups, Misc, Car, CloudyRoad]
+hiddenGroups: [Groups]
+rows: [Groups, Misc, Car, Car2, CarC, CloudyRoad]

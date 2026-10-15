@@ -47,7 +47,7 @@ public sealed class RacersGame : Game
         var rive = prefab.CreateFromData( "CloudyRoad", canvas );
         world.GetOrAdd< SortOrder >( rive ).value = -100;
 
-        var car = prefab.CreateFromData( "Car", canvas );
+        var car = prefab.CreateFromData( "Car2", canvas );
         world.Get< Position >( car ).value = new Vector2( 10, 10 );
 
         var solid = world.Get< PrefabSystem >().CreateSolid( "Test Solid", 40, 20, new Color( 1f, 0.3f, 0.3f ), canvas );
