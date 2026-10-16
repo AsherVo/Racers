@@ -2,6 +2,7 @@
 
 #include "rive/animation/state_machine_input_instance.hpp"
 #include "rive/text/text_value_run.hpp"
+#include "rive/viewmodel/viewmodel_instance_enum.hpp"
 
 using namespace rive;
 
@@ -59,6 +60,7 @@ EnRiveInstance* en_rive_instance_create(EnRiveFile* file, const char* artboardNa
         inst->viewModel = file->file->createDefaultViewModelInstance(artboard.get());
         if (inst->viewModel)
         {
+            inst->viewModelRuntime = make_rcp<ViewModelInstanceRuntime>(inst->viewModel);
             if (inst->stateMachine)
                 inst->stateMachine->bindViewModelInstance(inst->viewModel);
             else
@@ -111,6 +113,52 @@ int en_rive_instance_set_text(EnRiveInstance* inst, const char* run, const char*
     if (textRun)
         textRun->text(text);
     return textRun != nullptr;
+}
+
+int en_rive_instance_set_vm_number(EnRiveInstance* inst, const char* path, float value)
+{
+    auto* property = inst->viewModelRuntime ? inst->viewModelRuntime->propertyNumber(path) : nullptr;
+    if (property)
+        property->value(value);
+    return property != nullptr;
+}
+
+int en_rive_instance_set_vm_string(EnRiveInstance* inst, const char* path, const char* value)
+{
+    auto* property = inst->viewModelRuntime ? inst->viewModelRuntime->propertyString(path) : nullptr;
+    if (property)
+        property->value(value);
+    return property != nullptr;
+}
+
+int en_rive_instance_set_vm_bool(EnRiveInstance* inst, const char* path, int value)
+{
+    auto* property = inst->viewModelRuntime ? inst->viewModelRuntime->propertyBoolean(path) : nullptr;
+    if (property)
+        property->value(value != 0);
+    return property != nullptr;
+}
+
+int en_rive_instance_set_vm_color(EnRiveInstance* inst, const char* path, uint32_t argb)
+{
+    auto* property = inst->viewModelRuntime ? inst->viewModelRuntime->propertyColor(path) : nullptr;
+    if (property)
+        property->value((int)argb);
+    return property != nullptr;
+}
+
+int en_rive_instance_set_vm_enum(EnRiveInstance* inst, const char* path, const char* value)
+{
+    auto* property = inst->viewModelRuntime ? inst->viewModelRuntime->propertyEnum(path) : nullptr;
+    return property && property->viewModelInstanceValue()->as<ViewModelInstanceEnum>()->value(value);
+}
+
+int en_rive_instance_fire_vm_trigger(EnRiveInstance* inst, const char* path)
+{
+    auto* property = inst->viewModelRuntime ? inst->viewModelRuntime->propertyTrigger(path) : nullptr;
+    if (property)
+        property->trigger();
+    return property != nullptr;
 }
 
 int en_rive_instance_pointer(EnRiveInstance* inst, int action, float x, float y)

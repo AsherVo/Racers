@@ -16,6 +16,7 @@ public sealed class RacersGame : Game
 
     // World
     uint canvas;
+    uint uiCanvas;
     uint debugCanvas;
     uint statsText;
     uint statsShadow;
@@ -28,11 +29,17 @@ public sealed class RacersGame : Game
 
         world = new World();
         world.Start( new PrefabSystem() );
+        world.Start( new GridSystem() );
         world.Start( new RenderSystem() );
 
         canvas = world.Create( "Canvas",
             new Canvas {},
             new SortOrder { value = 0 }
+        );
+
+        uiCanvas = world.Create( "UI Canvas",
+            new Canvas {}, 
+            new SortOrder { value = 5000 }
         );
 
         debugCanvas = world.Create( "Debug Canvas",
@@ -46,8 +53,12 @@ public sealed class RacersGame : Game
         var rive = prefab.CreateFromData( "CloudyRoad", canvas );
         world.GetOrAdd< SortOrder >( rive ).value = -100;
 
-        var car = prefab.CreateFromData( "Car2", canvas );
-        world.Get< Position >( car ).value = new Vector2( 10, 10 );
+        var topSpeed = prefab.CreateFromData( "UI_TopSpeed", canvas );
+        world.Get< Position >( topSpeed ).value = new Vector2( graphics.width, graphics.height );
+        world.Get< Rect >( topSpeed ).pivot = Vector2.One;
+
+        var speedometer = world.Get< RenderSystem >().GetRive( topSpeed );
+        speedometer.SetViewModelString( "speedText", 5.ToString() );
 
         var solid = world.Get< PrefabSystem >().CreateSolid( "Test Solid", 40, 20, new Color( 1f, 0.3f, 0.3f ), canvas );
         world.Get< Position >( solid ).value = new Vector2( 80, 10 );
@@ -60,6 +71,8 @@ public sealed class RacersGame : Game
         world.Get< Position >( statsText ).value = new Vector2( 5, 12 );
         world.Get< Rect >( statsText ).pivot = new Vector2( 0, 1 );
         world.Add( statsText, new SortOrder { value = 1 } );
+
+        world.Get< GridSystem >().SpawnGrid( uiCanvas );
     }
 
     protected override void OnResize ()

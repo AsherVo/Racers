@@ -115,6 +115,9 @@ public class RenderSystem : WorldManipulator, ISystem, IDrawSystem
 		}
 	}
 
+	public RiveInstance GetRive ( uint entity )
+		=> riveInstances.TryGetValue( entity, out var rive ) ? rive : null;
+
 	int GetSortOrder ( uint entity )
 		=> TryGet( entity, out SortOrder sortOrder ) ? sortOrder : 0;
 

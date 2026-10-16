@@ -8,6 +8,7 @@
 #include "rive/artboard.hpp"
 #include "rive/file.hpp"
 #include "rive/renderer.hpp"
+#include "rive/viewmodel/runtime/viewmodel_instance_runtime.hpp"
 #include "rive/viewmodel/viewmodel_instance.hpp"
 
 struct EnRiveFile
@@ -22,6 +23,7 @@ struct EnRiveInstance
     std::unique_ptr<rive::StateMachineInstance> stateMachine; // null when playing a linear animation
     std::unique_ptr<rive::Scene> animation;
     rive::rcp<rive::ViewModelInstance> viewModel;
+    rive::rcp<rive::ViewModelInstanceRuntime> viewModelRuntime; // resolves property paths; null without a view model
 
     rive::Scene* scene() const
     {

@@ -39,4 +39,4 @@ blocks:
       - name: Artboard
         width: 178
 hiddenGroups: [Groups]
-rows: [Groups, Misc, Car, Car2, CarC, CloudyRoad]
+rows: [Groups, Misc, Car, CloudyRoad, Cell, UI_TopSpeed]

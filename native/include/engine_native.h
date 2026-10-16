@@ -97,6 +97,19 @@ EN_API int en_rive_instance_set_bool(EnRiveInstance*, const char* name, int valu
 EN_API int en_rive_instance_fire(EnRiveInstance*, const char* name);
 EN_API int en_rive_instance_set_text(EnRiveInstance*, const char* run, const char* text);
 
+/*
+ * Properties of the instance's view model. `path` is a property name, or view model property
+ * names and then a property name joined by '/' to reach into nested view models. Each returns 0 if
+ * the instance has no view model or nothing of that type is at `path`; the enum setter also
+ * returns 0 if `value` isn't one of the enum's values. Changes show on the next advance.
+ */
+EN_API int en_rive_instance_set_vm_number(EnRiveInstance*, const char* path, float value);
+EN_API int en_rive_instance_set_vm_string(EnRiveInstance*, const char* path, const char* value);
+EN_API int en_rive_instance_set_vm_bool(EnRiveInstance*, const char* path, int value);
+EN_API int en_rive_instance_set_vm_color(EnRiveInstance*, const char* path, uint32_t argb);
+EN_API int en_rive_instance_set_vm_enum(EnRiveInstance*, const char* path, const char* value);
+EN_API int en_rive_instance_fire_vm_trigger(EnRiveInstance*, const char* path);
+
 /* Pointer events in artboard coordinates. action: 0 = down, 1 = move, 2 = up. Returns 1 on a hit. */
 EN_API int en_rive_instance_pointer(EnRiveInstance*, int action, float x, float y);
 

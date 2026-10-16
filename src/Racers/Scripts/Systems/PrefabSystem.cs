@@ -20,7 +20,7 @@ public class PrefabSystem : WorldManipulator, ISystem
 
     public void TickSystem ( World world ) {}
 
-    public uint CreateFromData ( string id, uint canvas = 0 )
+    public uint CreateFromData ( string id, uint canvas = 0, string name = null )
     {
         var data = Toolbox.I.data;
 
@@ -30,7 +30,7 @@ public class PrefabSystem : WorldManipulator, ISystem
             return 0;
         }
 
-        var actor = CreateActor( id, canvas );
+        var actor = CreateActor( name == null ? id : name, canvas );
         Add( actor, new DataId { id = id } );
 
         if ( data.TryGetBlock( id, "Rive", out var riveBlock ) )
@@ -49,7 +49,7 @@ public class PrefabSystem : WorldManipulator, ISystem
 
             var colorHex = data.GetString( spriteBlock, "Color" );
             if ( colorHex != null )
-                Add( actor, new DrawColor { color = Utils.HexToColor( colorHex ) } );
+                Add( actor, new DrawColor { value = Utils.HexToColor( colorHex ) } );
         }
 
         return actor;
@@ -94,7 +94,7 @@ public class PrefabSystem : WorldManipulator, ISystem
                 fontSize = fontSize
             },
             new DrawColor {
-                color = color
+                value = color
             },
             new Rect {
                 width = size.x,
@@ -114,7 +114,7 @@ public class PrefabSystem : WorldManipulator, ISystem
 
             },
             new DrawColor {
-                color = color
+                value = color
             },
             new Rect {
                 width = width,

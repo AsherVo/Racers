@@ -66,6 +66,24 @@ internal static unsafe partial class EngineNative
     [LibraryImport( LIB, StringMarshalling = StringMarshalling.Utf8 )]
     public static partial int en_rive_instance_set_text ( nint instance, string run, string text );
 
+    [LibraryImport( LIB, StringMarshalling = StringMarshalling.Utf8 )]
+    public static partial int en_rive_instance_set_vm_number ( nint instance, string path, float value );
+
+    [LibraryImport( LIB, StringMarshalling = StringMarshalling.Utf8 )]
+    public static partial int en_rive_instance_set_vm_string ( nint instance, string path, string value );
+
+    [LibraryImport( LIB, StringMarshalling = StringMarshalling.Utf8 )]
+    public static partial int en_rive_instance_set_vm_bool ( nint instance, string path, int value );
+
+    [LibraryImport( LIB, StringMarshalling = StringMarshalling.Utf8 )]
+    public static partial int en_rive_instance_set_vm_color ( nint instance, string path, uint argb );
+
+    [LibraryImport( LIB, StringMarshalling = StringMarshalling.Utf8 )]
+    public static partial int en_rive_instance_set_vm_enum ( nint instance, string path, string value );
+
+    [LibraryImport( LIB, StringMarshalling = StringMarshalling.Utf8 )]
+    public static partial int en_rive_instance_fire_vm_trigger ( nint instance, string path );
+
     [LibraryImport( LIB )]
     public static partial int en_rive_instance_pointer ( nint instance, int action, float x, float y );
 

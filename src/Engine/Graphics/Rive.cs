@@ -119,6 +119,46 @@ public sealed class RiveInstance : IDisposable
         return EngineNative.en_rive_instance_set_text( live, run, text ) != 0;
     }
 
+    // View model properties. A path is a property name, or nested view model property names and
+    // then a property name joined by '/' (e.g. "dashboard/speed"). Each returns false if the
+    // artboard has no view model or nothing of that type is at the path.
+
+    /// <summary>Sets a number property on the view model.</summary>
+    public bool SetViewModelNumber ( string path, float value ) =>
+        Changed( EngineNative.en_rive_instance_set_vm_number( live, path, value ) );
+
+    /// <summary>Sets a string property on the view model.</summary>
+    public bool SetViewModelString ( string path, string value ) =>
+        Changed( EngineNative.en_rive_instance_set_vm_string( live, path, value ) );
+
+    /// <summary>Sets a boolean property on the view model.</summary>
+    public bool SetViewModelBool ( string path, bool value ) =>
+        Changed( EngineNative.en_rive_instance_set_vm_bool( live, path, value ? 1 : 0 ) );
+
+    /// <summary>Sets a color property on the view model.</summary>
+    public bool SetViewModelColor ( string path, Color value ) =>
+        Changed( EngineNative.en_rive_instance_set_vm_color( live, path, ToArgb( value ) ) );
+
+    /// <summary>Sets an enum property on the view model by value name. Also returns false if the enum has no such value.</summary>
+    public bool SetViewModelEnum ( string path, string value ) =>
+        Changed( EngineNative.en_rive_instance_set_vm_enum( live, path, value ) );
+
+    /// <summary>Fires a trigger property on the view model.</summary>
+    public bool FireViewModelTrigger ( string path ) =>
+        Changed( EngineNative.en_rive_instance_fire_vm_trigger( live, path ) );
+
+    bool Changed ( int found )
+    {
+        dirty |= found != 0;
+        return found != 0;
+    }
+
+    static uint ToArgb ( Color color )
+    {
+        static uint Channel ( float value ) => ( uint )MathF.Round( Math.Clamp( value, 0f, 1f ) * 255f );
+        return Channel( color.a ) << 24 | Channel( color.r ) << 16 | Channel( color.g ) << 8 | Channel( color.b );
+    }
+
     /// <summary>Pointer events for the state machine's listeners, in artboard coordinates. Return true on a hit.</summary>
     public bool PointerDown ( Vector2 position ) => Pointer( 0, position );
     public bool PointerMove ( Vector2 position ) => Pointer( 1, position );
