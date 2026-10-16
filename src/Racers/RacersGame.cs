@@ -29,6 +29,8 @@ public sealed class RacersGame : Game
 
         world = new World();
         world.Start( new PrefabSystem() );
+        world.Start( new PointerSystem() );
+        world.Start( new ButtonSystem() );
         world.Start( new GridSystem() );
         world.Start( new RenderSystem() );
 
@@ -87,6 +89,12 @@ public sealed class RacersGame : Game
 
     protected override void OnPointer ( PointerEvent e )
     {
+        if ( e.action == PointerAction.Move )
+            world.Send( new PointerHover { position = e.position } );
+
+        if ( e.action == PointerAction.Up )
+            world.Send( new PointerClick { position = e.position } );
+
         if ( e.action == PointerAction.Down )
         {
             // int lane = Math.Clamp( ( int )MathF.Round( ( 0.58f - e.position.y / graphics.height ) / 0.09f ), 0, LANES - 1 );

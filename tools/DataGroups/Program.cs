@@ -94,10 +94,10 @@ builder.AppendLine( "namespace Racers;" );
 builder.AppendLine();
 builder.AppendLine( "public partial class Data" );
 builder.AppendLine( "{" );
-builder.AppendLine( "    static readonly Dictionary< string, string > GroupsById = new()" );
+builder.AppendLine( "    static readonly Dictionary< string, Group > GroupsById = new()" );
 builder.AppendLine( "    {" );
 foreach ( string id in orderedIds )
-    builder.AppendLine( $"        {{ \"{id}\", \"{groupsById[id]}\" }}," );
+    builder.AppendLine( $"        {{ \"{id}\", Group.{groupsById[id]} }}," );
 
 builder.AppendLine( "    };" );
 builder.AppendLine( "}" );

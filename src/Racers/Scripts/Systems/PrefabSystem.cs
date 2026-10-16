@@ -52,6 +52,16 @@ public class PrefabSystem : WorldManipulator, ISystem
                 Add( actor, new DrawColor { value = Utils.HexToColor( colorHex ) } );
         }
 
+        var group = data.GetGroup( id );
+        switch ( group )
+        {
+            case Group.Buttons:
+                Add< Interactable >( actor );
+                Add< ClickTarget >( actor );
+                Add< HoverTarget >( actor );
+                break;
+        }
+
         return actor;
     }
 

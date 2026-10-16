@@ -39,7 +39,7 @@ public partial class Data
         return data[ id ];
     }
 
-    public string GetGroup ( string id )
+    public Group GetGroup ( string id )
     {
         if ( !GroupsById.TryGetValue( id, out var group ) )
             throw new KeyNotFoundException( $"No data file with ID '{ id }'." );
@@ -60,7 +60,7 @@ public partial class Data
         return GetBool( ( YamlMap )meta, ENABLED_KEY );
     }
 
-    public List< string > GetIds ( string group )
+    public List< string > GetIds ( Group group )
     {
         var result = new List< string >();
 
