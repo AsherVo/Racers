@@ -24,7 +24,6 @@ public partial class World
 
     /// <summary>View messages, plus every sim message sent by the ticks since the last <see cref="Update"/>.</summary>
     [YamlIgnore] public Dictionary< Type, List< Message > > messages = new();
-    [YamlIgnore] public Dictionary< Type, List< Message > > oldMessages = new();
     [YamlIgnore] Dictionary< Type, List< Message > > simMessages = new();
 
     // Serialization requires fields to be public
@@ -743,22 +742,6 @@ public partial class World
     	return list;
     }
 
-    public List< T > ReadOld< T >() where T : Message
-    	=> CopyMessages< T >( OldMessages );
-
-    /// <summary>Last frame's view messages. The sim never reads across ticks (Rule 10).</summary>
-    Dictionary< Type, List< Message > > OldMessages
-    {
-    	get
-    	{
-#if DEBUG
-    		if ( phase == WorldPhase.Sim )
-    			throw new InvalidOperationException( "The sim read old messages. Sim messages last one tick, and saves happen between ticks, so the sim never reads across ticks." );
-#endif
-    		return oldMessages;
-    	}
-    }
-
     static List< T > CopyMessages< T > ( Dictionary< Type, List< Message > > source ) where T : Message
     {
     	if ( !source.TryGetValue( typeof( T ), out var list ) || list.Count == 0 )
@@ -774,29 +757,12 @@ public partial class World
     static T FirstMessage< T > ( Dictionary< Type, List< Message > > source ) where T : Message
     	=> source.TryGetValue( typeof( T ), out var list ) && list.Count > 0 ? ( T )list[ 0 ] : null;
 
-    public List< Message > ReadOld ( System.Type messageType )
-    {
-    	if ( !OldMessages.TryGetValue( messageType, out var list ) )
-    		return new List< Message >();
-
-    	return list;
-    }
-
     public T ReadSingle< T > () where T : Message
     	=> FirstMessage< T >( CurrentMessages );
-
-    public T ReadSingleOld< T > () where T : Message
-    	=> FirstMessage< T >( OldMessages );
 
     public Message ReadSingle ( System.Type type )
     {
     	var results = Read( type );
-    	return results.Count == 0 ? null : results[ 0 ];
-    }
-
-    public Message ReadSingleOld ( System.Type type )
-    {
-    	var results = ReadOld( type );
     	return results.Count == 0 ? null : results[ 0 ];
     }
 
@@ -805,12 +771,6 @@ public partial class World
 		if ( CurrentMessages.TryGetValue( message.GetType(), out var list ) )
 			list.Remove( message );
 	}
-    
-    public void DestroyOld ( Message message )
-    {
-        if ( OldMessages.TryGetValue( message.GetType(), out var list ) )
-            list.Remove( message );
-    }
 	#endregion
 
 
@@ -1064,7 +1024,7 @@ public partial class World
 
     /// <summary>
     /// Runs one frame of the view: advances the clocks (if a <see cref="TimeSystem"/> is running), then runs view
-    /// systems in start order. This frame's messages, and the sim messages in the inbox, then become old messages.
+    /// systems in start order. This frame's view messages and the sim messages in the inbox are then cleared.
     /// </summary>
     /// <exception cref="InvalidOperationException">Called from inside a tick, a frame or a view scope.</exception>
     public void Update ( FrameTime time )
@@ -1086,7 +1046,6 @@ public partial class World
     	}
     	finally
     	{
-    		( oldMessages, messages ) = ( messages, oldMessages );
     		messages.Clear();
     	}
     }

@@ -41,7 +41,7 @@ These are what the worklist enforces. Check new code against them.
 9. **Coroutines are view-only and transient.** `IEnumerator` state can't be serialized, so
    coroutines end on `StopSystem` and don't survive a load. Sim sequencing is plain component state
    plus tick counts.
-10. **The sim never reads messages across ticks.** No `ReadOld` in sim systems. Messages aren't
+10. **No one reads messages across ticks or frames.** There is no `ReadOld`. Messages aren't
    serialized, so saves happen only between ticks, when no sim messages are in flight.
 
 ---
@@ -160,7 +160,8 @@ These are what the worklist enforces. Check new code against them.
       - Reading view messages is an error.
       - `TimeSystem.GetDelta`/`GetTotal` are errors. The view-component guard already catches the
         clock reads; this gives a clearer message. The sim reads `world.tick` only.
-      - `ReadOld` is an error (Rule 10).
+      - `ReadOld` is an error (Rule 10). *(Superseded: `ReadOld` and `oldMessages` are deleted.
+        Messages are commands, sim messages and frame-local view messages; see `docs/ECS.md`.)*
 - [x] During `Update`, also checksum sim state before and after the view phase. Component
       references are mutable, so this is the only way to catch a view write to a sim field.
       *(Also around `Draw` and `EnterViewPhase()` scopes. Filters remember the phase they started

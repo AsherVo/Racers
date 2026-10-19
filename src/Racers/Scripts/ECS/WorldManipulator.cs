@@ -140,29 +140,14 @@ public class WorldManipulator
 	protected List< Message > Read ( System.Type messageType )
 		=> world.Read( messageType );
 
-	protected List< T > ReadOld< T >() where T : Message
-		=> world.ReadOld< T >();
-
-	protected List< Message > ReadOld ( System.Type messageType )
-		=> world.ReadOld( messageType );
-
 	protected T ReadSingle< T >() where T : Message
 		=> world.ReadSingle< T >();
 
 	protected Message ReadSingle ( System.Type type )
 		=> world.ReadSingle( type );
 
-	protected T ReadSingleOld< T >() where T : Message
-		=> world.ReadSingleOld< T >();
-
-    protected Message ReadSingleOld ( System.Type type )
-    	=> world.ReadSingleOld( type );
-
 	protected void Destroy ( Message message )
 		=> world.Destroy( message );
-    
-    protected void DestroyOld ( Message message )
-        => world.DestroyOld( message );
 
 	#endregion
 

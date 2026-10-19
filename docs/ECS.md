@@ -110,23 +110,29 @@ at its `Grid`. `SetRelation< T >( from, to )` retargets an existing relation and
 
 ### Messages
 
-A message is a class deriving from `Message`. Messages are short-lived events. Where one goes depends
-on the phase it's sent in:
+A message is a class deriving from `Message`. Messages are short-lived events. There are three kinds,
+and each flows one way:
 
-| Sent | Kind | Read by | Lasts |
+| Kind | Sent in | Read by | Lasts |
 |---|---|---|---|
-| During a tick | sim message | sim systems that tick, then the view | one tick, then moves to the view's inbox until the next `Update` ends |
-| Anywhere else | view message | view systems | until the next `Update` ends |
-| Anywhere but a tick, deriving from `Command` | command | sim systems on the next tick, then the view | like a sim message |
+| **Command** (derives from `Command`) | the view, input handlers, loading | sim systems on the next tick, then the view | one tick, then the view's inbox |
+| **Sim message** | a tick | later sim systems in the same tick, then the view | one tick, then the view's inbox |
+| **View message** | the view, input handlers, loading | view systems | until the end of the next `Update` |
+
+Commands carry input into the sim, and sim messages carry events ("car crashed") out of it. View
+messages are the view talking to itself: input (`PointerClick`) and UI events (`StartHover`, `Click`).
+They can't be commands, because UI has to keep working while the sim is paused (a pause menu's
+"Resume" button), and cosmetic events don't belong in the replay.
 
 - `Send( new Click { target = entity } )`
 - `Read< T >()` returns the current messages of that type: in a tick, that tick's sim messages and
   commands; in the view, this frame's view messages plus every sim message from the ticks since the
   last frame. A frame can hold 0..N ticks, so the inbox is what keeps the view from dropping or
   repeating an event like "car crashed". `ReadSingle< T >()` returns the first one.
-- At the end of `Update`, the view's messages become "old" (`ReadOld`). The sim never reads old
-  messages.
-- `Destroy( message )` consumes a message, so later systems won't see it.
+- At the end of `Update`, the view's messages and the inbox are cleared. Nothing reads messages from
+  an earlier tick or frame.
+- `Destroy( message )` consumes a message, so later systems won't see it. A sim message destroyed in
+  the sim never reaches the view.
 
 The sim can't read view messages at all: in a tick, `Read` only sees the sim's own store.
 
@@ -287,7 +293,7 @@ view components ◄── view systems ◄── sim messages (inbox) ◄──�
 2. `world.Update( time )`:
    - `TimeSystem.AdvanceFrame( time )` advances the clocks, if a `TimeSystem` is running
    - run view systems in start order
-   - this frame's messages, inbox included, become old messages
+   - clear this frame's view messages and the inbox
 3. `world.Draw( batch )` runs draw systems in the view phase.
 
 ### Time
@@ -334,8 +340,8 @@ conventions that follow from them.
 8. **No concurrency in the sim.** No threads, `Task`, `async` or `Parallel`.
 9. **Coroutines are view-only and temporary.** They end on `StopSystem` and don't survive a load.
    Sim sequences are component state plus tick counts.
-10. **The sim never reads messages across ticks.** No `ReadOld` in sim systems. Saves happen only
-    between ticks.
+10. **No one reads messages across ticks or frames.** Sim messages last one tick (plus the view's
+    inbox) and view messages one frame. Saves happen only between ticks.
 11. **State that systems share lives on an entity, not in a system.** When a system needs
     world-level data, give it an entity. For example, a `Grid` entity holds `width`/`height`,
     cells relate to it, and `GridSystem` rebuilds its lookup arrays from those relations on start.
@@ -346,7 +352,7 @@ conventions that follow from them.
 In debug builds, guards catch breaches of Rules 3 and 10 while they happen, by throwing
 `InvalidOperationException`:
 - During a tick: `Get`/`Has`/`TryGet`/`GetRelations` of a view component, a filter or query that
-  names one, `GetComponents`, `ReadOld`, and `TimeSystem` lookups. (Reading view messages can't
+  names one, `GetComponents`, and `TimeSystem` lookups. (Reading view messages can't
   happen: the sim only sees its own.)
 - During the view phase: adding, removing or retargeting an `ISimComponent`, or destroying an entity
   that has one.
