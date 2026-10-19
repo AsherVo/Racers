@@ -124,8 +124,9 @@ These are what the worklist enforces. Check new code against them.
       desync diffs and rollback.
       - Keep a single `Create()`. The world picks the counter from the current phase.
       - **Default phase** (`Load`, `FixedTick`, anything outside the view): ids come from
-        `nextEntityId` (1, 2, 3…). `Load` runs identically on every platform, so canvases and
-        UI made there are safe in this range.
+        `nextEntityId` (1, 2, 3…). Only entities the sim needs go here. View-only entities
+        made in `Load` (canvases, UI) are created in the view phase, so a UI change never shifts
+        sim ids or breaks recorded replays.
       - **View phase** (`Update`, `Draw`, input handlers): ids come from `nextViewEntityId`, which
         starts at `VIEW_ENTITY_ID_START = 1_000_000` so they stay readable in the inspector.
       - `World.IsViewEntity( id )` checks against the start of the view range.

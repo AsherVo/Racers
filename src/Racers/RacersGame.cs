@@ -42,6 +42,21 @@ public sealed class RacersGame : Game
         world.Start( new CoroutineSystem() );
         world.Start( new RenderSystem() );
 
+        var car = LoadSim();
+
+        using ( world.EnterViewPhase() )
+            LoadView( car );
+    }
+
+    uint LoadSim ()
+    {
+        world.Get< GridSystem >().SpawnGrid( 9, 3 );
+
+        return world.Create( "Car", new GridPos { cell = new Vector2Int( 2, 2 ) } );
+    }
+
+    void LoadView ( uint car )
+    {
         canvas = world.Create( "Canvas",
             new Canvas {},
             new SortOrder { value = 0 }
@@ -79,11 +94,8 @@ public sealed class RacersGame : Game
         world.Get< Rect >( statsText ).pivot = new Vector2( 0, 1 );
         world.Add( statsText, new SortOrder { value = 1 } );
 
-        world.Get< GridSystem >().SpawnGrid( 9, 3 );
         world.Get< GridViewSystem >().DressGrid( canvas );
-
-        var car = prefab.CreateFromData( "Car", canvas );
-        world.Add( car, new GridPos { cell = new Vector2Int( 2, 2 ) } );
+        prefab.AddFromData( car, "Car", canvas );
     }
 
     protected override void OnResize ()

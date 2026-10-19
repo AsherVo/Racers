@@ -283,8 +283,8 @@ There is one `Create()`. The world picks the id counter from the current phase, 
 created at frame-dependent times (a hover highlight, an explosion, a tooltip) can never shift a sim
 entity's id. Without that, the same car would be entity 41 at 60 Hz and 47 at 120 Hz.
 
-- Sim range: `nextEntityId`, 1, 2, 3... up to `VIEW_ENTITY_ID_START` (1,000,000). `Load` runs
-  identically on every platform, so canvases and UI created there are safe in this range.
+- Sim range: `nextEntityId`, 1, 2, 3... up to `VIEW_ENTITY_ID_START` (1,000,000). Only entities the
+  sim needs belong here.
 - View range: `nextViewEntityId`, from `VIEW_ENTITY_ID_START` up. `World.IsViewEntity( id )` checks.
   The inspector tags these entities `view`.
 - Both counters are serialized. A rollback *(planned)* restores only `nextEntityId`.
