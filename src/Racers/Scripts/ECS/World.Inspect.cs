@@ -61,7 +61,9 @@ public partial class World : IInspectable
 
                 if ( component is Relation relation )
                 {
-                    componentNode.value = $"→ {GetName( relation.relation )}";
+                    // The target, not a summary of the fields: a tool can link to it by its leading id.
+                    componentNode.value = $"→ {relation.relation} ({GetName( relation.relation )})";
+                    componentNode.valueIsSummary = false;
                     var target = componentNode.children?.Find( child => child.key == nameof( Relation.relation ) );
                     if ( target != null )
                         target.value = $"{relation.relation} ({GetName( relation.relation )})";
