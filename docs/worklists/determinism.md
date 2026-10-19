@@ -179,7 +179,7 @@ These are what the worklist enforces. Check new code against them.
 | `TimeSystem` | Kept as a utility the world feeds. Clocks live on entities and ticks on `World` (see **Time** in Phase 2). |
 | `TimePassed` message | Deleted. Readers look up `TimeSystem.GetDelta( Time )` instead. |
 | `PointerSystem` | View. Hit-testing reads texture alpha, Rive and float rects, so it can't be sim. It loses hover state on a restart, which is fine. |
-| `ButtonSystem` | View. Turns clicks into **commands** (`PressButton { button }`, for sim-range targets only). |
+| `ButtonSystem` | View. Turns clicks into **commands**. *(Superseded in Phase 4: `ButtonSystem` only does hover visuals, and `GridViewSystem` turns cell clicks into `SelectCell`.)* |
 | `GridSystem` | Split into `GridSystem` (sim) and `GridViewSystem` (view, with `DressGrid( canvas )` called from `Load`). A new `Grid` entity holds `width`/`height`. `Cell` becomes a relation that points at its grid (`Cell : Relation, ISimComponent`, keeping `coords`). `cells[]`/`highlights[]` become caches rebuilt in `StartSystem`, so a highlight needs a link back to its cell. Grid rules and occupancy go to sim; cell visuals and highlights go to view. |
 | `SpriteAnimationSystem` | View (frame `dt` is fine). |
 | `CoroutineSystem` / `WaitForSeconds` | View. Each coroutine follows its `Time` type through `TimeSystem.GetDelta`. A `Game` coroutine pauses with the sim. Coroutines end on `StopSystem` and don't survive a load (Rule 9). |
@@ -195,15 +195,22 @@ These are what the worklist enforces. Check new code against them.
 
 ### Phase 4: Input as commands
 
-- [ ] `OnPointer`/`OnKey` send view messages only. They no longer reach the sim directly.
-      *(`OnPointer` already does, inside `world.EnterViewPhase()`.)*
-- [ ] View systems translate input into game commands such as `SelectCell { x, y }` and
+- [x] `OnPointer`/`OnKey` send view messages only. They no longer reach the sim directly.
+      *(`PointerHover`/`PointerClick` and `KeyInput`, inside `world.EnterViewPhase()`. Escape still
+      calls `Exit()` directly, which is app-level and never touches the world.)*
+- [x] View systems translate input into game commands such as `SelectCell { x, y }` and
       `ChangeLane { lane }`. These contain integers, never raw pointer positions.
-- [ ] `CommandQueue`: pending commands are stamped with the next tick and applied at the start of
+      *(`GridViewSystem` turns clicks on cells into `SelectCell`; `GridSystem` logs it as a test.
+      `PressButton` is gone. Command types are checked by `SimComponentRules` like sim components.
+      `ChangeLane` waits for lanes to exist.)*
+- [x] `CommandQueue`: pending commands are stamped with the next tick and applied at the start of
       that tick, in the order they were queued.
-- [ ] Every applied `( tick, command )` is recorded. This is the replay stream, and later the
+      *(Built in Phase 2 as `World.pendingCommands`; no separate class needed.)*
+- [x] Every applied `( tick, command )` is recorded. This is the replay stream, and later the
       network protocol. The recorder lives outside the world (in `RacersGame` or the engine),
       because it watches the world across stops, starts and loads.
+      *(`CommandRecorder` in `MintECS`, fed by `World.onCommandApplied`, owned by `RacersGame`.
+      Writing it to a replay file is Phase 6.)*
 
 ### Phase 5: Deterministic primitives (Engine)
 

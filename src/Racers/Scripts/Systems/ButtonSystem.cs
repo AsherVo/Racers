@@ -41,12 +41,5 @@ public class ButtonSystem : WorldManipulator, IViewSystem
                 rive?.FireViewModelTrigger( RIVE_IDLE_TRIGGER );
             }
         }
-
-        var clicks = Read< Click >();
-        foreach ( var click in clicks )
-        {
-            if ( Exists( click.target ) && !World.IsViewEntity( click.target ) )
-                Send( new PressButton { button = click.target } );
-        }
     }
 }

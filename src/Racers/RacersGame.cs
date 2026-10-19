@@ -24,12 +24,14 @@ public sealed class RacersGame : Game
     uint statsShadow;
 
     World world;
+    CommandRecorder recorder = new();
 
     protected override void Load ()
     {
         Toolbox.Setup( this );
 
         world = new World( ticksPerSecond );
+        recorder.Attach( world );
         world.Start( new TimeSystem() );
         world.Start( new PrefabSystem() );
         world.Start( new GridSystem() );
@@ -91,6 +93,7 @@ public sealed class RacersGame : Game
 
     protected override void Unload ()
     {
+        recorder.Detach();
         Toolbox.I.load.Dispose();
     }
 
@@ -113,6 +116,10 @@ public sealed class RacersGame : Game
 
     protected override void OnKey ( Key key, bool down )
     {
+        using var view = world.EnterViewPhase();
+
+        world.Send( new KeyInput { key = key, down = down } );
+
         if ( down && key == Key.Escape )
             Exit();
     }

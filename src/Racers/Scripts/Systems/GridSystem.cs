@@ -37,6 +37,15 @@ public class GridSystem : WorldManipulator, ISimSystem
 
     public void FixedUpdate ( World world )
     {
+        foreach ( var select in Read< SelectCell >() )
+        {
+            var coords = new Vector2Int( select.x, select.y );
+            if ( InBounds( coords ) )
+                Log.Info( $"[Sim] Tick { select.tick }: selected { GetName( GetCell( coords ) ) }" );
+            else
+                Log.Warning( $"[Sim] Tick { select.tick }: ignored SelectCell ({ select.x }, { select.y }), outside the grid" );
+        }
+
         foreach ( var entity in positioned.entities )
         {
             var coords = Get< GridPos >( entity ).cell;

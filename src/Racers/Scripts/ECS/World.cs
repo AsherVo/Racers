@@ -39,6 +39,9 @@ public partial class World
 
     [YamlIgnore] public WorldPhase phase { get; private set; }
 
+    /// <summary>Fires for each command as a tick applies it, already stamped, in the order the commands were sent.</summary>
+    public event Action< Command >? onCommandApplied;
+
     [YamlIgnore] public int structureVersion { get; private set; }
 
     const int MinDeadEntitiesToCompact = 1024;
@@ -707,6 +710,7 @@ public partial class World
     		if ( phase == WorldPhase.Sim )
     			throw new InvalidOperationException( $"The sim sent the command { command.GetType().Name }. Commands come from the view; the sim sends ordinary messages." );
 
+    		SimComponentRules.ValidateCommand( command.GetType() );
     		pendingCommands.Add( command );
     		return message;
     	}
@@ -977,8 +981,8 @@ public partial class World
 
     #region Phases
     /// <summary>
-    /// Runs one fixed tick: increments <see cref="tick"/>, applies pending commands stamped with it, and runs sim
-    /// systems in start order. The tick's sim messages then move to the view's inbox.
+    /// Runs one fixed tick: increments <see cref="tick"/>, applies pending commands stamped with it in the order they
+    /// were sent, and runs sim systems in start order. The tick's sim messages then move to the view's inbox.
     /// </summary>
     /// <exception cref="InvalidOperationException">Called from inside a tick, a frame or a view scope.</exception>
     public void FixedTick ()
@@ -991,12 +995,14 @@ public partial class World
     	{
     		tick++;
 
-    		foreach ( var command in pendingCommands )
+    		var applying = pendingCommands;
+    		pendingCommands = new List< Command >();
+    		foreach ( var command in applying )
     		{
     			command.tick = tick;
     			AddMessage( simMessages, command );
+    			onCommandApplied?.Invoke( command );
     		}
-    		pendingCommands.Clear();
 
     		simSystemSnapshot ??= simSystemOrder.ToArray();
     		foreach ( var system in simSystemSnapshot )

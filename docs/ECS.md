@@ -141,21 +141,43 @@ sent just before a save still applies after the load.
 
 ### Commands
 
-Commands are the only way input reaches the sim.
+Commands are the only way input reaches the sim. Input arrives as view messages (`PointerClick`,
+`KeyInput`), view systems work out what it means, and they send a command that says it in game terms:
 
 ```C#
-public class PressButton : Command
+public class SelectCell : Command
 {
-    public uint button;
+    public int x;
+    public int y;
 }
 
-Send( new PressButton { button = entity } );   // in a view system
+// GridViewSystem (view): a click on a cell becomes a command.
+foreach ( var click in Read< Click >() )
+{
+    if ( Exists( click.target ) && TryGet( click.target, out Cell cell ) )
+        Send( new SelectCell { x = cell.coords.x, y = cell.coords.y } );
+}
+
+// GridSystem (sim): the next tick applies it.
+foreach ( var select in Read< SelectCell >() )
+    ...
 ```
 
 The world keeps the command in `pendingCommands` until the next `FixedTick`, which stamps it with
-that tick (`command.tick`) and delivers it with the tick's sim messages. Sending a command from the
-sim is an error. Commands carry integers (cells, lanes, sim entity ids), never pointer positions or
-view entity ids.
+that tick (`command.tick`) and delivers it with the tick's sim messages, in the order the commands
+were sent. Sending a command from the sim is an error.
+
+Commands are sim input, so their fields follow the same rules as sim components: integers (cells,
+lanes, sim entity ids), never floats or pointer positions. `SimComponentRules` checks each command
+type at startup and the first time it's sent.
+
+### Recording
+
+`World.onCommandApplied` fires for each command as a tick applies it. `CommandRecorder` listens and
+keeps every applied command, each stamped with its tick: with the content and seed, that's
+everything needed to replay a match, and later the network protocol. The recorder lives outside the
+world (`RacersGame` owns it), so it keeps recording while systems stop and start. After loading a
+world, `Attach` it to the new one.
 
 ### Filters
 
@@ -213,10 +235,10 @@ Racers' systems:
 |---|---|---|
 | `TimeSystem` | utility | Fed by `World.Update`. See [Time](#time). |
 | `PrefabSystem` | utility | Called from `Load` or a sim system, it creates sim ids; from the view, view ids. `AddFromData` dresses an existing entity. |
-| `GridSystem` | sim | Owns the `Grid` entity and `cells[]` (a cache rebuilt from `Cell` relations). Keeps each `GridPos` entity's `InCell` relation pointing at its cell. |
+| `GridSystem` | sim | Owns the `Grid` entity and `cells[]` (a cache rebuilt from `Cell` relations). Keeps each `GridPos` entity's `InCell` relation pointing at its cell. Applies `SelectCell` (for now, logs it). |
 | `PointerSystem` | view | Hit-tests against texture alpha, Rive and float rects. Rebuilds its hover set from `HoverTarget.hovering` on start. |
-| `ButtonSystem` | view | Fires Rive hover triggers, and turns clicks on sim entities into `PressButton` commands. |
-| `GridViewSystem` | view | Cell layout and visuals (`DressGrid`), highlights (a cache rebuilt from `CellHighlight` relations), and `Position` derived from `GridPos`. |
+| `ButtonSystem` | view | Fires Rive hover triggers. |
+| `GridViewSystem` | view | Turns clicks on cells into `SelectCell` commands. Cell layout and visuals (`DressGrid`), highlights (a cache rebuilt from `CellHighlight` relations), and `Position` derived from `GridPos`. |
 | `SpriteAnimationSystem` | view | Follows `Time.Game`. |
 | `CoroutineSystem` | view | Each coroutine follows its own `Time` type. Coroutines end on `StopSystem`. |
 | `RenderSystem` | view + draw | Rive instances are rebuilt from `DrawRive` on start; their state machines reset after a load. |

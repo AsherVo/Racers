@@ -43,6 +43,12 @@ public class GridViewSystem : WorldManipulator, IViewSystem
 
     public void Update ( World world, FrameTime time )
     {
+        foreach ( var click in Read< Click >() )
+        {
+            if ( Exists( click.target ) && TryGet( click.target, out Cell cell ) )
+                Send( new SelectCell { x = cell.coords.x, y = cell.coords.y } );
+        }
+
         foreach ( var entity in positioned.entities )
         {
             var gridPos = Get< GridPos >( entity );

@@ -5,31 +5,42 @@ using System.Reflection;
 namespace MintECS;
 
 /// <summary>
-/// Classifies component types as sim or view, and checks that sim components only hold data that behaves the same on
-/// every platform: integers, bools, strings, enums, and arrays, lists and structs of those.
+/// Classifies component types as sim or view, and checks that sim data (sim components and commands) only holds data
+/// that behaves the same on every platform: integers, bools, strings, enums, and arrays, lists and structs of those.
 /// </summary>
 public static class SimComponentRules
 {
 	const BindingFlags DECLARED_FIELDS = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
 
 	static readonly ConcurrentDictionary< Type, bool > IsSimByType = new();
+	static readonly ConcurrentDictionary< Type, bool > ValidCommands = new();
 
 	/// <summary>Whether a component type is sim state. The first time a sim type is seen, its fields are checked.</summary>
 	/// <exception cref="InvalidOperationException">The type is an <see cref="ISimComponent"/> with a field that breaks the rules.</exception>
 	public static bool IsSim ( Type componentType )
 		=> IsSimByType.TryGetValue( componentType, out bool isSim ) ? isSim : IsSimByType.GetOrAdd( componentType, Classify );
 
-	/// <summary>Checks every <see cref="ISimComponent"/> in an assembly at once, so a bad field fails at startup instead of on first use.</summary>
+	/// <summary>Checks a command type the first time it's sent. Commands are sim input, so they follow the same rules as sim components.</summary>
+	/// <exception cref="InvalidOperationException">The command has a field that breaks the rules.</exception>
+	public static void ValidateCommand ( Type commandType )
+	{
+		if ( ValidCommands.ContainsKey( commandType ) )
+			return;
+
+		ThrowIfAny( FindProblems( commandType ) );
+		ValidCommands.TryAdd( commandType, true );
+	}
+
+	/// <summary>Checks every <see cref="ISimComponent"/> and <see cref="Command"/> in an assembly at once, so a bad field fails at startup instead of on first use.</summary>
 	/// <exception cref="InvalidOperationException">Lists every field that breaks the rules.</exception>
 	[UnconditionalSuppressMessage( "Trimming", "IL2026", Justification = "Data assemblies are rooted (YamlDataAssemblies in hosts/Directory.Build.targets), so none of their types are trimmed." )]
 	public static void ValidateAssembly ( Assembly assembly )
 	{
 		var problems = new List< string >();
-		foreach ( var type in assembly.GetTypes().Where( IsSimComponentType ).OrderBy( type => type.FullName, StringComparer.Ordinal ) )
+		foreach ( var type in assembly.GetTypes().Where( IsSimDataType ).OrderBy( type => type.FullName, StringComparer.Ordinal ) )
 			problems.AddRange( FindProblems( type ) );
 
-		if ( problems.Count > 0 )
-			throw new InvalidOperationException( $"Sim components must be deterministic:\n{ string.Join( "\n", problems ) }" );
+		ThrowIfAny( problems );
 	}
 
 	public static List< string > FindProblems ( Type componentType )
@@ -61,19 +72,23 @@ public static class SimComponentRules
 		return name.StartsWith( '<' ) && close > 1 ? name[ 1..close ] : name;
 	}
 
-	static bool IsSimComponentType ( Type type )
-		=> typeof( Component ).IsAssignableFrom( type ) && typeof( ISimComponent ).IsAssignableFrom( type );
+	static bool IsSimDataType ( Type type )
+		=> typeof( Command ).IsAssignableFrom( type )
+			|| ( typeof( Component ).IsAssignableFrom( type ) && typeof( ISimComponent ).IsAssignableFrom( type ) );
 
 	static bool Classify ( Type componentType )
 	{
 		if ( !typeof( ISimComponent ).IsAssignableFrom( componentType ) )
 			return false;
 
-		var problems = FindProblems( componentType );
-		if ( problems.Count > 0 )
-			throw new InvalidOperationException( $"Sim components must be deterministic:\n{ string.Join( "\n", problems ) }" );
-
+		ThrowIfAny( FindProblems( componentType ) );
 		return true;
+	}
+
+	static void ThrowIfAny ( List< string > problems )
+	{
+		if ( problems.Count > 0 )
+			throw new InvalidOperationException( $"Sim data must be deterministic:\n{ string.Join( "\n", problems ) }" );
 	}
 
 	static void CheckFields ( Type type, string path, List< string > problems, HashSet< Type > visited )
