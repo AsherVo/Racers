@@ -50,6 +50,14 @@ public class PrefabSystem : WorldManipulator, ISystem
             var colorHex = data.GetString( spriteBlock, "Color" );
             if ( colorHex != null )
                 Add( actor, new DrawColor { value = Utils.HexToColor( colorHex ) } );
+
+            if ( data.GetBool( spriteBlock, "Animated" ) )
+            {
+                Add( actor, new SpriteAnimation {
+                    animation = Loader.GetAnimationPrefix( data.GetString( spriteBlock, "Path" ) ),
+                    fps = data.GetInt( spriteBlock, "FPS" )
+                });
+            }
         }
 
         var group = data.GetGroup( id );

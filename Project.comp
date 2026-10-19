@@ -29,6 +29,13 @@ blocks:
         extensions: false
       - name: Color
         type: color
+        width: 104
+      - name: Animated
+        type: boolean
+        width: 68
+      - name: FPS
+        type: integer
+        width: 44
   - name: Rive
     properties:
       - name: Path

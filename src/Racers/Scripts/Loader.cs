@@ -19,6 +19,7 @@ public class Loader
     Dictionary< string, Texture > textures;
     Dictionary< string, RiveFile > rives;
     Dictionary< string, Dictionary< int, Font > > fonts;
+    Dictionary< string, string[] > spritePaths;
 
     public Loader ()
         => Setup();
@@ -28,6 +29,7 @@ public class Loader
         textures = new();
         rives = new();
         fonts = new();
+        spritePaths = new();
     }
 
     public void Dispose ()
@@ -47,6 +49,7 @@ public class Loader
         textures.Clear();
         rives.Clear();
         fonts.Clear();
+        spritePaths.Clear();
     }
 
     public Font Font ( string path, int fontSize )
@@ -84,5 +87,41 @@ public class Loader
         }
 
         return textures[ path ];
+    }
+
+    public static string GetAnimationPrefix ( string path )
+    {
+        var prefix = path.TrimEnd( "0123456789".ToCharArray() );
+        return prefix.EndsWith( '_' ) ? prefix[ ..^1 ] : prefix;
+    }
+
+    public string[] GetSpritePaths ( string prefix )
+    {
+        if ( !spritePaths.ContainsKey( prefix ) )
+            spritePaths[ prefix ] = FindSpritePaths( prefix );
+
+        return spritePaths[ prefix ];
+    }
+
+    string[] FindSpritePaths ( string prefix )
+    {
+        var slash = prefix.LastIndexOf( '/' );
+        var directory = SPRITE_PATH + prefix[ ..( slash + 1 ) ];
+        var name = prefix[ ( slash + 1 ).. ];
+
+        var frames = new List< ( string suffix, string number, int value ) >();
+        foreach ( var file in Toolbox.I.game.content.FindFiles( directory, $"{ name }*{ SPRITE_SUFFIX }" ) )
+        {
+            var suffix = file[ name.Length..^SPRITE_SUFFIX.Length ];
+            var number = suffix.StartsWith( '_' ) ? suffix[ 1.. ] : suffix;
+            if ( number.Length > 0 && number.All( char.IsAsciiDigit ) && int.TryParse( number, out var value ) )
+                frames.Add( ( suffix, number, value ) );
+        }
+
+        return frames
+            .OrderBy( frame => frame.value )
+            .ThenBy( frame => frame.suffix.Length )
+            .Select( frame => prefix + frame.suffix )
+            .ToArray();
     }
 }

@@ -110,4 +110,7 @@ public partial class Data
 
     public bool GetBool ( YamlMap block, string key )
         => block.TryGetValue( key, out var node ) && node is YamlScalar scalar && scalar.TryGetBool( out bool value ) && value;
+
+    public int GetInt ( YamlMap block, string key )
+        => block.TryGetValue( key, out var node ) && node is YamlScalar scalar && scalar.TryGetInt64( out long value ) ? ( int )value : 0;
 }

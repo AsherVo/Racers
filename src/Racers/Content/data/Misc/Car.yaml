@@ -3,3 +3,5 @@ Meta:
 
 Sprite:
   Path: car_1
+  Animated: true
+  FPS: 16

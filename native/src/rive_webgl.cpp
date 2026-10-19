@@ -25,6 +25,8 @@ struct EnRiveContext
 struct EnRiveTarget
 {
     rcp<TextureRenderTargetGL> target;
+    GLuint texture;
+    GLuint readFramebuffer = 0; // made on the first en_rive_target_alpha
 };
 
 Factory* en_rive_factory(EnRiveContext* ctx) { return ctx->context.get(); }
@@ -104,11 +106,45 @@ EnRiveTarget* en_rive_target_create(EnRiveContext*, int width, int height, uint3
     target->target = make_rcp<TextureRenderTargetGL>((uint32_t)width, (uint32_t)height);
     target->target->setTargetTexture(glTexture);
     target->target->setBottomUp(false); // SDL textures are top-down
+    target->texture = glTexture;
     *pixelBuffer = nullptr;
     return target;
 }
 
-void en_rive_target_destroy(EnRiveTarget* target) { delete target; }
+void en_rive_target_destroy(EnRiveTarget* target)
+{
+    if (!target)
+        return;
+    if (target->readFramebuffer)
+        glDeleteFramebuffers(1, &target->readFramebuffer);
+    delete target;
+}
+
+int en_rive_target_alpha(EnRiveContext*, EnRiveTarget* target, int x, int y)
+{
+    if (x < 0 || y < 0 || (uint32_t)x >= target->target->width() || (uint32_t)y >= target->target->height())
+        return 0;
+
+    // Only the read binding changes, and it's put back, so neither SDL's nor Rive's state is disturbed.
+    GLint previous = 0;
+    glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &previous);
+    if (!target->readFramebuffer)
+    {
+        glGenFramebuffers(1, &target->readFramebuffer);
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, target->readFramebuffer);
+        glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, target->texture, 0);
+    }
+    else
+    {
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, target->readFramebuffer);
+    }
+
+    // Texture rows are top-down (setBottomUp(false)), and so are the framebuffer rows over them.
+    uint8_t rgba[4] = {};
+    glReadPixels(x, y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, rgba);
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, (GLuint)previous);
+    return rgba[3];
+}
 
 void en_rive_render(EnRiveContext* ctx, EnRiveInstance* inst, EnRiveTarget* target)
 {

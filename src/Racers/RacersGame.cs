@@ -32,6 +32,7 @@ public sealed class RacersGame : Game
         world.Start( new PointerSystem() );
         world.Start( new ButtonSystem() );
         world.Start( new GridSystem() );
+        world.Start( new SpriteAnimationSystem() );
         world.Start( new RenderSystem() );
 
         canvas = world.Create( "Canvas",
@@ -62,19 +63,20 @@ public sealed class RacersGame : Game
         var speedometer = world.Get< RenderSystem >().GetRive( topSpeed );
         speedometer.SetViewModelString( "speedText", 5.ToString() );
 
-        var solid = world.Get< PrefabSystem >().CreateSolid( "Test Solid", 40, 20, new Color( 1f, 0.3f, 0.3f ), canvas );
-        world.Get< Position >( solid ).value = new Vector2( 80, 10 );
-
         statsShadow = world.Get< PrefabSystem >().CreateText( "Stats Shadow", "", "Crates", 8, Color.Black.WithAlpha( 0.6f ), debugCanvas );
-        world.Get< Position >( statsShadow ).value = new Vector2( 6, 11 );
+        world.Get< Position >( statsShadow ).value = new Vector2( 6, graphics.height - 5 );
         world.Get< Rect >( statsShadow ).pivot = new Vector2( 0, 1 );
 
         statsText = world.Get< PrefabSystem >().CreateText( "Stats", "", "Crates", 8, Color.White, debugCanvas );
-        world.Get< Position >( statsText ).value = new Vector2( 5, 12 );
+        world.Get< Position >( statsText ).value = new Vector2( 5, graphics.height - 4 );
         world.Get< Rect >( statsText ).pivot = new Vector2( 0, 1 );
         world.Add( statsText, new SortOrder { value = 1 } );
 
-        world.Get< GridSystem >().SpawnGrid( uiCanvas );
+        world.Get< GridSystem >().SpawnGrid( canvas );
+
+        var car = prefab.CreateFromData( "Car", canvas );
+        var rect = world.Get< Rect >( car );
+        world.Get< Position >( car ).value = world.Get< GridSystem >().CenterOnCell( new Vector2Int( 2, 2 ), ( int )rect.width, ( int )rect.height );
     }
 
     protected override void OnResize ()
@@ -110,6 +112,7 @@ public sealed class RacersGame : Game
 
     protected override void Update ( GameTime time )
     {
+        world.Send( new TimePassed { dt = time.dt } );
         world.Tick();
 
         frames++;

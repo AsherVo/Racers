@@ -121,6 +121,23 @@ void en_rive_target_destroy(EnRiveTarget* target)
     }
 }
 
+int en_rive_target_alpha(EnRiveContext* ctx, EnRiveTarget* target, int x, int y)
+{
+    CVPixelBufferRef buffer = target->pixelBuffer;
+    if (x < 0 || y < 0 || (size_t)x >= CVPixelBufferGetWidth(buffer) || (size_t)y >= CVPixelBufferGetHeight(buffer))
+        return 0;
+
+    en_rive_finish(ctx);
+    if (CVPixelBufferLockBaseAddress(buffer, kCVPixelBufferLock_ReadOnly) != kCVReturnSuccess)
+        return 0;
+
+    // BGRA: alpha is the fourth byte.
+    const uint8_t* row = (const uint8_t*)CVPixelBufferGetBaseAddress(buffer) + (size_t)y * CVPixelBufferGetBytesPerRow(buffer);
+    int alpha = row[(size_t)x * 4 + 3];
+    CVPixelBufferUnlockBaseAddress(buffer, kCVPixelBufferLock_ReadOnly);
+    return alpha;
+}
+
 void en_rive_render(EnRiveContext* ctx, EnRiveInstance* inst, EnRiveTarget* target)
 {
     @autoreleasepool

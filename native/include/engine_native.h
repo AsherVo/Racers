@@ -124,6 +124,13 @@ EN_API int en_rive_instance_pointer(EnRiveInstance*, int action, float x, float 
 EN_API EnRiveTarget* en_rive_target_create(EnRiveContext*, int width, int height, uint32_t glTexture, void** pixelBuffer);
 EN_API void en_rive_target_destroy(EnRiveTarget*);
 
+/*
+ * The alpha (0 to 255) of the target's pixel at (x, y), counted from the top-left; 0 outside it.
+ * Waits for Rive's pending renders, then reads back from the GPU, so it costs a sync: fine for a few
+ * pixels a frame, not for scanning images. Metal: reads the pixel buffer. WebGL: glReadPixels.
+ */
+EN_API int en_rive_target_alpha(EnRiveContext*, EnRiveTarget*, int x, int y);
+
 /* Clears the target to transparent and draws the instance scaled to fill it (premultiplied alpha). */
 EN_API void en_rive_render(EnRiveContext*, EnRiveInstance*, EnRiveTarget*);
 

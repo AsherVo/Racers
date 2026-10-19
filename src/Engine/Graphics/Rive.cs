@@ -159,6 +159,26 @@ public sealed class RiveInstance : IDisposable
         return Channel( color.a ) << 24 | Channel( color.r ) << 16 | Channel( color.g ) << 8 | Channel( color.b );
     }
 
+    /// <summary>
+    /// The alpha (0 to 1) of the most recently rendered frame at a point in artboard units from its
+    /// top-left. Outside the artboard is transparent. It reads back from the GPU, so query a few points a
+    /// frame, not whole regions.
+    /// </summary>
+    public float AlphaAt ( Vector2 position )
+    {
+        ObjectDisposedException.ThrowIf( handle == 0, this );
+
+        var frame = texture;
+        float x = position.x / width * frame.width;
+        float y = position.y / height * frame.height;
+
+        // Written so NaN fails too.
+        if ( !( x >= 0f && y >= 0f && x < frame.width && y < frame.height ) )
+            return 0f;
+
+        return runtime.ReadAlpha( targets[current], ( int )x, ( int )y ) / 255f;
+    }
+
     /// <summary>Pointer events for the state machine's listeners, in artboard coordinates. Return true on a hit.</summary>
     public bool PointerDown ( Vector2 position ) => Pointer( 0, position );
     public bool PointerMove ( Vector2 position ) => Pointer( 1, position );
@@ -349,6 +369,8 @@ internal sealed unsafe class RiveRuntime : IDisposable
     }
 
     public void Remove ( RiveInstance instance ) => instances.Remove( instance );
+
+    public int ReadAlpha ( nint target, int x, int y ) => EngineNative.en_rive_target_alpha( context, target, x, y );
 
     public void Remove ( RiveFile file ) => files.Remove( file );
 

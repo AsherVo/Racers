@@ -19,6 +19,9 @@ public class PointerSystem : WorldManipulator, ISystem
         .Include< ClickTarget >()
         .ToFilter();
 
+    const float MIN_ALPHA = 0.1f;
+
+    RenderSystem renderSystem;
     HashSet< uint > activeHovers = new();
     Vector2? hoverPosition;
 
@@ -40,6 +43,8 @@ public class PointerSystem : WorldManipulator, ISystem
 
     public void TickSystem ( World world )
     {
+        renderSystem ??= Get< RenderSystem >();
+
         var hoverEvents = Read< PointerHover >();
         if ( hoverEvents.Count > 0 )
             hoverPosition = hoverEvents[ ^1 ].position;
@@ -90,11 +95,51 @@ public class PointerSystem : WorldManipulator, ISystem
 
     public bool IsInTarget ( Vector2 position, uint targetEntity )
     {
+        var origin = Get< Position >( targetEntity ).value;
         var rect = Get< Rect >( targetEntity );
-        var bottomLeft = Get< Position >( targetEntity ).value - new Vector2( rect.width * rect.pivot.x, rect.height * rect.pivot.y );
+
+        if ( Has< DrawSolid >( targetEntity ) && IsInSolid( position, origin, rect ) )
+            return true;
+
+        if ( TryGet( targetEntity, out DrawSprite sprite ) && IsInSprite( position, origin, rect, sprite ) )
+            return true;
+
+        if ( Has< DrawRive >( targetEntity ) && IsInRive( position, origin, rect, renderSystem.GetRive( targetEntity ) ) )
+            return true;
+
+        return false;
+    }
+
+    bool IsInSolid ( Vector2 position, Vector2 origin, Rect rect )
+    {
+        var bottomLeft = origin - new Vector2( rect.width * rect.pivot.x, rect.height * rect.pivot.y );
 
         return
             position.x >= bottomLeft.x && position.x <= bottomLeft.x + rect.width &&
             position.y >= bottomLeft.y && position.y <= bottomLeft.y + rect.height;
+    }
+
+    bool IsInSprite ( Vector2 position, Vector2 origin, Rect rect, DrawSprite sprite )
+    {
+        var texture = Toolbox.I.load.Texture( sprite.path );
+        var pivot = new Vector2( rect.width * rect.pivot.x, rect.height * ( 1f - rect.pivot.y ) );
+        var x = position.x - origin.x + pivot.x;
+        var y = pivot.y - ( position.y - origin.y );
+
+        return texture.AlphaAt( ( int )MathF.Floor( x ), ( int )MathF.Floor( y ) ) >= MIN_ALPHA;
+    }
+
+    bool IsInRive ( Vector2 position, Vector2 origin, Rect rect, RiveInstance rive )
+    {
+        if ( rive == null )
+            return false;
+
+        var pivot = new Vector2( rive.width * rect.pivot.x, rive.height * ( 1f - rect.pivot.y ) );
+        var artboardPosition = new Vector2(
+            ( position.x - origin.x ) * rive.width / rect.width + pivot.x,
+            pivot.y - ( position.y - origin.y ) * rive.height / rect.height
+        );
+
+        return rive.AlphaAt( artboardPosition ) >= MIN_ALPHA;
     }
 }

@@ -130,6 +130,17 @@ internal static unsafe partial class SDL
         public float u, v;
     }
 
+    /// <summary>SDL_Surface. Read only; SDL owns it.</summary>
+    public struct Surface
+    {
+        public uint flags;
+        public uint format;
+        public int w, h, pitch;
+        public void* pixels;
+        public int refcount;
+        public void* reserved;
+    }
+
     // Main / lifecycle
     [LibraryImport( LIB )]
     public static partial int SDL_RunApp ( int argc, byte** argv, delegate* unmanaged[Cdecl]< int, byte**, int > mainFunction, void* reserved );
@@ -300,6 +311,16 @@ internal static unsafe partial class SDL
     [LibraryImport( LIB )]
     public static partial void SDL_DestroySurface ( nint surface );
 
+    [LibraryImport( LIB )]
+    public static partial Surface* SDL_ConvertSurface ( nint surface, uint format );
+
+    [LibraryImport( LIB )]
+    [return: MarshalAs( UnmanagedType.U1 )]
+    public static partial bool SDL_LockSurface ( Surface* surface );
+
+    [LibraryImport( LIB )]
+    public static partial void SDL_UnlockSurface ( Surface* surface );
+
     // Properties
     [LibraryImport( LIB )]
     public static partial uint SDL_CreateProperties ();
@@ -321,6 +342,11 @@ internal static unsafe partial class SDL
     // Files and memory
     [LibraryImport( LIB, StringMarshalling = StringMarshalling.Utf8 )]
     public static partial void* SDL_LoadFile ( string file, out nuint dataSize );
+
+    /// <summary>Returns one allocation (free it with <see cref="SDL_free"/>) holding <paramref name="count"/>
+    /// paths relative to <paramref name="path"/>. Lists Android APK assets when <paramref name="path"/> is relative.</summary>
+    [LibraryImport( LIB, StringMarshalling = StringMarshalling.Utf8 )]
+    public static partial byte** SDL_GlobDirectory ( string path, string? pattern, uint flags, out int count );
 
     [LibraryImport( LIB )]
     public static partial void SDL_free ( void* mem );

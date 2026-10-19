@@ -94,6 +94,9 @@ internal static unsafe partial class EngineNative
     public static partial void en_rive_target_destroy ( nint target );
 
     [LibraryImport( LIB )]
+    public static partial int en_rive_target_alpha ( nint context, nint target, int x, int y );
+
+    [LibraryImport( LIB )]
     public static partial void en_rive_render ( nint context, nint instance, nint target );
 
     [LibraryImport( LIB )]
