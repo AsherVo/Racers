@@ -3,7 +3,7 @@ using MintECS;
 
 namespace Racers;
 
-public class PointerSystem : WorldManipulator, ISystem
+public class PointerSystem : WorldManipulator, IViewSystem
 {
     Filter hoverFilter = new FilterBuilder()
         .Include< Interactable >()
@@ -31,6 +31,14 @@ public class PointerSystem : WorldManipulator, ISystem
 
         Start( hoverFilter );
         Start( clickFilter );
+
+        activeHovers.Clear();
+        hoverPosition = null;
+        foreach ( var entity in hoverFilter.entities )
+        {
+            if ( Get< HoverTarget >( entity ).hovering )
+                activeHovers.Add( entity );
+        }
     }
 
     public void StopSystem ( World world )
@@ -38,12 +46,15 @@ public class PointerSystem : WorldManipulator, ISystem
         Stop( hoverFilter );
         Stop( clickFilter );
 
+        activeHovers.Clear();
+        hoverPosition = null;
+        renderSystem = null;
         this.world = null;
     }
 
-    public void TickSystem ( World world )
+    public void Update ( World world, FrameTime time )
     {
-        renderSystem ??= Get< RenderSystem >();
+        renderSystem = Get< RenderSystem >();
 
         var hoverEvents = Read< PointerHover >();
         if ( hoverEvents.Count > 0 )

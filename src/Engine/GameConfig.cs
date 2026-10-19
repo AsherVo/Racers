@@ -3,6 +3,8 @@ namespace Engine;
 /// <summary>Window and resolution settings, read from the game's <c>config.yaml</c> before the window opens.</summary>
 public sealed class GameConfig
 {
+    public const int MAX_TICKS_PER_SECOND = 1000;
+
     public string title = "Game";
 
     /// <summary>
@@ -21,6 +23,9 @@ public sealed class GameConfig
     /// <summary>With <see cref="dynamicSize"/>, how many window points one game pixel covers.</summary>
     public float dynamicPixelScale = 1f;
 
+    /// <summary>How many fixed simulation ticks run per second of app time (<see cref="Game.FixedUpdate"/>).</summary>
+    public int ticksPerSecond = 60;
+
     /// <exception cref="InvalidDataException">A setting is out of range.</exception>
     public void Validate ( string source )
     {
@@ -28,5 +33,7 @@ public sealed class GameConfig
             throw new InvalidDataException( $"{source}: resolution must be positive, got {resolutionX}x{resolutionY}." );
         if ( !( dynamicPixelScale > 0f ) || float.IsInfinity( dynamicPixelScale ) )
             throw new InvalidDataException( $"{source}: dynamicPixelScale must be positive, got {dynamicPixelScale}." );
+        if ( ticksPerSecond is <= 0 or > MAX_TICKS_PER_SECOND )
+            throw new InvalidDataException( $"{source}: ticksPerSecond must be between 1 and {MAX_TICKS_PER_SECOND}, got {ticksPerSecond}." );
     }
 }

@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace Racers;
 
-public class RenderSystem : WorldManipulator, ISystem, IDrawSystem
+public class RenderSystem : WorldManipulator, IViewSystem, IDrawSystem
 {
 	Filter canvases;
 	Dictionary< uint, Filter > canvasFilters;
@@ -59,7 +59,7 @@ public class RenderSystem : WorldManipulator, ISystem, IDrawSystem
 		this.world = null;
 	}
 
-	public void TickSystem ( World world )
+	public void Update ( World world, FrameTime time )
 	{
 		
 	}

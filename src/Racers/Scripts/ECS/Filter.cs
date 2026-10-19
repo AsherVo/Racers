@@ -39,6 +39,9 @@ public class Filter
 	public HashSet< uint > entities = new();
 	public bool isBeingModified;
 
+	/// <summary>The phase the filter was started in. Its callbacks run in it.</summary>
+	public WorldPhase phase { get; internal set; }
+
 	public Filter ( System.Type[] include, System.Type[] exclude, RelationFilter[] relates, RelationFilter[] notRelates )
 	{
 		this.include = include;
@@ -83,13 +86,13 @@ public class Filter
 		{
             foreach (var includeType in include)
             {
-                if ( !world.Has( entity, includeType ) )
+                if ( world.Peek( entity, includeType ) == null )
                     return false;
             }
 
             foreach ( var excludeType in exclude )
             {
-                if ( world.Has( entity, excludeType ) )
+                if ( world.Peek( entity, excludeType ) != null )
                     return false;
             }
 
@@ -98,7 +101,7 @@ public class Filter
                 foreach ( var relatedEntity in relation.toEntities )
                 {
                     if ( !world.Exists( relatedEntity )
-                        || !world.HasRelation( entity, relatedEntity, relation.relationType ) )
+                        || !world.Relates( entity, relatedEntity, relation.relationType ) )
                     {
                         return false;
                     }
@@ -110,7 +113,7 @@ public class Filter
                 foreach ( var relatedEntity in relation.toEntities )
                 {
                     if ( world.Exists( relatedEntity )
-                        && world.HasRelation( entity, relatedEntity, relation.relationType ) )
+                        && world.Relates( entity, relatedEntity, relation.relationType ) )
                     {
                         return false;
                     }

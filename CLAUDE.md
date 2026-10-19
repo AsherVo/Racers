@@ -27,4 +27,10 @@ Game code is dynamic, changing, and often uses non-ideal coding practices. This 
 
 ```C#
 if ( condition )
-    return;```
+    return;
+```
+
+# Docs
+- Engine architecture is documented at `docs/architecture.md`
+- ECS design/standards is documented at `docs/ECS.md`
+- Worklists should be contained to the `docs/worklists` folder

@@ -3,7 +3,7 @@ using MintECS;
 
 namespace Racers;
 
-public class InCell : Relation
+public class InCell : Relation, ISimComponent
 {
 	
 }

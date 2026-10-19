@@ -3,7 +3,7 @@ using MintECS;
 
 namespace Racers;
 
-public class SpriteAnimationSystem : WorldManipulator, ISystem
+public class SpriteAnimationSystem : WorldManipulator, IViewSystem
 {
     Filter filter;
 
@@ -26,13 +26,9 @@ public class SpriteAnimationSystem : WorldManipulator, ISystem
         this.world = null;
     }
 
-    public void TickSystem ( World world )
+    public void Update ( World world, FrameTime time )
     {
-        var timePassed = ReadSingle< TimePassed >();
-        if ( timePassed == null )
-            return;
-
-        float dt = timePassed.dt;
+        float dt = Get< TimeSystem >().GetDelta( Time.Game );
 
         foreach ( var entity in filter.entities )
         {

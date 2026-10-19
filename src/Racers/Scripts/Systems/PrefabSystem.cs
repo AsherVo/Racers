@@ -18,8 +18,6 @@ public class PrefabSystem : WorldManipulator, ISystem
         this.world = null;    
     }
 
-    public void TickSystem ( World world ) {}
-
     public uint CreateFromData ( string id, uint canvas = 0, string name = null )
     {
         var data = Toolbox.I.data;
@@ -30,7 +28,22 @@ public class PrefabSystem : WorldManipulator, ISystem
             return 0;
         }
 
-        var actor = CreateActor( name == null ? id : name, canvas );
+        var actor = Create( name == null ? id : name );
+        AddFromData( actor, id, canvas );
+        return actor;
+    }
+
+    public void AddFromData ( uint actor, string id, uint canvas = 0 )
+    {
+        var data = Toolbox.I.data;
+
+        if ( !data.Exists( id ) )
+        {
+            Log.Warning( $"Trying to add data to { GetName( actor ) }, but '{ id }` does not exist! Aborting." );
+            return;
+        }
+
+        AddActor( actor, canvas );
         Add( actor, new DataId { id = id } );
 
         if ( data.TryGetBlock( id, "Rive", out var riveBlock ) )
@@ -64,24 +77,26 @@ public class PrefabSystem : WorldManipulator, ISystem
         switch ( group )
         {
             case Group.Buttons:
-                Add< Interactable >( actor );
-                Add< ClickTarget >( actor );
-                Add< HoverTarget >( actor );
+                Add( actor, new Interactable() );
+                Add( actor, new ClickTarget() );
+                Add( actor, new HoverTarget() );
                 break;
         }
-
-        return actor;
     }
 
     public uint CreateActor ( string name, uint canvas = 0 )
     {
         var result = Create( name );
-        Add< Position >( result );
+        AddActor( result, canvas );
+        return result;
+    }
+
+    void AddActor ( uint actor, uint canvas )
+    {
+        Add( actor, new Position() );
 
         if ( canvas != 0 )
-            SetRelation< OnCanvas >( result, canvas );
-
-        return result;
+            SetRelation< OnCanvas >( actor, canvas );
     }
 
     public uint CreateSprite ( string name, string path, uint canvas = 0, float width = 0f, float height = 0f )

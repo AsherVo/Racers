@@ -1,6 +1,5 @@
-using System;
 
-namespace Racers;
+namespace MintECS;
 
 public enum Time
 {

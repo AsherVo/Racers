@@ -23,6 +23,7 @@ public class ViewFitTests
             pixelPerfect: true
             dynamicSize: true
             dynamicPixelScale: 4
+            ticksPerSecond: 30
             """ );
 
         Assert.Equal( "Resource Racers", config.title );
@@ -31,6 +32,7 @@ public class ViewFitTests
         Assert.True( config.pixelPerfect );
         Assert.True( config.dynamicSize );
         Assert.Equal( 4f, config.dynamicPixelScale );
+        Assert.Equal( 30, config.ticksPerSecond );
     }
 
     [Theory]
@@ -41,6 +43,17 @@ public class ViewFitTests
     public void RejectsOutOfRangeSettings ( int resolutionX, int resolutionY, float dynamicPixelScale )
     {
         var config = new GameConfig { resolutionX = resolutionX, resolutionY = resolutionY, dynamicPixelScale = dynamicPixelScale };
+
+        Assert.Throws< InvalidDataException >( () => config.Validate( "config.yaml" ) );
+    }
+
+    [Theory]
+    [InlineData( 0 )]
+    [InlineData( -60 )]
+    [InlineData( GameConfig.MAX_TICKS_PER_SECOND + 1 )]
+    public void RejectsOutOfRangeTickRates ( int ticksPerSecond )
+    {
+        var config = new GameConfig { ticksPerSecond = ticksPerSecond };
 
         Assert.Throws< InvalidDataException >( () => config.Validate( "config.yaml" ) );
     }

@@ -13,11 +13,18 @@ public sealed unsafe class GameRunner ( Game game, GameOptions options )
     nint renderer;
     GameConfig config = null!;
     SpriteBatch batch = null!;
-    ulong lastTicks;
-    double totalSeconds;
+    FixedTimestep timestep = null!;
+    ulong lastAppTicks;
+    ulong lastRealTicks;
     bool quit;
     bool paused;
     int frameCount;
+
+    /// <summary>Longest frame the game is told about, so a debugger break or a backgrounded tab doesn't produce a huge step.</summary>
+    public const ulong MAX_FRAME_NS = 100_000_000;
+
+    /// <summary>Most fixed ticks one frame runs. When a frame needs more, the extra time is dropped.</summary>
+    const int MAX_TICKS_PER_FRAME = 8;
 
     // Debug aid: ENGINE_CAPTURE=/path/to/frame.png saves one frame once the scene has settled.
     const int CAPTURE_FRAME = 90;
@@ -42,6 +49,7 @@ public sealed unsafe class GameRunner ( Game game, GameOptions options )
         string contentRoot = options.contentRoot ?? ContentManager.DefaultRoot();
         config = options.configPath is null ? new GameConfig() : ContentManager.ReadYaml< GameConfig >( contentRoot, options.configPath );
         config.Validate( options.configPath ?? nameof( GameConfig ) );
+        timestep = new FixedTimestep( config.ticksPerSecond, MAX_TICKS_PER_FRAME );
 
         ulong flags = SDL.WINDOW_RESIZABLE | SDL.WINDOW_HIGH_PIXEL_DENSITY;
         if ( OperatingSystem.IsBrowser() )
@@ -76,11 +84,12 @@ public sealed unsafe class GameRunner ( Game game, GameOptions options )
         Log.Info( $"Resolution {game.graphics.width}x{game.graphics.height} at {game.graphics.pixelScale:0.##}x" );
 
         game.content = new ContentManager( game.graphics, contentRoot );
+        game.ticksPerSecond = config.ticksPerSecond;
         batch = new SpriteBatch( game.graphics );
 
         Inspector.Start();
         game.Load();
-        lastTicks = SDL.SDL_GetTicksNS();
+        lastAppTicks = lastRealTicks = SDL.SDL_GetTicksNS();
         return true;
     }
 
@@ -99,19 +108,22 @@ public sealed unsafe class GameRunner ( Game game, GameOptions options )
 
     public bool Iterate ()
     {
-        ulong now = SDL.SDL_GetTicksNS();
-        float dt = ( now - lastTicks ) / 1e9f;
-        lastTicks = now;
-
         if ( paused )
             return !quit;
 
-        // Clamp so a debugger break or a backgrounded tab doesn't produce a huge step.
-        dt = MathF.Min( dt, 0.1f );
-        totalSeconds += dt;
-        game.Update( new GameTime( totalSeconds, dt ) );
+        ulong now = SDL.SDL_GetTicksNS();
+        ulong realElapsed = now - lastRealTicks;
+        ulong appElapsed = Math.Min( now - lastAppTicks, MAX_FRAME_NS );
+        lastRealTicks = lastAppTicks = now;
+
+        int ticks = timestep.Advance( appElapsed );
+        for ( int i = 0; i < ticks; i++ )
+            game.FixedUpdate();
+
+        var time = new FrameTime( realElapsed / 1e9f, appElapsed / 1e9f, timestep.alpha );
+        game.Update( time );
         Inspector.Pump();
-        game.graphics.UpdateRive( dt );
+        game.graphics.UpdateRive( time.appDt );
 
         // RenderClear covers the whole window, so the bars around the game stay black.
         SDL.SDL_SetRenderDrawColorFloat( renderer, 0f, 0f, 0f, 1f );
@@ -143,11 +155,13 @@ public sealed unsafe class GameRunner ( Game game, GameOptions options )
 
             case SDL.EVENT_WILL_ENTER_BACKGROUND:
                 paused = true;
+                timestep.Reset();
                 break;
 
             case SDL.EVENT_DID_ENTER_FOREGROUND:
                 paused = false;
-                lastTicks = SDL.SDL_GetTicksNS();
+                timestep.Reset();
+                lastAppTicks = SDL.SDL_GetTicksNS();
                 break;
 
             case SDL.EVENT_WINDOW_PIXEL_SIZE_CHANGED:

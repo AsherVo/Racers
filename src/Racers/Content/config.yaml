@@ -4,3 +4,4 @@ resolutionY: 225
 pixelPerfect: false
 dynamicSize: false
 dynamicPixelScale: 4
+ticksPerSecond: 60

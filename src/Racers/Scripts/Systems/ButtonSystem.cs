@@ -3,7 +3,7 @@ using MintECS;
 
 namespace Racers;
 
-public class ButtonSystem : WorldManipulator, ISystem
+public class ButtonSystem : WorldManipulator, IViewSystem
 {
     const string RIVE_IDLE_TRIGGER = "idle";
     const string RIVE_HOVER_TRIGGER = "highlight";
@@ -18,7 +18,7 @@ public class ButtonSystem : WorldManipulator, ISystem
         this.world = null;
     }
 
-    public void TickSystem ( World world )
+    public void Update ( World world, FrameTime time )
     {
         var startHovers = Read< StartHover >();
         foreach ( var startHover in startHovers )
@@ -27,7 +27,7 @@ public class ButtonSystem : WorldManipulator, ISystem
             if ( Has< DrawRive >( target ) )
             {
                 var rive = world.Get< RenderSystem >().GetRive( target );
-                rive.FireViewModelTrigger( RIVE_HOVER_TRIGGER );
+                rive?.FireViewModelTrigger( RIVE_HOVER_TRIGGER );
             }
         }
 
@@ -35,11 +35,18 @@ public class ButtonSystem : WorldManipulator, ISystem
         foreach ( var stopHover in stopHovers )
         {
             var target = stopHover.target;
-            if ( Has< DrawRive >( target ) )
+            if ( Exists( target ) && Has< DrawRive >( target ) )
             {
                 var rive = world.Get< RenderSystem >().GetRive( target );
-                rive.FireViewModelTrigger( RIVE_IDLE_TRIGGER );
+                rive?.FireViewModelTrigger( RIVE_IDLE_TRIGGER );
             }
+        }
+
+        var clicks = Read< Click >();
+        foreach ( var click in clicks )
+        {
+            if ( Exists( click.target ) && !World.IsViewEntity( click.target ) )
+                Send( new PressButton { button = click.target } );
         }
     }
 }

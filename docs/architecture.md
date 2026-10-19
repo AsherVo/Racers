@@ -64,18 +64,31 @@ calls `Init()`, then calls `Frame()` from `requestAnimationFrame`.
 
 `GameRunner.Iterate` runs, in order:
 
-1. Measures `dt` and clamps it to 0.1 s, so a debugger break or a backgrounded tab doesn't produce a
-   huge step.
-2. Calls `Game.Update(time)`.
-3. Answers the inspector's latest request, if a tool is connected (see [Inspector](#inspector)).
-4. Calls `Graphics.UpdateRive(dt)`: advances every Rive instance and re-renders the ones that
+1. Measures the time since the last frame in integer nanoseconds (`SDL_GetTicksNS`):
+   - **real** time is unclamped, and includes time spent in the background.
+   - **app** time is clamped to `MAX_FRAME_NS` (0.1 s), so a debugger break or a backgrounded tab
+     doesn't produce a huge step.
+2. Runs fixed ticks: `FixedTimestep` adds the app time to an integer accumulator and calls
+   `Game.FixedUpdate()` once per whole tick it holds (`ticksPerSecond` in `config.yaml`). That's 0..N
+   times per frame. Past `MAX_TICKS_PER_FRAME` (8), the extra time is dropped instead of being owed as
+   ticks, so a slow machine falls behind real time instead of spiraling.
+3. Calls `Game.Update( FrameTime )`. `FrameTime` carries `realDt`, `appDt` (both in seconds), and
+   `alpha`: how far the next tick is from happening, in [0, 1), for interpolating between ticks.
+4. Answers the inspector's latest request, if a tool is connected (see [Inspector](#inspector)).
+5. Calls `Graphics.UpdateRive( appDt )`: advances every Rive instance and re-renders the ones that
    changed. It runs after `Update`, so inputs the game just set take effect this frame.
-5. Clears, then `SpriteBatch.Begin` → `Game.Draw(batch)` → `SpriteBatch.End`.
-6. Saves a PNG at frame 90 if `ENGINE_CAPTURE` is set (an automated check that works on any platform).
-7. Presents.
+6. Clears, then `SpriteBatch.Begin` → `Game.Draw(batch)` → `SpriteBatch.End`.
+7. Saves a PNG at frame 90 if `ENGINE_CAPTURE` is set (an automated check that works on any platform).
+8. Presents.
+
+The split is what makes a deterministic simulation possible. `FixedUpdate` is the simulation: it never
+sees a time value, only the fact that one tick passed, so the same inputs give the same ticks at any
+frame rate. `Update` and `Draw` are the view, which may use real time and floats freely. Racers'
+rules for each side are in [ECS.md](ECS.md).
 
 When the app enters the background (`SDL_EVENT_WILL_ENTER_BACKGROUND`) the runner stops updating
-and drawing. On return it resets the clock so no time is skipped.
+and drawing. On return it resets app time and the tick accumulator, so no time is skipped and no ticks
+are owed. Real time keeps counting.
 
 ### Window, resolution and input
 
@@ -89,6 +102,7 @@ resolutionY: 225
 pixelPerfect: false     # true: scale only by whole numbers (1x, 2x, ...)
 dynamicSize: false      # true: the resolution follows the window
 dynamicPixelScale: 4    # with dynamicSize: window points per game pixel
+ticksPerSecond: 60      # fixed simulation ticks per second of app time (1-1000)
 ```
 
 `ViewFit` turns the config and the window's size into the game's resolution (`Graphics.width/height`) and an
@@ -248,7 +262,7 @@ listening on. `GameRunner.Init` connects to it before `Game.Load`. Without the v
 and each frame costs one null check.
 
 Anything implementing `IInspectable` can be registered with `Inspector.Register`. MintECS's `World` registers
-itself in its constructor (`src/Racers/ECS/World.Inspect.cs`). A source returns a tree of `InspectorNode`s,
+itself in its constructor (`src/Racers/Scripts/ECS/World.Inspect.cs`). A source returns a tree of `InspectorNode`s,
 each with a key, a label, an optional muted note, a value, and children. Children are filled in only for rows
 the tool has expanded (`InspectorQuery`), so a large world is still cheap to send. The tool identifies a row by
 its *path*, the keys from the root joined with `/`, with `%` and `/` in a key escaped (`InspectorQuery.Join`).

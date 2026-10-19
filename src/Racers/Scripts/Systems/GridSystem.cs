@@ -1,111 +1,77 @@
-using RectangleF = System.Drawing.RectangleF;
-using System.Runtime.InteropServices;
 using Engine;
 using MintECS;
-using Vo;
 
 namespace Racers;
 
-public class GridSystem : WorldManipulator, ISystem
+public class GridSystem : WorldManipulator, ISimSystem
 {
-    public int width { get; private set; } = 9;
-    public int height { get; private set; } = 3;
-    
-    public uint[] cells { get; private set; }
-    public uint[] highlights { get; private set; }
+    public uint grid { get; private set; }
+    public uint[] cells { get; private set; } = Array.Empty< uint >();
 
+    public int width => grid != 0 ? Get< Grid >( grid ).width : 0;
+    public int height => grid != 0 ? Get< Grid >( grid ).height : 0;
     public int size => width * height;
 
-    const int gridStartX = 10;
-    const int gridStartY = 2;
-    const int yOffset = 6;
-    const int gridIncrementX = 40;
-    const int gridIncrementY = 34;
-
-    const int cellWidth = 40;
-    const int cellHeight = 30;
+    Filter positioned = new FilterBuilder()
+        .Include< GridPos >()
+        .ToFilter();
 
     public void StartSystem ( World world )
     {
         this.world = world;
+
+        grid = GetSingleEntity( new FilterBuilder().Include< Grid >() );
+        RebuildCells();
+
+        Start( positioned );
     }
 
     public void StopSystem ( World world )
     {
+        Stop( positioned );
+
+        grid = 0;
+        cells = Array.Empty< uint >();
         this.world = null;
     }
 
-    public void TickSystem ( World world )
-    {   
-        
+    public void FixedUpdate ( World world )
+    {
+        foreach ( var entity in positioned.entities )
+        {
+            var coords = Get< GridPos >( entity ).cell;
+            if ( InBounds( coords ) )
+                SetRelation< InCell >( entity, GetCell( coords ) );
+            else if ( Has< InCell >( entity ) )
+                Remove< InCell >( entity );
+        }
     }
 
-    public void SpawnGrid ( uint canvas )
+    public uint SpawnGrid ( int width, int height )
     {
-        cells = new uint[ size ];
-        highlights = new uint[ size ];
-
-        var prefab = Get< PrefabSystem >();
+        grid = Create( "Grid", new Grid { width = width, height = height } );
 
         for ( int y = 0; y < height; y++ )
         {
             for ( int x = 0; x < width; x++ )
-            {
-                var coords = new Vector2Int( x, y );
-                var cell = prefab.CreateFromData( "Cell", canvas, $"Cell ({ x }, { y })" );
-                Get< Position >( cell ).value = GetCellPosition( coords ) ;
-
-                Add( cell, new Cell { coords = coords  } );
-                Add( cell, new SortOrder { value = -1 } );
-                cells[ OneDee( coords ) ] = cell;
-
-                // var highlight = world.Create( $"Cell ({ x }, { y }) Highlight", 
-                //     new Position {},
-                //     new Child {
-                //         relationId = cell,
-                //     },
-                //     new TransformChild {
-                //         relationId = cell,
-                //     },
-                //     new Sprite {},
-                //     new SortOrder { 
-                //         sortOrder = 1 
-                //     }, 
-                //     new SpriteShader {},
-                //     new SpriteAnimation { 
-                //         animation = "cell_select", 
-                //         fps = 8 
-                //     }
-                // );
-                // highlights[ OneDee( coords ) ] = highlight;
-            }
+                Create( $"Cell ({ x }, { y })", new Cell { relation = grid, coords = new Vector2Int( x, y ) } );
         }
+
+        RebuildCells();
+        return grid;
     }
 
-    uint GetHighlight ( uint cellEntity )
+    void RebuildCells ()
     {
-        var cell = Get< Cell >( cellEntity );
-        return highlights[ OneDee( cell.coords ) ];
-    }
+        cells = new uint[ size ];
+        if ( grid == 0 )
+            return;
 
-    public Vector2 GetCellPosition ( Vector2Int coords )
-    {
-        return new Vector2(
-            gridStartX + ( yOffset * coords.y ) + ( gridIncrementX * coords.x ),
-            gridStartY + ( gridIncrementY * coords.y )
-        );
-    }
-
-    public Vector2 CenterOnCell ( Vector2Int coords, int width, int height )
-    {
-        var cellCenter = GetCellPosition( coords );
-        cellCenter.x += cellWidth / 2;
-        cellCenter.y += cellHeight / 2;
-
-        var result = cellCenter;
-        result.x -= width / 2;
-        result.y -= height / 2;
-        return result;
+        foreach ( var ( entity, cell ) in GetRelations< Cell >( grid ) )
+        {
+            if ( InBounds( cell.coords ) )
+                cells[ OneDee( cell.coords ) ] = entity;
+        }
     }
 
     public bool InBounds ( Vector2Int coords )
@@ -129,12 +95,12 @@ public class GridSystem : WorldManipulator, ISystem
     public List< uint > GetAll ()
         => cells.ToList();
 
-    int OneDee ( Vector2Int coords )
+    public int OneDee ( Vector2Int coords )
     {
         return ( coords.y * width ) + coords.x;
     }
 
-    Vector2Int TwoDee ( int index )
+    public Vector2Int TwoDee ( int index )
     {
         int x = index % width;
         int y = index / width;

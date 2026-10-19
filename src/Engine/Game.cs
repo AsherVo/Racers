@@ -6,12 +6,20 @@ public abstract class Game
     public Graphics graphics { get; internal set; } = null!;
     public ContentManager content { get; internal set; } = null!;
 
+    /// <summary>How many times per second of app time <see cref="FixedUpdate"/> runs, from <see cref="GameConfig.ticksPerSecond"/>.</summary>
+    public int ticksPerSecond { get; internal set; }
+
     internal bool exitRequested { get; private set; }
 
     public void Exit () => exitRequested = true;
 
     protected internal virtual void Load () { }
-    protected internal virtual void Update ( GameTime time ) { }
+
+    /// <summary>One fixed simulation tick. Runs 0..N times per frame, before <see cref="Update"/>, never with real time.</summary>
+    protected internal virtual void FixedUpdate () { }
+
+    /// <summary>Once per frame, after the frame's fixed ticks.</summary>
+    protected internal virtual void Update ( FrameTime time ) { }
     protected internal virtual void Draw ( SpriteBatch batch ) { }
     protected internal virtual void Unload () { }
 
@@ -23,7 +31,10 @@ public abstract class Game
     protected internal virtual void OnResize () { }
 }
 
-public readonly record struct GameTime ( double totalSeconds, float dt );
+/// <param name="realDt">Seconds since the last frame, unclamped. Includes time spent in the background.</param>
+/// <param name="appDt">Seconds since the last frame, clamped to <see cref="GameRunner.MAX_FRAME_NS"/>. Excludes time spent in the background.</param>
+/// <param name="alpha">How far the next fixed tick is from happening, in [0, 1). Views interpolate with it.</param>
+public readonly record struct FrameTime ( float realDt, float appDt, float alpha );
 
 public enum PointerAction { Down, Move, Up }
 

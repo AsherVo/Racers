@@ -41,7 +41,7 @@ public partial class World : IInspectable
 
             var entityNode = new InspectorNode( entity.ToString(), GetBasicName( entity ) )
             {
-                note = $"#{entity}",
+                note = IsViewEntity( entity ) ? $"#{entity} · view" : $"#{entity}",
                 value = string.Join( " · ", entityComponents.Where( c => c is not Name ).Select( c => c.GetType().Name ) ),
                 valueIsSummary = true,
                 expandable = entityComponents.Count > 0,

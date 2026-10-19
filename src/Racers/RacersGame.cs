@@ -29,12 +29,13 @@ public sealed class RacersGame : Game
     {
         Toolbox.Setup( this );
 
-        world = new World();
+        world = new World( ticksPerSecond );
         world.Start( new TimeSystem() );
         world.Start( new PrefabSystem() );
+        world.Start( new GridSystem() );
         world.Start( new PointerSystem() );
         world.Start( new ButtonSystem() );
-        world.Start( new GridSystem() );
+        world.Start( new GridViewSystem() );
         world.Start( new SpriteAnimationSystem() );
         world.Start( new CoroutineSystem() );
         world.Start( new RenderSystem() );
@@ -76,11 +77,11 @@ public sealed class RacersGame : Game
         world.Get< Rect >( statsText ).pivot = new Vector2( 0, 1 );
         world.Add( statsText, new SortOrder { value = 1 } );
 
-        world.Get< GridSystem >().SpawnGrid( canvas );
+        world.Get< GridSystem >().SpawnGrid( 9, 3 );
+        world.Get< GridViewSystem >().DressGrid( canvas );
 
         var car = prefab.CreateFromData( "Car", canvas );
-        var rect = world.Get< Rect >( car );
-        world.Get< Position >( car ).value = world.Get< GridSystem >().CenterOnCell( new Vector2Int( 2, 2 ), ( int )rect.width, ( int )rect.height );
+        world.Add( car, new GridPos { cell = new Vector2Int( 2, 2 ) } );
     }
 
     protected override void OnResize ()
@@ -95,6 +96,8 @@ public sealed class RacersGame : Game
 
     protected override void OnPointer ( PointerEvent e )
     {
+        using var view = world.EnterViewPhase();
+
         if ( e.action == PointerAction.Move )
             world.Send( new PointerHover { position = e.position } );
 
@@ -114,22 +117,28 @@ public sealed class RacersGame : Game
             Exit();
     }
 
-    protected override void Update ( GameTime time )
+    protected override void FixedUpdate ()
     {
-        world.Get< TimeSystem >().Update( time );
-        world.Tick();        
+        world.FixedTick();
+    }
+
+    protected override void Update ( FrameTime time )
+    {
+        world.Update( time );
 
         frames++;
-        if ( time.totalSeconds >= nextReport )
+        var total = world.Get< TimeSystem >().GetTotal( Time.App );
+        var ticks = world.tick;
+        if ( total >= nextReport )
         {
             if ( nextReport > 0 )
             {
-                var stats = $"{frames / 2f:0} fps {batch?.drawCalls} draw calls";
+                var stats = $"{frames / 2f:0} fps / {batch?.drawCalls} draw calls / { ticks } ticks";
                 world.Get< DrawText >( statsText ).text = stats;
                 world.Get< DrawText >( statsShadow ).text = stats;
             }
             frames = 0;
-            nextReport = time.totalSeconds + 2;
+            nextReport = total + 2;
         }
     }
 

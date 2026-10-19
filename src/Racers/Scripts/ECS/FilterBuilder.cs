@@ -54,14 +54,14 @@ public class FilterBuilder
             for ( int i = 0; i < includes.Count; i++ )
             {
                 var includeType = includes [ i ];
-                if ( !world.Has( entity, includeType ) )
+                if ( world.Peek( entity, includeType ) == null )
                     return false;
             }
 
             for ( int i = 0; i < excludes.Count; i++ )
             {
                 var excludeType = excludes [ i ];
-                if ( world.Has( entity, excludeType ) )
+                if ( world.Peek( entity, excludeType ) != null )
                     return false;
             }
 
@@ -72,7 +72,7 @@ public class FilterBuilder
                 {
                     uint relatedEntity = relation.toEntities [ k ];
                     if ( !world.Exists( relatedEntity )
-                        || !world.HasRelation( entity, relatedEntity, relation.relationType ) )
+                        || !world.Relates( entity, relatedEntity, relation.relationType ) )
                     {
                         return false;
                     }
@@ -86,7 +86,7 @@ public class FilterBuilder
                 {
                     uint relatedEntity = relation.toEntities [ k ];
                     if ( world.Exists( relatedEntity )
-                        && world.HasRelation( entity, relatedEntity, relation.relationType ) )
+                        && world.Relates( entity, relatedEntity, relation.relationType ) )
                     {
                         return false;
                     }
@@ -101,6 +101,12 @@ public class FilterBuilder
             return false;
         }
     }
+
+	internal IEnumerable< System.Type > watchedTypes
+		=> includes
+			.Concat( excludes )
+			.Concat( relates.Select( r => r.relationType ) )
+			.Concat( notRelates.Select( r => r.relationType ) );
 
 	public Filter ToFilter ()
 		=> new Filter( 
