@@ -1,4 +1,6 @@
-namespace MintECS;
+using MintECS;
+
+namespace Racers;
 
 public class TimePassed : Message
 {

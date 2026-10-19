@@ -1,4 +1,6 @@
-namespace MintECS;
+using MintECS;
+
+namespace Racers;
 
 public abstract class UIEvent : Message
 {

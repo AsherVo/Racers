@@ -3,6 +3,8 @@ using System.Runtime.InteropServices;
 using Engine;
 using MintECS;
 
+using Racers.Coroutines;
+
 namespace Racers;
 
 public sealed class RacersGame : Game
@@ -28,11 +30,13 @@ public sealed class RacersGame : Game
         Toolbox.Setup( this );
 
         world = new World();
+        world.Start( new TimeSystem() );
         world.Start( new PrefabSystem() );
         world.Start( new PointerSystem() );
         world.Start( new ButtonSystem() );
         world.Start( new GridSystem() );
         world.Start( new SpriteAnimationSystem() );
+        world.Start( new CoroutineSystem() );
         world.Start( new RenderSystem() );
 
         canvas = world.Create( "Canvas",
@@ -112,8 +116,8 @@ public sealed class RacersGame : Game
 
     protected override void Update ( GameTime time )
     {
-        world.Send( new TimePassed { dt = time.dt } );
-        world.Tick();
+        world.Get< TimeSystem >().Update( time );
+        world.Tick();        
 
         frames++;
         if ( time.totalSeconds >= nextReport )
