@@ -18,6 +18,8 @@ public sealed unsafe class GameRunner ( Game game, GameOptions options )
     ulong lastRealTicks;
     bool quit;
     bool paused;
+    bool focused = true;
+    bool redrawRequested;
     int frameCount;
 
     /// <summary>Longest frame the game is told about, so a debugger break or a backgrounded tab doesn't produce a huge step.</summary>
@@ -25,6 +27,9 @@ public sealed unsafe class GameRunner ( Game game, GameOptions options )
 
     /// <summary>Most fixed ticks one frame runs. When a frame needs more, the extra time is dropped.</summary>
     const int MAX_TICKS_PER_FRAME = 8;
+
+    /// <summary>How long an unfocused frame sleeps in place of the vsync wait it skipped by not presenting.</summary>
+    const ulong UNFOCUSED_FRAME_NS = 16_666_667;
 
     // Debug aid: ENGINE_CAPTURE=/path/to/frame.png saves one frame once the scene has settled.
     const int CAPTURE_FRAME = 90;
@@ -113,7 +118,8 @@ public sealed unsafe class GameRunner ( Game game, GameOptions options )
 
         ulong now = SDL.SDL_GetTicksNS();
         ulong realElapsed = now - lastRealTicks;
-        ulong appElapsed = Math.Min( now - lastAppTicks, MAX_FRAME_NS );
+        bool frozen = !focused && !config.runsInBackground;
+        ulong appElapsed = frozen ? 0 : Math.Min( now - lastAppTicks, MAX_FRAME_NS );
         lastRealTicks = lastAppTicks = now;
 
         int ticks = timestep.Advance( appElapsed );
@@ -124,6 +130,15 @@ public sealed unsafe class GameRunner ( Game game, GameOptions options )
         game.Update( time );
         Inspector.Pump();
         game.graphics.UpdateRive( time.appDt );
+
+        // Skipping the present keeps the last frame on screen, since SDL's back buffer is undefined after one.
+        if ( frozen && !redrawRequested )
+        {
+            if ( !OperatingSystem.IsBrowser() )
+                SDL.SDL_DelayNS( UNFOCUSED_FRAME_NS );
+            return !( quit || game.exitRequested );
+        }
+        redrawRequested = false;
 
         // RenderClear covers the whole window, so the bars around the game stay black.
         SDL.SDL_SetRenderDrawColorFloat( renderer, 0f, 0f, 0f, 1f );
@@ -164,7 +179,20 @@ public sealed unsafe class GameRunner ( Game game, GameOptions options )
                 lastAppTicks = SDL.SDL_GetTicksNS();
                 break;
 
+            case SDL.EVENT_WINDOW_FOCUS_GAINED:
+                focused = true;
+                break;
+
+            case SDL.EVENT_WINDOW_FOCUS_LOST:
+                focused = false;
+                break;
+
+            case SDL.EVENT_WINDOW_EXPOSED:
+                redrawRequested = true;
+                break;
+
             case SDL.EVENT_WINDOW_PIXEL_SIZE_CHANGED:
+                redrawRequested = true;
                 if ( UpdateView() )
                     game.OnResize();
                 break;

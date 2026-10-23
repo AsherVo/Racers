@@ -32,7 +32,7 @@ public abstract class Game
 }
 
 /// <param name="realDt">Seconds since the last frame, unclamped. Includes time spent in the background.</param>
-/// <param name="appDt">Seconds since the last frame, clamped to <see cref="GameRunner.MAX_FRAME_NS"/>. Excludes time spent in the background.</param>
+/// <param name="appDt">Seconds since the last frame, clamped to <see cref="GameRunner.MAX_FRAME_NS"/>. Excludes time spent in the background, and time unfocused unless <see cref="GameConfig.runsInBackground"/>.</param>
 /// <param name="alpha">How far the next fixed tick is from happening, in [0, 1). Views interpolate with it.</param>
 public readonly record struct FrameTime ( float realDt, float appDt, float alpha );
 

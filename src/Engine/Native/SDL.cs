@@ -69,7 +69,10 @@ internal static unsafe partial class SDL
     public const uint EVENT_TERMINATING = 0x101;
     public const uint EVENT_WILL_ENTER_BACKGROUND = 0x103;
     public const uint EVENT_DID_ENTER_FOREGROUND = 0x106;
+    public const uint EVENT_WINDOW_EXPOSED = 0x204;
     public const uint EVENT_WINDOW_PIXEL_SIZE_CHANGED = 0x207;
+    public const uint EVENT_WINDOW_FOCUS_GAINED = 0x20E;
+    public const uint EVENT_WINDOW_FOCUS_LOST = 0x20F;
     public const uint EVENT_KEY_DOWN = 0x300;
     public const uint EVENT_KEY_UP = 0x301;
     public const uint EVENT_MOUSE_MOTION = 0x400;
@@ -174,6 +177,9 @@ internal static unsafe partial class SDL
 
     [LibraryImport( LIB )]
     public static partial ulong SDL_GetTicksNS ();
+
+    [LibraryImport( LIB )]
+    public static partial void SDL_DelayNS ( ulong ns );
 
     [LibraryImport( LIB )]
     public static partial delegate* unmanaged[Cdecl]< void*, int, int, byte*, void > SDL_GetDefaultLogOutputFunction ();

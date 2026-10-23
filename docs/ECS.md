@@ -333,7 +333,7 @@ view components ◄── view systems ◄── sim messages (inbox) ◄──�
   | `Time` | Delta from | Pauses |
   |---|---|---|
   | `Realtime` | `FrameTime.realDt` | never; includes time in the background |
-  | `App` | `FrameTime.appDt` | while the app is in the background |
+  | `App` | `FrameTime.appDt` | while the app is in the background, or unfocused unless `runsInBackground` |
   | `Game` | `FrameTime.appDt` for now | will also pause with a pause menu *(planned)* |
 
   `TimeSystem` answers `GetDelta( Time )` (seconds this frame), `GetTotal( Time )` and
