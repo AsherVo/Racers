@@ -36,7 +36,8 @@ public class Filter
 
 	public readonly System.Type[] watchedTypes;
 
-	public HashSet< uint > entities = new();
+	/// <summary>The matching entities, in ascending id order.</summary>
+	public SortedEntities entities { get; } = new();
 	public bool isBeingModified;
 
 	/// <summary>The phase the filter was started in. Its callbacks run in it.</summary>
@@ -132,8 +133,9 @@ public class Filter
 	public List< uint > GetListCopy ()
 		=> entities.ToList();
 
+	/// <summary>The lowest matching id, or 0 if nothing matches.</summary>
 	public uint FirstOrDefault ()
-		=> entities.FirstOrDefault();
+		=> entities.Count > 0 ? entities[ 0 ] : 0;
 
 	public override string ToString ()
 	{

@@ -10,4 +10,8 @@ namespace MintECS;
 public abstract class Command : Message
 {
 	public long tick;
+
+	/// <summary>A deep copy, made by writing the command to YAML and reading it back, so it's exactly what a replay file holds.</summary>
+	public Command Copy ()
+		=> Yaml.Deserialize< Command >( Yaml.ToNode< Command >( this ) );
 }

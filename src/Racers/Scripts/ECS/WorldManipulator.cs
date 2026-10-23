@@ -100,7 +100,7 @@ public class WorldManipulator
 	protected List< uint > GetEntities< T > ( uint entity ) where T : Relation
 		=> world.GetEntities< T >( entity );
 
-	protected Dictionary< uint, T > GetRelations< T >( uint entity ) where T : Relation
+	protected List< ( uint entity, T relation ) > GetRelations< T >( uint entity ) where T : Relation
 		=> world.GetRelations< T >( entity );
 
 	protected uint GetRelated< T >( uint fromEntity ) where T : Relation

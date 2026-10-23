@@ -39,8 +39,20 @@ public partial class World
 
     [YamlIgnore] public WorldPhase phase { get; private set; }
 
+    /// <summary>
+    /// Fires at the start of each <see cref="FixedTick"/>, before <see cref="tick"/> moves and pending commands are
+    /// applied. It runs outside the sim phase, so a handler can still send commands for the coming tick.
+    /// </summary>
+    public event Action? onTickStart;
+
     /// <summary>Fires for each command as a tick applies it, already stamped, in the order the commands were sent.</summary>
     public event Action< Command >? onCommandApplied;
+
+    /// <summary>
+    /// Fires after each <see cref="FixedTick"/> completes, outside the sim phase. Sim state is final for
+    /// <see cref="tick"/>, so this is where to checksum it.
+    /// </summary>
+    public event Action? onTickEnd;
 
     [YamlIgnore] public int structureVersion { get; private set; }
 
@@ -56,7 +68,7 @@ public partial class World
 
     [YamlIgnore] readonly Dictionary< Type, List< Filter > > filtersByType = new();
 
-    [YamlIgnore] readonly HashSet< uint > getSingleEntityCache = new ();
+    [YamlIgnore] Type[]? componentTypeOrder;
 
 	public World ( int ticksPerSecond ) : this()
 	{
@@ -171,13 +183,10 @@ public partial class World
 #endif
 
 		// Debug.Log( $"DESTROY { GetName( entity ) }" );
-        
-		foreach ( var kvp in components )
-        {
-            var componentType = kvp.Key;
-            var componentDict = kvp.Value;
 
-			if ( componentDict.ContainsKey( entity ) )
+		foreach ( var componentType in ComponentTypesInOrder() )
+		{
+			if ( components[ componentType ].ContainsKey( entity ) )
 				Remove( entity, componentType );
 		}
 
@@ -275,13 +284,11 @@ public partial class World
     	var type = component.GetType();
     	GuardWrite( entity, type, "add" );
 
-    	if ( !components.ContainsKey( type ) )
-    		components[ type ] = new();
-
-    	if ( components[ type ].ContainsKey( entity ) )
+    	var componentDict = ComponentsOfType( type );
+    	if ( componentDict.ContainsKey( entity ) )
     		Remove( entity, type );
 
-    	components[ type ][ entity ] = component;
+    	componentDict[ entity ] = component;
         structureVersion++;
 
         if ( !filtersByType.TryGetValue( type, out var watchingFilters ) )
@@ -435,6 +442,34 @@ public partial class World
     	}
 
     	return results;
+    }
+
+    Dictionary< uint, Component > ComponentsOfType ( Type type )
+    {
+    	if ( !components.TryGetValue( type, out var componentDict ) )
+    	{
+    		componentDict = new Dictionary< uint, Component >();
+    		components[ type ] = componentDict;
+    		componentTypeOrder = null;
+    	}
+
+    	return componentDict;
+    }
+
+    /// <summary>
+    /// Every component type the world has seen, sorted by full name. Anything that walks component types and can
+    /// affect the sim (filter callbacks fired by <see cref="Destroy(uint)"/>) walks them in this order, never in
+    /// <see cref="components"/>' hash order (Rule 6).
+    /// </summary>
+    Type[] ComponentTypesInOrder ()
+    {
+    	if ( componentTypeOrder == null )
+    	{
+    		componentTypeOrder = components.Keys.ToArray();
+    		Array.Sort( componentTypeOrder, ( a, b ) => string.CompareOrdinal( a.FullName, b.FullName ) );
+    	}
+
+    	return componentTypeOrder;
     }
 
     /// <summary>Reads a component without the phase guard. For the world's own bookkeeping: filters, names, destroy.</summary>
@@ -655,29 +690,31 @@ public partial class World
     	return relation;
     }
 
+    /// <summary>Every entity whose <typeparamref name="T"/> points at <paramref name="entity"/>, in ascending id order.</summary>
     public List< uint > GetEntities< T > ( uint entity ) where T : Relation
-    	=> GetRelations< T >( entity ).Keys.ToList();
+    	=> GetRelations< T >( entity ).ConvertAll( pair => pair.entity );
 
-    public Dictionary< uint, T > GetRelations< T >( uint entity ) where T : Relation
+    /// <summary>Every <typeparamref name="T"/> that points at <paramref name="entity"/>, with its owner, in ascending id order.</summary>
+    public List< ( uint entity, T relation ) > GetRelations< T >( uint entity ) where T : Relation
     {
     	var type = typeof( T );
     	GuardRead( type );
 
-    	var results = new Dictionary< uint, T >();
-    	if ( !components.ContainsKey( type ) )
+    	var results = new List< ( uint entity, T relation ) >();
+    	if ( !components.TryGetValue( type, out var relationDict ) )
     		return results;
 
-		var relationDict = components[ type ];
-		foreach ( var kvp in relationDict )
+		foreach ( var ( owner, component ) in relationDict )
 		{
-			if ( !Exists( kvp.Key ) )
+			if ( !Exists( owner ) )
 				continue;
 
-			var relation = ( Relation )kvp.Value;
+			var relation = ( T )component;
 			if ( relation.relation == entity )
-				results[ kvp.Key ] = ( T )relation;
+				results.Add( ( owner, relation ) );
 		}
 
+		results.Sort( ( a, b ) => a.entity.CompareTo( b.entity ) );
 		return results;
     }
 
@@ -804,12 +841,12 @@ public partial class World
             watchingFilters.Add( filter );
         }
 
-		filter.entities = new HashSet< uint >(
-    		entities
-    		.Where( kvp => kvp.Value == true )
-    		.Select( kvp => kvp.Key )
-	        .Where( entity => filter.Matches( entity, this ) )
-	    );
+		filter.entities.Clear();
+		foreach ( var entity in LiveEntitiesInOrder() )
+		{
+			if ( filter.Matches( entity, this ) )
+				filter.entities.Add( entity );
+		}
 
 	    foreach ( var entity in filter.entities )
 	    	InvokeFilterCallback( filter, filter.onAdd, entity );
@@ -850,10 +887,12 @@ public partial class World
         }
     }
     
+    /// <summary>Appends the matching entities to <paramref name="results"/> in ascending id order.</summary>
     public void GetEntitiesNonAlloc ( FilterBuilder filterBuilder, List< uint > results )
     {
     	GuardSimQuery( filterBuilder.watchedTypes );
 
+    	int start = results.Count;
         foreach ( KeyValuePair< uint, bool > kvp in entities )
         {
             if ( kvp.Value == true && filterBuilder.Matches( kvp.Key, this ) )
@@ -861,17 +900,37 @@ public partial class World
                 results.Add( kvp.Key );
             }
         }
+
+        results.Sort( start, results.Count - start, null );
     }
 
+    /// <summary>The lowest matching id, or 0 if nothing matches.</summary>
     public uint GetSingleEntity ( FilterBuilder filterBuilder )
     {
-        getSingleEntityCache.Clear();
-    	GetEntitiesNonAlloc( filterBuilder, getSingleEntityCache );
+    	GuardSimQuery( filterBuilder.watchedTypes );
 
-        if ( getSingleEntityCache.Any() )
-            return getSingleEntityCache.First();
-        else
-            return 0;
+    	uint lowest = 0;
+        foreach ( KeyValuePair< uint, bool > kvp in entities )
+        {
+            if ( kvp.Value && ( lowest == 0 || kvp.Key < lowest ) && filterBuilder.Matches( kvp.Key, this ) )
+                lowest = kvp.Key;
+        }
+
+        return lowest;
+    }
+
+    /// <summary>Every live entity, in ascending id order.</summary>
+    List< uint > LiveEntitiesInOrder ()
+    {
+    	var live = new List< uint >( entities.Count );
+    	foreach ( var ( entity, alive ) in entities )
+    	{
+    		if ( alive )
+    			live.Add( entity );
+    	}
+
+    	live.Sort();
+    	return live;
     }
 
     void GuardSimQuery ( IEnumerable< Type > types )
@@ -915,20 +974,15 @@ public partial class World
 
     	filter.isBeingModified = true;
 
-    	var newEntities = new HashSet< uint >(
-    		entities
-    		.Where( kvp => kvp.Value == true )
-    		.Select( kvp => kvp.Key )
-	        .Where( entity => filter.Matches( entity, this ) )
-	    );
+    	var newEntities = LiveEntitiesInOrder().FindAll( entity => filter.Matches( entity, this ) );
+    	var toAdd = newEntities.FindAll( entity => !filter.entities.Contains( entity ) );
+    	var toRemove = filter.entities.Where( entity => newEntities.BinarySearch( entity ) < 0 ).ToList();
 
-	    var toAdd = new HashSet< uint >( newEntities );
-	    toAdd.ExceptWith( filter.entities );
+    	foreach ( var entity in toRemove )
+    		filter.entities.Remove( entity );
 
-	    var toRemove = new HashSet< uint >( filter.entities );
-	    toRemove.ExceptWith( newEntities );
-
-	    filter.entities = newEntities;
+    	foreach ( var entity in toAdd )
+    		filter.entities.Add( entity );
 
 	    foreach ( var entity in toRemove)
 	        InvokeFilterCallback( filter, filter.onRemove, entity );
@@ -981,14 +1035,17 @@ public partial class World
 
     #region Phases
     /// <summary>
-    /// Runs one fixed tick: increments <see cref="tick"/>, applies pending commands stamped with it in the order they
-    /// were sent, and runs sim systems in start order. The tick's sim messages then move to the view's inbox.
+    /// Runs one fixed tick: fires <see cref="onTickStart"/>, increments <see cref="tick"/>, applies pending commands
+    /// stamped with it in the order they were sent, and runs sim systems in start order. The tick's sim messages then
+    /// move to the view's inbox, and <see cref="onTickEnd"/> fires.
     /// </summary>
     /// <exception cref="InvalidOperationException">Called from inside a tick, a frame or a view scope.</exception>
     public void FixedTick ()
     {
     	if ( phase != WorldPhase.Default )
     		throw new InvalidOperationException( $"FixedTick can't run inside the { phase } phase." );
+
+    	onTickStart?.Invoke();
 
     	phase = WorldPhase.Sim;
     	try
@@ -1013,6 +1070,8 @@ public partial class World
     		MoveSimMessagesToInbox();
     		phase = WorldPhase.Default;
     	}
+
+    	onTickEnd?.Invoke();
     }
 
     void MoveSimMessagesToInbox ()
@@ -1115,12 +1174,7 @@ public partial class World
 
     // SLOW, USE FOR DEBUG ONLY
     public List< uint > GetEntities ()
-    {
-    	return entities
-    		.Where( kvp => kvp.Value == true )
-    		.Select( kvp => kvp.Key )
-    		.ToList();
-    }
+    	=> LiveEntitiesInOrder();
 }
 
 public readonly struct ViewPhaseScope : IDisposable

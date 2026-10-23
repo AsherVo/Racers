@@ -61,46 +61,64 @@ Everything in `determinism.md`'s Rules applies here too.
 - [x] `RaceConfig` (content YAML, `races/<name>.yaml`, loaded with `Loader.Race`): grid size, unit
       placements and background. `RaceSystem.Setup( RaceConfig )` builds the match from it, so a
       replay doesn't depend on code that changes between builds.
-- [ ] The replay header stores a full copy of the `RaceConfig`, not its path, so playback doesn't
+- [x] The replay header stores a full copy of the `RaceConfig`, not its path, so playback doesn't
       depend on the race file being unchanged.
 - [ ] The seed comes from `RaceSave` (a sub-state of `GameSave`, loaded by `SaveController` in the
       toolbox, which doesn't exist yet). The recorder copies it into the replay header at race
       start, so playback doesn't depend on the player's save. Until `SaveController` exists, record
-      `0`.
+      `0`. *(`header.seed` exists and is always `0`.)*
 - [ ] Build id: embed the git commit (plus a dirty flag) at build time, e.g. through
       `SourceRevisionId` / `AssemblyInformationalVersion`. Expose it from the engine.
 - [ ] Content hash: hash every file under the content root, with paths sorted ordinally, using the same
       FNV-1a as `World.Checksum()`. Compute it once at startup.
-- [ ] `Replay` type (YAML, read and written with `Engine.Yaml`):
+      *(Deferred: Android can't list subfolders of APK assets at runtime, which is why
+      `tools/DataGroups` exists, so a runtime hash would differ by platform. Generate it at build
+      time instead, the same way as `DataGroups.g.cs`.)*
+- [x] `Replay` type (YAML, read and written with `Engine.Yaml`):
       - `header`: `build`, `dirty`, `contentHash`, `ticksPerSecond`, `race` (`RaceConfig`), `seed`,
         `platform`, `runtime`, `recordedAt`
       - `commands`: the `( tick, command )` list, using `Command`'s `[YamlPolymorphic]` tags
       - `checksums`: `( tick, checksum )` every `CHECKSUM_INTERVAL` ticks (start with
         `ticksPerSecond`), plus the final tick
-- [ ] `CommandRecorder` copies each command as it's applied (Rule 3).
-- [ ] Checksum recording: the recorder takes a checksum after every `CHECKSUM_INTERVAL`th tick. This needs
+      *(`src/Racers/Scripts/Data/Replay.cs`. The header also has `version`, `startTick` and
+      `endTick`. `build`, `dirty` and `contentHash` wait for the two items above. The first
+      checksum is the state at `startTick`, so a replay also checks the match setup.)*
+- [x] `CommandRecorder` copies each command as it's applied (Rule 3).
+      *(Renamed `ReplayRecorder`. `Command.Copy()` round-trips through YAML, so the copy is
+      exactly what the file holds.)*
+- [x] Checksum recording: the recorder takes a checksum after every `CHECKSUM_INTERVAL`th tick. This needs
       a hook after `FixedTick` finishes, either a `World.onTickEnd` event or a call from
       `RacersGame.FixedUpdate`. Like the recorder, it lives outside the world.
-- [ ] Recording starts at match start (tick 0, right after `RaceSystem.Setup`) and runs for the whole match.
+      *(`World.onTickEnd`. `ReplayRecorder( checksumInterval )`; `RacersGame` passes
+      `ticksPerSecond`.)*
+- [x] Recording starts at match start (tick 0, right after `RaceSystem.Setup`) and runs for the whole match.
       Commands are tiny, so there's no rolling buffer.
-- [ ] `Replay.Write( path )` / `Replay.Read( path )`, plus a round-trip test.
-- [ ] Debug key to save the current replay to disk, for testing before bug reports exist.
+- [x] `Replay.Write( path )` / `Replay.Read( path )`, plus a round-trip test.
+- [x] Debug key to save the current replay to disk, for testing before bug reports exist.
+      *(F5 writes `replays/replay-<time>.yaml` under the working directory, which is gitignored. The
+      reports directory in Phase 4 replaces this.)*
 
 ### Phase 2: Playback
 
-- [ ] `ReplayPlayer`, which lives outside the world like the recorder: before each `FixedTick`, it queues the
+- [x] `ReplayPlayer`, which lives outside the world like the recorder: before each `FixedTick`, it queues the
       recorded commands for `world.tick + 1`, in recorded order. After the tick, it asserts each
       applied command's stamped tick matches the recording.
-- [ ] While a player drives the world, commands queued by the view are dropped and logged once.
+      *(Hooks `World.onTickStart`, which fires before the tick in the default phase, so the player
+      can still send commands. It can also attach to a world loaded mid-replay.)*
+- [x] While a player drives the world, commands queued by the view are dropped and logged once.
       View systems keep running, so hover and animations still work.
-- [ ] After each recorded checksum tick, compare checksums. On the first mismatch, pause and
+- [x] After each recorded checksum tick, compare checksums. On the first mismatch, pause and
       produce the desync report (`determinism.md` Phase 6).
-- [ ] `ENGINE_REPLAY=path` (same pattern as `ENGINE_CAPTURE` and `ENGINE_INSPECTOR`): `Load` builds the
+- [x] `ENGINE_REPLAY=path` (same pattern as `ENGINE_CAPTURE` and `ENGINE_INSPECTOR`): `Load` builds the
       match from the replay's `race` instead of loading `races/test`, then attaches a player.
+      *(Checked in the desktop build: a replay recorded by the test harness matched all its
+      checksums in the real game, and a tampered one paused at the bad tick and wrote the dump.)*
 - [ ] On load, compare `build` and `contentHash` with the running game. Warn loudly on a mismatch
       and play anyway (Rule 1).
-- [ ] At the end of the replay, pause on the last tick.
-- [ ] Test: drive a match with scripted commands, record it, play it into a new world and compare
+      *(Waits for both to be recorded. `ticksPerSecond` is already compared: the world uses the
+      replay's value, and a mismatch with `config.yaml` logs a warning.)*
+- [x] At the end of the replay, pause on the last tick.
+- [x] Test: drive a match with scripted commands, record it, play it into a new world and compare
       every checksum. This shares setup with the "play twice" test in `determinism.md`.
 
 ### Phase 3: Playback controls (debug builds)

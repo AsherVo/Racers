@@ -58,6 +58,12 @@ Problems print as `file:line:column: key.path: message`. The exit code is 1 if a
 
 **Debug capture:** set `ENGINE_CAPTURE=/path/frame.png` and the engine saves frame 90 as a PNG on any platform.
 
+**Replays:** press F5 in the game to save the match so far to `replays/replay-<time>.yaml` under the working
+directory. Set `ENGINE_REPLAY=/path/replay.yaml` and the game builds the replay's race and plays its commands
+instead of live input, checking checksums as it goes. It pauses at the end, or at the first checksum that doesn't
+match, and writes the sim state at that tick next to the replay (`<replay>.desync-<tick>.yaml`) for diffing. See
+[worklists/replays.md](worklists/replays.md).
+
 **Inspector:** set `ENGINE_INSPECTOR=/path/to.sock` and the game connects to a tool listening there, which
 can then browse its ECS worlds. Compee sets it when it runs the game (see [architecture.md](architecture.md#inspector)).
 

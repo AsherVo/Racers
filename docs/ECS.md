@@ -99,10 +99,11 @@ public class OnCanvas : Relation {}
 SetRelation< OnCanvas >( sprite, canvas );
 GetRelated< OnCanvas >( sprite );      // → canvas
 GetEntities< OnCanvas >( canvas );     // → every entity on that canvas
+GetRelations< OnCanvas >( canvas );    // → ( entity, relation ) pairs
 ```
 
-`GetEntities` and `GetRelations` scan every relation of that type, so use a filter
-(`Related< T >( target )`) for anything you query every frame.
+`GetEntities` and `GetRelations` return results in ascending id order. They scan every relation of
+that type, so use a filter (`Related< T >( target )`) for anything you query every frame.
 
 A relation can carry data of its own: `Cell : Relation, ISimComponent` keeps its `coords` and points
 at its `Grid`. `SetRelation< T >( from, to )` retargets an existing relation and keeps its data;
@@ -171,18 +172,64 @@ Commands are sim input, so their fields follow the same rules as sim components:
 lanes, sim entity ids), never floats or pointer positions. `SimComponentRules` checks each command
 type at startup and the first time it's sent.
 
-### Recording
+### Recording and replays
 
-`World.onCommandApplied` fires for each command as a tick applies it. `CommandRecorder` listens and
-keeps every applied command, each stamped with its tick: with the content and seed, that's
-everything needed to replay a match, and later the network protocol. The recorder lives outside the
-world (`RacersGame` owns it), so it keeps recording while systems stop and start. After loading a
-world, `Attach` it to the new one.
+The world fires three events around each tick, all outside the sim phase:
+
+| Event | When |
+|---|---|
+| `onTickStart` | before `tick` moves and pending commands are applied, so a handler can still send commands for this tick |
+| `onCommandApplied( command )` | for each command as the tick applies it, already stamped |
+| `onTickEnd` | after the tick, when sim state is final for `tick` |
+
+`ReplayRecorder` listens. It keeps a copy of every applied command, stamped with its tick, and a
+`World.Checksum()` every `checksumInterval` ticks, starting with the state it was attached to. With
+the match setup and seed, the commands are everything needed to replay a match (and later, the
+network protocol), and the checksums prove the replay matched. The recorder only watches, so the
+sim runs the same with or without it.
+
+`ReplayPlayer` drives a world from a recording. Before each tick it drops any commands the view
+queued and sends the ones recorded for that tick. After each recorded checksum tick it compares
+checksums, and on the first mismatch it sets `desync` and fires `onDesync`. Whoever owns the world
+stops ticking at `isFinished` or a desync.
+
+Both live outside the world (`RacersGame` owns them), so they keep going while systems stop and
+start. After loading a world, `Attach` them to the new one. Racers' replay file (`Replay`) is
+covered in [worklists/replays.md](worklists/replays.md).
+
+### Saving
+
+`world.Save()` writes everything that persists as YAML: the counters, pending commands, and every
+live entity with its components, by id and then type name. Components are keyed by type name, so
+names must be unique across the game assembly. `World.Load( yaml )` builds a new world from it with
+no systems running; start them afterwards, and they rebuild their caches the same way as after any
+other start. Save between ticks and frames, since messages aren't saved.
+
+```yaml
+tick: 20
+nextEntityId: 31
+nextViewEntityId: 1000000
+pendingCommands: []
+entities:
+- id: 1
+  components:
+    Grid:
+      width: 9
+      height: 3
+    Name:
+      name: Grid
+```
+
+`world.SaveSimState()` writes only what `Checksum()` covers: `tick`, `nextEntityId` and the sim
+components of sim entities. Two worlds with the same checksum produce the same text, so diffing
+two of these shows where two runs diverged.
 
 ### Filters
 
 A filter is a live query. You describe it with `FilterBuilder` and start it, and the world keeps
-its `entities` set up to date as components and relations change.
+its `entities` up to date as components and relations change. `entities` is a `SortedEntities`:
+it's always in ascending id order, so iterating it visits entities in the same order on every run,
+whatever order they matched in and after a load (Rule 6). Iterating doesn't allocate.
 
 ```C#
 filter = new FilterBuilder()
@@ -200,12 +247,13 @@ foreach ( var entity in filter.entities )
 - `onAdd` and `onRemove` fire as entities enter and leave. A callback can't change the filter
   that's calling it.
 - `Start( filter )` builds the set from scratch, so a filter is always rebuilt when its system
-  starts. Its order then has nothing to do with any earlier run (see Rule 6).
+  starts. `onAdd` fires for the matches in id order.
 - A filter remembers the phase it was started in, and its callbacks always run in that phase. A view
   system's filter can fire during a tick (the sim spawns an entity with a `DrawRive`), and its
   callback still follows view rules: entities it creates get view ids, and it can't touch sim state.
 - A sim system's filter can only name sim components.
-- For one-off queries, use `GetEntitiesNonAlloc( builder, results )` and `GetSingleEntity( builder )`.
+- For one-off queries, use `GetEntitiesNonAlloc( builder, results )`, which appends in id order, and
+  `GetSingleEntity( builder )`, which returns the lowest matching id.
 
 ### Systems
 
@@ -309,11 +357,14 @@ view components ◄── view systems ◄── sim messages (inbox) ◄──�
 ### One frame
 
 1. The engine runs 0..N fixed ticks, depending on how much app time has built up. For each one,
-   `RacersGame.FixedUpdate` calls `world.FixedTick()` (a pause menu will skip it *(planned)*):
+   `RacersGame.FixedUpdate` calls `world.FixedTick()` (a pause menu will skip it *(planned)*, and
+   replay playback skips it once the replay ends or desyncs):
+   - fire `onTickStart`
    - `world.tick++`
    - stamp pending commands with the new tick and deliver them as sim messages
    - run sim systems in start order
    - move the tick's sim messages to the view's inbox
+   - fire `onTickEnd`
 2. `world.Update( time )`:
    - `TimeSystem.AdvanceFrame( time )` advances the clocks, if a `TimeSystem` is running
    - run view systems in start order
@@ -355,8 +406,9 @@ conventions that follow from them.
 5. **Randomness comes only from the sim RNG**, whose state lives in a sim component. Never use
    `System.Random`. Cosmetic effects use a separate view RNG.
 6. **Sim iteration order is explicit.** Iterate by sorted entity id. Never rely on
-   `Dictionary`/`HashSet` order, `GetHashCode()` or `Type` order. Filters are rebuilt whenever a
-   system starts, so their order after a load is unrelated to an uninterrupted run.
+   `Dictionary`/`HashSet` order, `GetHashCode()` or `Type` order. Filters, relation queries and
+   `GetEntitiesNonAlloc` already return ids in ascending order, and `Destroy` removes components
+   in type-name order. A `HashSet` or `Dictionary` a sim system builds itself is still hash order.
 7. **Systems are disposable.** Systems are never serialized. Everything that persists lives in
    `World`, its entities and its components. A system's fields are caches: `StartSystem` rebuilds
    them from the world (which may have just been loaded mid-match) and `StopSystem` releases them.
@@ -401,7 +453,8 @@ sim state.
    `world`.
 4. **Keep state in components.** If losing a field on restart would change the game, it belongs
    on an entity.
-5. **Sim only:** iterate in sorted order *(planned API)*, read only `ISimComponent`s and commands,
+5. **Sim only:** iterate filters and query results as they come (they're sorted by id), and sort
+   anything you collect yourself. Read only `ISimComponent`s and commands,
    and time things with `world.tick`. Add components with `Add( entity, new T() )`.
 6. **View only:** derive what you draw from sim state every frame (like `UnitViewSystem` turning
    `InCell` into `Position`) instead of caching it, and send commands for anything the sim should

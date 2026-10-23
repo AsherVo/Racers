@@ -220,11 +220,16 @@ These are what the worklist enforces. Check new code against them.
 - [ ] `DeterministicRandom` (PCG32 or xoshiro128**). Its state lives in a sim singleton component,
       so it's checksummed and snapshotted. The seed comes from match setup.
 - [ ] Separate cosmetic RNG for the view, so effects never use up sim randomness.
-- [ ] Sorted iteration for sim systems. Either sim filters keep a sorted `List< uint >`, or
+- [x] Sorted iteration for sim systems. Either sim filters keep a sorted `List< uint >`, or
       the sim iterates `filter.entities` through a sorted view. Pick one and make it the only API
       sim systems get.
-- [ ] Stable type order wherever the sim enumerates component types (checksum, `Destroy`): sort by
+      *(Every filter keeps a sorted list: `Filter.entities` is a `SortedEntities`, which iterates
+      without allocating. `GetRelations`/`GetEntities< T >` and `GetEntitiesNonAlloc` return ids in
+      ascending order, and `GetSingleEntity` returns the lowest. Tested in `SortedIterationTests`.)*
+- [x] Stable type order wherever the sim enumerates component types (checksum, `Destroy`): sort by
       `Type.FullName` with ordinal comparison.
+      *(`World.ComponentTypesInOrder()`, cached until a new type appears. `Checksum()` already
+      sorted.)*
 - [ ] `Fixed` (Q32.32 in a `long`, or Q16.16 in an `int`), `FixedVector2`, and integer `Sqrt`.
       Add trig/LUT only if movement needs it. Defer until the first real movement logic, but
       before any sim component stores a fraction.
@@ -243,14 +248,22 @@ These are what the worklist enforces. Check new code against them.
       entities as a full run. Either it runs the same `Load` with stubbed graphics, or `Load`
       creates view-only entities (canvases, UI, cell visuals) in the view phase.
 - [ ] `ENGINE_REPLAY=path`: moved to `docs/worklists/replays.md` Phase 2.
-- [ ] Test: play the same replay twice in-process and compare checksums.
-- [ ] Save/load test (enforces Rule 7): run to tick N, serialize the world, load it into a new
+- [x] Test: play the same replay twice in-process and compare checksums.
+      *(`ReplayTests` in `tests/Racers.Tests`, on a sim-only match built without content: the
+      real `GridSystem` and `RaceSystem` with two units.)*
+- [x] Save/load test (enforces Rule 7): run to tick N, serialize the world, load it into a new
       world with new systems, and keep going. The checksums must match an uninterrupted run.
       This catches any system that keeps state of its own.
+      *(`WorldSaveTests.LoadingMidMatchMatchesAnUninterruptedRun`, comparing every tick. Needed
+      world serialization, which didn't exist: `World.Save()`/`World.Load()` in `World.Save.cs`.)*
 - [ ] Cross-platform golden test: one checked-in replay, with the expected checksum log, played on
       desktop CoreCLR, NativeAOT, browser (Mono wasm), iOS and Android. Run in CI where possible.
-- [ ] Desync report: the first tick whose checksum differs, plus a YAML dump of sim state at that
+- [x] Desync report: the first tick whose checksum differs, plus a YAML dump of sim state at that
       tick for diffing.
+      *(`ReplayPlayer.desync` and `World.SaveSimState()`; `RacersGame` writes the dump next to the
+      replay. It finds the first recorded checksum that differs, so the divergence happened within
+      the previous checksum interval. Narrowing it to the exact tick means recording with an
+      interval of 1.)*
 
 ### Phase 7: Later
 

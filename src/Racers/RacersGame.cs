@@ -16,15 +16,23 @@ public sealed class RacersGame : Game
     SpriteBatch? batch; // read in Update, after the previous frame's End() has flushed everything
     int frames;
     
+    const string REPLAY_VARIABLE = "ENGINE_REPLAY";
+    const string REPLAY_DIRECTORY = "replays";
+
     World world;
-    CommandRecorder recorder = new();
+    RaceConfig race;
+    ReplayRecorder recorder;
+
+    string replayPath;
+    ReplayPlayer player;
+    bool loggedReplayEnd;
 
     protected override void Load ()
     {
         Toolbox.Setup( this );
 
-        world = new World( ticksPerSecond );
-        recorder.Attach( world );
+        var replay = ReadReplayFromEnvironment();
+        world = new World( replay?.header.ticksPerSecond ?? ticksPerSecond );
 
         // Utilities
         world.Start( new TimeSystem() );
@@ -51,13 +59,77 @@ public sealed class RacersGame : Game
         world.Start( new RenderSystem() );
 
 
-        var raceConfig = Toolbox.I.load.Race( "test" );
-        world.Get< RaceSystem >().Setup( raceConfig );
+        race = replay?.header.race ?? Toolbox.I.load.Race( "test" );
+        world.Get< RaceSystem >().Setup( race );
 
         using ( world.EnterViewPhase() )
-            world.Get< GameViewSystem >().Setup( graphics, raceConfig );
+            world.Get< GameViewSystem >().Setup( graphics, race );
 
         world.Get< GameViewSystem >().uiState.Set< Race_DefaultState >();
+
+        recorder = new ReplayRecorder( world.ticksPerSecond );
+        recorder.Attach( world );
+
+        if ( replay != null )
+        {
+            player = replay.CreatePlayer();
+            player.onDesync += OnDesync;
+            player.Attach( world );
+            Log.Info( $"Replay: playing { replayPath } to tick { player.endTick }." );
+        }
+    }
+
+    Replay ReadReplayFromEnvironment ()
+    {
+        replayPath = Environment.GetEnvironmentVariable( REPLAY_VARIABLE );
+        if ( string.IsNullOrEmpty( replayPath ) )
+            return null;
+
+        Replay replay;
+        try
+        {
+            replay = Replay.Read( replayPath );
+        }
+        catch ( Exception e ) when ( e is IOException or UnauthorizedAccessException or YamlException or InvalidDataException )
+        {
+            Log.Error( $"Replay: couldn't read { replayPath }, so playing live.\n{ e.Message }" );
+            return null;
+        }
+
+        if ( replay.header.ticksPerSecond != ticksPerSecond )
+            Log.Warning( $"Replay: recorded at { replay.header.ticksPerSecond } ticks per second, but config.yaml says { ticksPerSecond }. Playback speed will differ; the outcome won't." );
+
+        return replay;
+    }
+
+    void OnDesync ( ReplayDesync desync )
+    {
+        Log.Error( $"Replay: desync at { desync }. Pausing." );
+
+        var dumpPath = $"{ replayPath }.desync-{ desync.tick }.yaml";
+        try
+        {
+            File.WriteAllText( dumpPath, world.SaveSimState() );
+            Log.Info( $"Replay: sim state at the desync written to { dumpPath }" );
+        }
+        catch ( Exception e )
+        {
+            Log.Error( $"Replay: couldn't write the desync report to { dumpPath }: { e.Message }" );
+        }
+    }
+
+    void SaveReplay ()
+    {
+        var path = Path.Combine( Environment.CurrentDirectory, REPLAY_DIRECTORY, $"replay-{ DateTime.Now:yyyyMMdd-HHmmss}.yaml" );
+        try
+        {
+            Replay.FromRecording( recorder, world, race ).Write( path );
+            Log.Info( $"Replay: saved ticks { recorder.startTick }-{ world.tick } to { path }" );
+        }
+        catch ( Exception e )
+        {
+            Log.Error( $"Replay: couldn't save to { path }: { e.Message }" );
+        }
     }
 
     void LoadView ()
@@ -75,7 +147,8 @@ public sealed class RacersGame : Game
 
     protected override void Unload ()
     {
-        recorder.Detach();
+        player?.Detach();
+        recorder?.Detach();
         Toolbox.I.load.Dispose();
     }
 
@@ -104,10 +177,22 @@ public sealed class RacersGame : Game
 
         if ( down && key == Key.Escape )
             Exit();
+
+        if ( down && key == Key.F5 )
+            SaveReplay();
     }
 
     protected override void FixedUpdate ()
     {
+        if ( player != null && ( player.isFinished || player.desync != null ) )
+        {
+            if ( player.isFinished && !loggedReplayEnd )
+                Log.Info( $"Replay: finished at tick { world.tick }, { player.matchedChecksums } checksums matched." );
+
+            loggedReplayEnd = player.isFinished;
+            return;
+        }
+
         world.FixedTick();
     }
 
