@@ -44,7 +44,7 @@ public class UnitViewSystem : WorldManipulator, IViewSystem
         {
         	var unitRect = Get< Rect >( moveMessage.unit );
         	var startPosition = Get< Position >( moveMessage.unit ).value;
-        	var endPosition = grid.CenterOnCell( moveMessage.to, ( int )unitRect.width, ( int )unitRect.height );
+        	var endPosition = grid.GetCellCenter( moveMessage.to, ( int )unitRect.width, ( int )unitRect.height );
 
             float moveTime = 0.9f;
             Get< CutsceneSystem >().StartCutscene( $"Move { GetName( moveMessage.unit ) }",

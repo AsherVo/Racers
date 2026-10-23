@@ -6,7 +6,7 @@ report with a replay that reproduces what they saw.
 **Shape:** a replay is the determinism equation written to disk:
 
 ```
-( build, content, setup, seed, [ ( tick, command ), ... ], [ ( tick, checksum ), ... ] )
+( build, content, race, seed, [ ( tick, command ), ... ], [ ( tick, checksum ), ... ] )
 ```
 
 There are two layers:
@@ -58,15 +58,21 @@ Everything in `determinism.md`'s Rules applies here too.
 
 ### Phase 1: Replay file and recording
 
-- [ ] `MatchSetup` (sim data, YAML): everything `RacersGame.LoadSim()` hardcodes today (grid size,
-      car start cell) plus the seed. `LoadSim( MatchSetup )` builds the match from it, so a replay
-      doesn't depend on code that changes between builds.
+- [x] `RaceConfig` (content YAML, `races/<name>.yaml`, loaded with `Loader.Race`): grid size, unit
+      placements and background. `RaceSystem.Setup( RaceConfig )` builds the match from it, so a
+      replay doesn't depend on code that changes between builds.
+- [ ] The replay header stores a full copy of the `RaceConfig`, not its path, so playback doesn't
+      depend on the race file being unchanged.
+- [ ] The seed comes from `RaceSave` (a sub-state of `GameSave`, loaded by `SaveController` in the
+      toolbox, which doesn't exist yet). The recorder copies it into the replay header at race
+      start, so playback doesn't depend on the player's save. Until `SaveController` exists, record
+      `0`.
 - [ ] Build id: embed the git commit (plus a dirty flag) at build time, e.g. through
       `SourceRevisionId` / `AssemblyInformationalVersion`. Expose it from the engine.
 - [ ] Content hash: hash every file under the content root, with paths sorted ordinally, using the same
       FNV-1a as `World.Checksum()`. Compute it once at startup.
 - [ ] `Replay` type (YAML, read and written with `Engine.Yaml`):
-      - `header`: `build`, `dirty`, `contentHash`, `ticksPerSecond`, `setup` (`MatchSetup`),
+      - `header`: `build`, `dirty`, `contentHash`, `ticksPerSecond`, `race` (`RaceConfig`), `seed`,
         `platform`, `runtime`, `recordedAt`
       - `commands`: the `( tick, command )` list, using `Command`'s `[YamlPolymorphic]` tags
       - `checksums`: `( tick, checksum )` every `CHECKSUM_INTERVAL` ticks (start with
@@ -75,7 +81,7 @@ Everything in `determinism.md`'s Rules applies here too.
 - [ ] Checksum recording: the recorder takes a checksum after every `CHECKSUM_INTERVAL`th tick. This needs
       a hook after `FixedTick` finishes, either a `World.onTickEnd` event or a call from
       `RacersGame.FixedUpdate`. Like the recorder, it lives outside the world.
-- [ ] Recording starts at match start (tick 0, right after `LoadSim`) and runs for the whole match.
+- [ ] Recording starts at match start (tick 0, right after `RaceSystem.Setup`) and runs for the whole match.
       Commands are tiny, so there's no rolling buffer.
 - [ ] `Replay.Write( path )` / `Replay.Read( path )`, plus a round-trip test.
 - [ ] Debug key to save the current replay to disk, for testing before bug reports exist.
@@ -90,7 +96,7 @@ Everything in `determinism.md`'s Rules applies here too.
 - [ ] After each recorded checksum tick, compare checksums. On the first mismatch, pause and
       produce the desync report (`determinism.md` Phase 6).
 - [ ] `ENGINE_REPLAY=path` (same pattern as `ENGINE_CAPTURE` and `ENGINE_INSPECTOR`): `Load` builds the
-      match from the replay's `setup` instead of the default, then attaches a player.
+      match from the replay's `race` instead of loading `races/test`, then attaches a player.
 - [ ] On load, compare `build` and `contentHash` with the running game. Warn loudly on a mismatch
       and play anyway (Rule 1).
 - [ ] At the end of the replay, pause on the last tick.

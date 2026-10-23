@@ -85,7 +85,7 @@ public class GridViewSystem : WorldManipulator, IViewSystem
         );
     }
 
-    public Vector2 CenterOnCell ( Vector2Int coords, int width, int height )
+    public Vector2 GetCellCenter ( Vector2Int coords, int width, int height )
     {
         var cellCenter = GetCellPosition( coords );
         cellCenter.x += cellWidth / 2;
@@ -97,7 +97,7 @@ public class GridViewSystem : WorldManipulator, IViewSystem
         return result;
     }
 
-    public Vector2 CenterOnCell ( Vector2Int coords, uint entity )
+    public Vector2 GetCellCenter ( Vector2Int coords, uint entity )
     {
         int width = 0;
         int height = 0;
@@ -108,7 +108,7 @@ public class GridViewSystem : WorldManipulator, IViewSystem
             height = ( int )rect.height;
         }
 
-        return CenterOnCell( coords, width, height );
+        return GetCellCenter( coords, width, height );
     }
 
     public void SnapToCell ( uint entity )
@@ -121,7 +121,7 @@ public class GridViewSystem : WorldManipulator, IViewSystem
         }
 
         var coords = Get< Cell >( onCell ).coords;    
-        Get< Position >( entity ).value = CenterOnCell( coords, entity );
+        Get< Position >( entity ).value = GetCellCenter( coords, entity );
     }
 
     Dictionary< uint, CellHighlight > GetAllHighlights ()

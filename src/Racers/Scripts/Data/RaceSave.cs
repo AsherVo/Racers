@@ -7,5 +7,6 @@ namespace Racers;
 public class RaceSave
 {
     public string config;
+    public string seed;
     public uint grid;
 }
