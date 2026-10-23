@@ -237,16 +237,12 @@ These are what the worklist enforces. Check new code against them.
       `world.tick` and the RNG state. *(Built in Phase 2 for the view-phase guard, with FNV-1a; still
       needs the RNG state once it exists.)* Use a fixed hash such as FNV-1a or xxHash64, not
       `HashCode` (which is randomized per process).
-- [ ] Replay file (YAML):
-      - header: build version, content hash, seed, `ticksPerSecond`
-      - body: the `( tick, command )` list
-      - checksums every N ticks
+- [ ] Replay file: moved to `docs/worklists/replays.md` Phase 1.
 - [ ] Headless runner: build the world with only sim and utility systems (no SDL,
       graphics or content textures) and play back a replay. It must create the same sim-range
       entities as a full run. Either it runs the same `Load` with stubbed graphics, or `Load`
       creates view-only entities (canvases, UI, cell visuals) in the view phase.
-- [ ] `ENGINE_REPLAY=path` (same pattern as `ENGINE_CAPTURE`): play back a replay on any platform
-      and write the checksum log.
+- [ ] `ENGINE_REPLAY=path`: moved to `docs/worklists/replays.md` Phase 2.
 - [ ] Test: play the same replay twice in-process and compare checksums.
 - [ ] Save/load test (enforces Rule 7): run to tick N, serialize the world, load it into a new
       world with new systems, and keep going. The checksums must match an uninterrupted run.

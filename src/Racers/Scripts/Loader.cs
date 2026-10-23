@@ -15,6 +15,9 @@ public class Loader
     const string FONTS_PATH = "fonts/";
     const string FONT_SUFFIX = ".ttf";
 
+    const string RACES_PATH = "races/";
+    const string RACE_SUFFIX = ".yaml";
+
     Dictionary< string, Texture > textures;
     Dictionary< string, RiveFile > rives;
     Dictionary< string, Dictionary< int, Font > > fonts;
@@ -123,4 +126,7 @@ public class Loader
             .Select( frame => prefix + frame.suffix )
             .ToArray();
     }
+
+    public RaceConfig Race ( string path )
+        => Toolbox.I.game.content.LoadYaml< RaceConfig >( $"{ RACES_PATH }{ path }{ RACE_SUFFIX }" );
 }

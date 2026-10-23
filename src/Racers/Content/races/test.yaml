@@ -1,0 +1,8 @@
+width: 9
+height: 3
+units:
+- id: Car
+  x: 2
+  y: 2
+
+background: CloudyRoad

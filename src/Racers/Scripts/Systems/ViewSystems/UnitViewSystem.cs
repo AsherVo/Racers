@@ -8,32 +8,36 @@ namespace Racers;
 
 public class UnitViewSystem : WorldManipulator, IViewSystem
 {
-    Filter units;
+    Filter visibleUnits;
 
     public void StartSystem ( World world )
     {
         this.world = world;
 
-        units = new FilterBuilder()
+        visibleUnits = new FilterBuilder()
             .Include< Unit >()
-            .Include< InCell >()
             .Include< Position >()
-            .Exclude< InCutscene >()
             .ToFilter();
 
-        Start( units );
+        visibleUnits.onAdd += OnAddVisibleUnit;
+        visibleUnits.onRemove += OnRemoveVisibleUnit;
+
+        Start( visibleUnits );
     }
 
     public void StopSystem ( World world )
     {
-        Stop( units );
+        Stop( visibleUnits );
+
+        visibleUnits.onAdd -= OnAddVisibleUnit;
+        visibleUnits.onRemove -= OnRemoveVisibleUnit;
 
         this.world = null;
     }
 
     public void Update ( World world, FrameTime time )
     {
-    	var grid = Get< GridViewSystem >();
+        var grid = Get< GridViewSystem >();
 
         var moveMessages = Read< UnitMoved >();
         foreach ( var moveMessage in moveMessages )
@@ -48,13 +52,6 @@ public class UnitViewSystem : WorldManipulator, IViewSystem
                 moveMessage.unit
             );
         }
-
-        foreach ( var unit in units.entities )
-        {
-        	var coords = Get< Cell >( GetRelated< InCell >( unit ) ).coords;
-        	var rect = Get< Rect >( unit );
-        	Get< Position >( unit ).value = grid.CenterOnCell( coords, ( int )rect.width, ( int )rect.height );
-        }
     }
  
     IEnumerator MoveUnitCo ( uint unit, Vector2 startPosition, Vector2 endPosition, float moveTime )
@@ -68,6 +65,34 @@ public class UnitViewSystem : WorldManipulator, IViewSystem
     		float p = Ease.InOut( Float.Clamp01( t / moveTime ) );
     		Get< Position >( unit ).value = Vector2.Lerp( startPosition, endPosition, p );
     		yield return null;
-    	} 
+    	}
+
+        if ( Has< InCell >( unit ) )
+            Get< GridViewSystem >().SnapToCell( unit );
+    }
+
+    void OnAddVisibleUnit ( uint unit )
+    {
+        var canvas = Get< GameViewSystem >().raceCanvas;
+
+        if ( canvas != 0 )
+            SetRelation< OnCanvas >( unit, canvas );
+
+        if ( Has< InCell >( unit ) )
+            Get< GridViewSystem >().SnapToCell( unit );
+    }
+
+    void OnRemoveVisibleUnit ( uint unit )
+    {
+        Remove< OnCanvas >( unit );
+    }
+
+    public void Refresh ()
+    {
+        foreach ( var unit in visibleUnits.entities )
+        {
+            OnRemoveVisibleUnit( unit );
+            OnAddVisibleUnit( unit );
+        }
     }
 }

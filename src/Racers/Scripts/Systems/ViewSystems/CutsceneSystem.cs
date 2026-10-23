@@ -46,9 +46,9 @@ public class CutsceneSystem : WorldManipulator, IViewSystem
     		Destroy( finishedCutscene );
     	}
 
-        var ui = Get< UISystem >();
-        if ( cutscenes.Count == 0 && ui.InState< Race_CutsceneState >() )
-            ui.Pop();
+        var uiState = Get< GameViewSystem >().uiState;
+        if ( cutscenes.Count == 0 && uiState.Is< Race_CutsceneState >() )
+            uiState.Pop();
 
     }
  
@@ -72,8 +72,8 @@ public class CutsceneSystem : WorldManipulator, IViewSystem
 
  		cutscenes[ cutscene ] = coroutines.Start( enumerator, Time.Game );
 
-        var ui = Get< UISystem >();
-        if ( !ui.IsInStack< Race_CutsceneState >() )
-            ui.Push< Race_CutsceneState >();
+        var uiState = Get< GameViewSystem >().uiState;
+        if ( !uiState.IsInStack< Race_CutsceneState >() )
+            uiState.Push< Race_CutsceneState >();
  	}
 }

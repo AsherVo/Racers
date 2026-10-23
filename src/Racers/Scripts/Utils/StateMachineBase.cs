@@ -70,7 +70,7 @@ public abstract class StateMachineBase< TState > where TState : StateBase< TStat
     public bool IsInStack< T > ()
         => stack.Any( state => state is T );
 
-    public bool InState< T > ()
+    public bool Is< T > ()
         => currentState != null && currentState is T;
 
     public string GetStack ()

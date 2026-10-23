@@ -33,7 +33,7 @@ public class GridViewSystem : WorldManipulator, IViewSystem
 
     public void Update ( World world, FrameTime time )
     {
-        if ( !Get< UISystem >().InState< Race_DefaultState >() )
+        if ( !Get< GameViewSystem >().uiState.Is< Race_DefaultState >() )
             return;
 
         foreach ( var click in Read< Click >() )
@@ -43,7 +43,7 @@ public class GridViewSystem : WorldManipulator, IViewSystem
         }
     }
 
-    public void DressGrid ( uint canvas )
+    public void Setup ( uint canvas )
     {
         var prefab = Get< PrefabSystem >();
 
@@ -95,6 +95,33 @@ public class GridViewSystem : WorldManipulator, IViewSystem
         result.x -= width / 2;
         result.y -= height / 2;
         return result;
+    }
+
+    public Vector2 CenterOnCell ( Vector2Int coords, uint entity )
+    {
+        int width = 0;
+        int height = 0;
+
+        if ( TryGet< Rect >( entity, out Rect rect ) )
+        {
+            width = ( int )rect.width;
+            height = ( int )rect.height;
+        }
+
+        return CenterOnCell( coords, width, height );
+    }
+
+    public void SnapToCell ( uint entity )
+    {
+        var onCell = GetRelated< InCell >( entity );
+        if ( onCell == 0 )
+        {
+            Log.Warning( $"Trying to snap { GetName( entity ) } to cell, but it has no InCell component! Aborting." );
+            return;
+        }
+
+        var coords = Get< Cell >( onCell ).coords;    
+        Get< Position >( entity ).value = CenterOnCell( coords, entity );
     }
 
     Dictionary< uint, CellHighlight > GetAllHighlights ()

@@ -28,6 +28,19 @@ public class RaceSystem : WorldManipulator, ISimSystem
         this.world = null; 
     }
 
+    public void Setup ( RaceConfig race )
+    {
+        var grid = Get< GridSystem >();
+        grid.SpawnGrid( race.width, race.height );
+
+        foreach ( var unit in race.units )
+        {
+            var entity = Get< PrefabSystem >().CreateFromData( unit.id );
+            var coords = new Vector2Int( unit.x, unit.y );
+            world.SetRelation< InCell >( entity, grid.GetCell( coords ) );    
+        }
+    }
+
     public void FixedUpdate ( World world )
     {
         var grid = Get< GridSystem >();

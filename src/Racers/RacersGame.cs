@@ -15,14 +15,7 @@ public sealed class RacersGame : Game
     double nextReport;
     SpriteBatch? batch; // read in Update, after the previous frame's End() has flushed everything
     int frames;
-
-    // World
-    uint canvas;
-    uint uiCanvas;
-    uint debugCanvas;
-    uint statsText;
-    uint statsShadow;
-
+    
     World world;
     CommandRecorder recorder = new();
 
@@ -46,7 +39,7 @@ public sealed class RacersGame : Game
         world.Start( new ButtonSystem() );
 
         // Views
-        world.Start( new UISystem() );
+        world.Start( new GameViewSystem() );
 
         world.Start( new GridViewSystem() );
         world.Start( new UnitViewSystem() );
@@ -57,65 +50,22 @@ public sealed class RacersGame : Game
         world.Start( new CoroutineSystem() );
         world.Start( new RenderSystem() );
 
-        var car = LoadSim();
+
+        var raceConfig = Toolbox.I.load.Race( "test" );
+        world.Get< RaceSystem >().Setup( raceConfig );
 
         using ( world.EnterViewPhase() )
-            LoadView( car );
+            world.Get< GameViewSystem >().Setup( graphics, raceConfig );
 
-        world.Get< UISystem >().Set< Race_DefaultState >();
+        world.Get< GameViewSystem >().uiState.Set< Race_DefaultState >();
     }
 
-    uint LoadSim ()
+    void LoadView ()
     {
-        var grid = world.Get< GridSystem >();
-        grid.SpawnGrid( 9, 3 );
-
-        var car = world.Get< PrefabSystem >().CreateFromData( "Car" );
-        world.SetRelation< InCell >( car, grid.GetCell( new Vector2Int( 2, 2 ) ) );
-        return car;
-    }
-
-    void LoadView ( uint car )
-    {
-        canvas = world.Create( "Canvas",
-            new Canvas {},
-            new SortOrder { value = 0 }
-        );
-
-        uiCanvas = world.Create( "UI Canvas",
-            new Canvas {}, 
-            new SortOrder { value = 5000 }
-        );
-
-        debugCanvas = world.Create( "Debug Canvas",
-            new Canvas {},
-            new SortOrder { value = 9999 }
-        ); 
+        
 
 
-        var prefab = world.Get< PrefabSystem >();
-
-        var rive = prefab.CreateFromData( "CloudyRoad", canvas );
-        world.GetOrAdd< SortOrder >( rive ).value = -100;
-
-        var topSpeed = prefab.CreateFromData( "UI_TopSpeed", canvas );
-        world.Get< Position >( topSpeed ).value = new Vector2( graphics.width, graphics.height );
-        world.Get< Rect >( topSpeed ).pivot = Vector2.One;
-
-        var speedometer = world.Get< RenderSystem >().GetRive( topSpeed );
-        speedometer.SetViewModelString( "speedText", 5.ToString() );
-
-        statsShadow = world.Get< PrefabSystem >().CreateText( "Stats Shadow", "", "Crates", 8, Color.Black.WithAlpha( 0.6f ), debugCanvas );
-        world.Get< Position >( statsShadow ).value = new Vector2( 6, graphics.height - 5 );
-        world.Get< Rect >( statsShadow ).pivot = new Vector2( 0, 1 );
-
-        statsText = world.Get< PrefabSystem >().CreateText( "Stats", "", "Crates", 8, Color.White, debugCanvas );
-        world.Get< Position >( statsText ).value = new Vector2( 5, graphics.height - 4 );
-        world.Get< Rect >( statsText ).pivot = new Vector2( 0, 1 );
-        world.Add( statsText, new SortOrder { value = 1 } );
-
-        world.Get< GridViewSystem >().DressGrid( canvas );
-        world.SetRelation< OnCanvas >( car, canvas );
+        
     }
 
     protected override void OnResize ()
@@ -173,8 +123,7 @@ public sealed class RacersGame : Game
             if ( nextReport > 0 )
             {
                 var stats = $"{frames / 2f:0} fps / {batch?.drawCalls} draw calls / { ticks } ticks";
-                world.Get< DrawText >( statsText ).text = stats;
-                world.Get< DrawText >( statsShadow ).text = stats;
+                world.Get< GameViewSystem >().DrawDebugStats( stats );
             }
             frames = 0;
             nextReport = total + 2;
