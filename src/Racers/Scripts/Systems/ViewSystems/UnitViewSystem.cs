@@ -41,8 +41,8 @@ public class UnitViewSystem : WorldManipulator, IViewSystem
         	var unitRect = Get< Rect >( moveMessage.unit );
         	var startPosition = Get< Position >( moveMessage.unit ).value;
         	var endPosition = grid.CenterOnCell( moveMessage.to, ( int )unitRect.width, ( int )unitRect.height );
-            
-            float moveTime = 1f;
+
+            float moveTime = 0.9f;
             Get< CutsceneSystem >().StartCutscene( $"Move { GetName( moveMessage.unit ) }",
                 MoveUnitCo( moveMessage.unit, startPosition, endPosition, moveTime ),
                 moveMessage.unit
@@ -65,7 +65,7 @@ public class UnitViewSystem : WorldManipulator, IViewSystem
     	while ( t < moveTime )
     	{
     		t += timeSystem.GetDelta( Time.Game );
-    		float p = Utils.Clamp01( t / moveTime );
+    		float p = Ease.InOut( Float.Clamp01( t / moveTime ) );
     		Get< Position >( unit ).value = Vector2.Lerp( startPosition, endPosition, p );
     		yield return null;
     	} 
