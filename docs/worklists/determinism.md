@@ -133,7 +133,7 @@ These are what the worklist enforces. Check new code against them.
       - Both counters go into world serialization. A rollback restores only `nextEntityId`.
 - [x] The editor and inspector stay unchanged: one `entities` dictionary, one flat list. View-phase
       entities just have large ids. Optionally tag them in the inspector.
-- [x] Sim entities may carry view components; the car can have `GridPos` and `DrawSprite`. View
+- [x] Sim entities may carry view components; the car can have `InCell` and `DrawSprite`. View
       entities may not carry sim components: `Add` of an `ISimComponent` to a view-range entity is
       an error in any phase.
 - [x] View filter `onRemove` callbacks can fire during sim `Destroy`. They must not touch sim state.
@@ -193,6 +193,8 @@ These are what the worklist enforces. Check new code against them.
       derives `Position` from it and interpolates with `alpha`.
       *(`GridViewSystem` derives `Position` from `GridPos` every frame. Interpolation with `alpha`
       is left to the Phase 7 polish item: nothing moves yet, so there's no previous state to blend.)*
+      *(Later: `GridPos` was removed. Grid position is the `InCell` relation; moves are discrete
+      and `UnitViewSystem` animates them on `UnitMoved`.)*
 
 ### Phase 4: Input as commands
 

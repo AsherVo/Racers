@@ -12,24 +12,16 @@ public class GridSystem : WorldManipulator, ISimSystem
     public int height => grid != 0 ? Get< Grid >( grid ).height : 0;
     public int size => width * height;
 
-    Filter positioned = new FilterBuilder()
-        .Include< GridPos >()
-        .ToFilter();
-
     public void StartSystem ( World world )
     {
         this.world = world;
 
         grid = GetSingleEntity( new FilterBuilder().Include< Grid >() );
         RebuildCells();
-
-        Start( positioned );
     }
 
     public void StopSystem ( World world )
     {
-        Stop( positioned );
-
         grid = 0;
         cells = Array.Empty< uint >();
         this.world = null;
@@ -37,23 +29,6 @@ public class GridSystem : WorldManipulator, ISimSystem
 
     public void FixedUpdate ( World world )
     {
-        foreach ( var select in Read< SelectCell >() )
-        {
-            var coords = new Vector2Int( select.x, select.y );
-            if ( InBounds( coords ) )
-                Log.Info( $"[Sim] Tick { select.tick }: selected { GetName( GetCell( coords ) ) }" );
-            else
-                Log.Warning( $"[Sim] Tick { select.tick }: ignored SelectCell ({ select.x }, { select.y }), outside the grid" );
-        }
-
-        foreach ( var entity in positioned.entities )
-        {
-            var coords = Get< GridPos >( entity ).cell;
-            if ( InBounds( coords ) )
-                SetRelation< InCell >( entity, GetCell( coords ) );
-            else if ( Has< InCell >( entity ) )
-                Remove< InCell >( entity );
-        }
     }
 
     public uint SpawnGrid ( int width, int height )

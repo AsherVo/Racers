@@ -73,7 +73,6 @@ public class PointerSystem : WorldManipulator, IViewSystem
                 {
                     Get< HoverTarget >( entity ).hovering = true;
                     Send( new StartHover { target = entity } );
-                    Log.Info( "Start hover: " + GetName( entity ) );
                 }
             }
         }
@@ -89,7 +88,6 @@ public class PointerSystem : WorldManipulator, IViewSystem
                     Get< HoverTarget >( lostHover ).hovering = false;
 
                 Send( new StopHover { target = lostHover } );
-                Log.Info( "Stop hover: " + GetName( lostHover ) );
             }
         }
 

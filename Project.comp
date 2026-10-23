@@ -20,6 +20,11 @@ blocks:
       - name: Enabled
         type: boolean
         width: 56
+  - name: Unit
+    properties:
+      - name: IsUnit
+        type: boolean
+        width: 71
   - name: Sprite
     properties:
       - name: Path

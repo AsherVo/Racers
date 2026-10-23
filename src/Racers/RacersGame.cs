@@ -32,13 +32,28 @@ public sealed class RacersGame : Game
 
         world = new World( ticksPerSecond );
         recorder.Attach( world );
+
+        // Utilities
         world.Start( new TimeSystem() );
         world.Start( new PrefabSystem() );
+        
+        // Sim
         world.Start( new GridSystem() );
+        world.Start( new RaceSystem() );
+
+        // Input
         world.Start( new PointerSystem() );
         world.Start( new ButtonSystem() );
+
+        // Views
+        world.Start( new UISystem() );
+
         world.Start( new GridViewSystem() );
+        world.Start( new UnitViewSystem() );
+
+        world.Start( new CutsceneSystem() );
         world.Start( new SpriteAnimationSystem() );
+
         world.Start( new CoroutineSystem() );
         world.Start( new RenderSystem() );
 
@@ -46,13 +61,18 @@ public sealed class RacersGame : Game
 
         using ( world.EnterViewPhase() )
             LoadView( car );
+
+        world.Get< UISystem >().Set< Race_DefaultState >();
     }
 
     uint LoadSim ()
     {
-        world.Get< GridSystem >().SpawnGrid( 9, 3 );
+        var grid = world.Get< GridSystem >();
+        grid.SpawnGrid( 9, 3 );
 
-        return world.Create( "Car", new GridPos { cell = new Vector2Int( 2, 2 ) } );
+        var car = world.Get< PrefabSystem >().CreateFromData( "Car" );
+        world.SetRelation< InCell >( car, grid.GetCell( new Vector2Int( 2, 2 ) ) );
+        return car;
     }
 
     void LoadView ( uint car )
@@ -70,7 +90,7 @@ public sealed class RacersGame : Game
         debugCanvas = world.Create( "Debug Canvas",
             new Canvas {},
             new SortOrder { value = 9999 }
-        );
+        ); 
 
 
         var prefab = world.Get< PrefabSystem >();
@@ -95,7 +115,7 @@ public sealed class RacersGame : Game
         world.Add( statsText, new SortOrder { value = 1 } );
 
         world.Get< GridViewSystem >().DressGrid( canvas );
-        prefab.AddFromData( car, "Car", canvas );
+        world.SetRelation< OnCanvas >( car, canvas );
     }
 
     protected override void OnResize ()

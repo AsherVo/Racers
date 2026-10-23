@@ -16,12 +16,6 @@ public class GridViewSystem : WorldManipulator, IViewSystem
 
     Dictionary< uint, uint > highlights = new();
 
-    Filter positioned = new FilterBuilder()
-        .Include< GridPos >()
-        .Include< Position >()
-        .Include< Rect >()
-        .ToFilter();
-
     public void StartSystem ( World world )
     {
         this.world = world;
@@ -29,34 +23,23 @@ public class GridViewSystem : WorldManipulator, IViewSystem
         highlights.Clear();
         foreach ( var ( highlight, cellHighlight ) in GetAllHighlights() )
             highlights[ cellHighlight.relation ] = highlight;
-
-        Start( positioned );
     }
 
     public void StopSystem ( World world )
     {
-        Stop( positioned );
-
         highlights.Clear();
         this.world = null;
     }
 
     public void Update ( World world, FrameTime time )
     {
+        if ( !Get< UISystem >().InState< Race_DefaultState >() )
+            return;
+
         foreach ( var click in Read< Click >() )
         {
             if ( Exists( click.target ) && TryGet( click.target, out Cell cell ) )
                 Send( new SelectCell { x = cell.coords.x, y = cell.coords.y } );
-        }
-
-        foreach ( var entity in positioned.entities )
-        {
-            var gridPos = Get< GridPos >( entity );
-            var rect = Get< Rect >( entity );
-
-            var position = CenterOnCell( gridPos.cell, ( int )rect.width, ( int )rect.height );
-            position.x += gridIncrementX * gridPos.progress / ( float )GridPos.PROGRESS_PER_CELL;
-            Get< Position >( entity ).value = position;
         }
     }
 

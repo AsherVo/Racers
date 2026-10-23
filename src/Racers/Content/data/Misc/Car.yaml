@@ -1,6 +1,9 @@
 Meta:
   Enabled: true
 
+Unit:
+  IsUnit: true
+
 Sprite:
   Path: car_1
   Animated: true

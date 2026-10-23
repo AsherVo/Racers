@@ -235,10 +235,12 @@ Racers' systems:
 |---|---|---|
 | `TimeSystem` | utility | Fed by `World.Update`. See [Time](#time). |
 | `PrefabSystem` | utility | Called from `Load` or a sim system, it creates sim ids; from the view, view ids. `AddFromData` dresses an existing entity. |
-| `GridSystem` | sim | Owns the `Grid` entity and `cells[]` (a cache rebuilt from `Cell` relations). Keeps each `GridPos` entity's `InCell` relation pointing at its cell. Applies `SelectCell` (for now, logs it). |
+| `GridSystem` | sim | Owns the `Grid` entity and `cells[]` (a cache rebuilt from `Cell` relations). Grid position is the `InCell` relation from an entity to its cell; `GetContents`/`GetAll< T >` query it. |
+| `RaceSystem` | sim | Applies `SelectCell`: moves a unit's `InCell` to the selected cell and sends `UnitMoved`. |
 | `PointerSystem` | view | Hit-tests against texture alpha, Rive and float rects. Rebuilds its hover set from `HoverTarget.hovering` on start. |
 | `ButtonSystem` | view | Fires Rive hover triggers. |
-| `GridViewSystem` | view | Turns clicks on cells into `SelectCell` commands. Cell layout and visuals (`DressGrid`), highlights (a cache rebuilt from `CellHighlight` relations), and `Position` derived from `GridPos`. |
+| `GridViewSystem` | view | Turns clicks on cells into `SelectCell` commands. Cell layout and visuals (`DressGrid`) and highlights (a cache rebuilt from `CellHighlight` relations). |
+| `UnitViewSystem` | view | Animates units on `UnitMoved`. When not animating, derives each unit's `Position` from its `InCell` cell. |
 | `SpriteAnimationSystem` | view | Follows `Time.Game`. |
 | `CoroutineSystem` | view | Each coroutine follows its own `Time` type. Coroutines end on `StopSystem`. |
 | `RenderSystem` | view + draw | Rive instances are rebuilt from `DrawRive` on start; their state machines reset after a load. |
@@ -297,7 +299,7 @@ input ──► view systems ──► commands ──► sim systems ──► 
 view components ◄── view systems ◄── sim messages (inbox) ◄──┘
 ```
 
-- Sim entities may carry view components: the car has a sim `GridPos` and a view `DrawSprite`.
+- Sim entities may carry view components: the car has a sim `InCell` and a view `DrawSprite`.
   View entities may not carry sim components; adding one throws in any phase and any build.
 - The sim may add or remove view components (to spawn an entity with its visuals), but it never
   reads them. Adding with `Add( entity, new T() )` isn't a read; `Add< T >( entity )` is, because it
@@ -401,6 +403,6 @@ sim state.
    on an entity.
 5. **Sim only:** iterate in sorted order *(planned API)*, read only `ISimComponent`s and commands,
    and time things with `world.tick`. Add components with `Add( entity, new T() )`.
-6. **View only:** derive what you draw from sim state every frame (like `GridViewSystem` turning
-   `GridPos` into `Position`) instead of caching it, and send commands for anything the sim should
+6. **View only:** derive what you draw from sim state every frame (like `UnitViewSystem` turning
+   `InCell` into `Position`) instead of caching it, and send commands for anything the sim should
    do.

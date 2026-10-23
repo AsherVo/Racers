@@ -46,6 +46,12 @@ public class PrefabSystem : WorldManipulator, ISystem
         AddActor( actor, canvas );
         Add( actor, new DataId { id = id } );
 
+        if ( data.TryGetBlock( id, "Unit", out var unitBlock ) )
+        {
+            if ( data.GetBool( unitBlock, "IsUnit" ) )
+                Add( actor, new Unit {} );
+        }
+
         if ( data.TryGetBlock( id, "Rive", out var riveBlock ) )
         {
             AddRive( actor,
