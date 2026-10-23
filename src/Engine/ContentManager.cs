@@ -6,11 +6,29 @@ namespace Engine;
 /// Loads assets through SDL's file I/O, which already knows each platform's storage: the app bundle
 /// on Apple platforms, APK assets on Android (relative paths), and the Emscripten FS in the browser.
 /// </summary>
-public sealed unsafe class ContentManager ( Graphics graphics, string root )
+public sealed unsafe class ContentManager
 {
-    readonly nint renderer = graphics.renderer;
+    readonly Graphics? graphics;
 
-    public string root { get; } = root;
+    public ContentManager ( Graphics graphics, string root )
+    {
+        this.graphics = graphics;
+        this.root = root;
+    }
+
+    /// <summary>
+    /// Reads files only (bytes, text, YAML, listings), for tools and headless runs that have no window. Loading a
+    /// texture, font or Rive file throws. SDL's file I/O works without <c>SDL_Init</c>.
+    /// </summary>
+    public ContentManager ( string root )
+    {
+        this.root = root;
+    }
+
+    public string root { get; }
+
+    /// <summary>False for a files-only manager, which can't load textures, fonts or Rive files.</summary>
+    public bool hasGraphics => graphics != null;
 
     public byte[] LoadBytes ( string path ) => ReadFile( root + path );
 
@@ -67,13 +85,17 @@ public sealed unsafe class ContentManager ( Graphics graphics, string root )
     /// <param name="size">Pixel height in game pixels.</param>
     /// <param name="density">Atlas pixels per game pixel. <see cref="Graphics.pixelScale"/> keeps text sharp
     /// at the window's current scale.</param>
+    /// <exception cref="InvalidOperationException">This manager has no graphics.</exception>
     public Font LoadFont ( string path, float size, float density = 2f ) =>
-        Font.Bake( renderer, LoadBytes( path ), size, density );
+        Font.Bake( RequireGraphics( path ).renderer, LoadBytes( path ), size, density );
 
-    public RiveFile LoadRive ( string path ) => graphics.rive.Load( LoadBytes( path ), path );
+    /// <exception cref="InvalidOperationException">This manager has no graphics.</exception>
+    public RiveFile LoadRive ( string path ) => RequireGraphics( path ).rive.Load( LoadBytes( path ), path );
 
+    /// <exception cref="InvalidOperationException">This manager has no graphics.</exception>
     public Texture LoadTexture ( string path, TextureFilter filter = TextureFilter.Linear )
     {
+        nint renderer = RequireGraphics( path ).renderer;
         string full = root + path;
         nint surface = SDL.SDL_LoadPNG( full );
         if ( surface == 0 )
@@ -93,6 +115,9 @@ public sealed unsafe class ContentManager ( Graphics graphics, string root )
             SDL.SDL_DestroySurface( surface );
         }
     }
+
+    Graphics RequireGraphics ( string path ) =>
+        graphics ?? throw new InvalidOperationException( $"Can't load '{path}': this ContentManager reads files only and has no graphics." );
 
     /// <summary>Copies a surface's alpha, one byte per pixel with rows top-down.</summary>
     static byte[] ReadAlpha ( nint surface )
@@ -125,7 +150,8 @@ public sealed unsafe class ContentManager ( Graphics graphics, string root )
         }
     }
 
-    internal static string DefaultRoot () => SDL.GetPlatform() switch
+    /// <summary>Where this platform keeps the game's content: next to the executable on desktop, in the bundle or APK on mobile.</summary>
+    public static string DefaultRoot () => SDL.GetPlatform() switch
     {
         // Relative paths resolve against the APK's assets folder.
         "Android" => "Content/",

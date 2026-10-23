@@ -166,29 +166,27 @@ public class PrefabSystem : WorldManipulator, ISystem
 
     void AddSprite ( uint actor, string path, float width = 0f, float height = 0f )
     {
-        var texture = Toolbox.I.load.Texture( path );
         AddBatch( actor, 
             new DrawSprite { 
                 path = path 
             },
             new Rect {
-                width = width != 0f ? width : texture.width,
-                height = height != 0f ? height : texture.height
+                width = width,
+                height = height
             }
         );
     }
 
     void AddRive ( uint actor, string path, string artboard = null, float width = 0f, float height = 0f )
     {
-        var artboardSize = Toolbox.I.load.Rive( path ).ArtboardSize( artboard );
         AddBatch( actor, 
             new DrawRive {
                 path = path,
                 artboard = artboard
             },
             new Rect {
-                width = width != 0f ? width : artboardSize.x,
-                height = height != 0f ? height : artboardSize.y
+                width = width,
+                height = height
             }
         );
     }

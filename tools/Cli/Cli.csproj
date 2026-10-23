@@ -11,6 +11,15 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Engine\Engine.csproj" />
     <ProjectReference Include="..\..\src\Racers\Racers.Game.csproj" />
+    <!-- Log writes through SDL, so replay commands need its native library. -->
+    <PackageReference Include="SDL3-CS.MacOS" />
+    <PackageReference Include="SDL3-CS.Windows" />
+    <PackageReference Include="SDL3-CS.Linux" />
+  </ItemGroup>
+
+  <!-- The default content for replay commands, which run the game's setup headless. -->
+  <ItemGroup>
+    <None Include="$(GameContentDir)**" LinkBase="Content" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

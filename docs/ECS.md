@@ -277,12 +277,14 @@ A system is sim (`ISimSystem`) or view (`IViewSystem` and/or `IDrawSystem`), nev
 `World.Start` throws. A system with neither, like `PrefabSystem` or `TimeSystem`, is a **utility**:
 it has helpers but doesn't run on its own, and its helpers follow the rules of whoever calls them.
 
-Racers' systems:
+Racers' systems are below. `SimSystems.Start( world )` starts the utility and sim ones in their
+fixed order; `RacersGame` and the headless runner both use it, since sim system order is part of
+the outcome.
 
 | System | Kind | Notes |
 |---|---|---|
 | `TimeSystem` | utility | Fed by `World.Update`. See [Time](#time). |
-| `PrefabSystem` | utility | Called from `Load` or a sim system, it creates sim ids; from the view, view ids. `AddFromData` dresses an existing entity. |
+| `PrefabSystem` | utility | Called from `Load` or a sim system, it creates sim ids; from the view, view ids. `AddFromData` dresses an existing entity. It reads data but never loads an asset, so the sim runs headless: a `Rect` it adds has 0 for any size that comes from the sprite or artboard. |
 | `GridSystem` | sim | Owns the `Grid` entity and `cells[]` (a cache rebuilt from `Cell` relations). Grid position is the `InCell` relation from an entity to its cell; `GetContents`/`GetAll< T >` query it. |
 | `RaceSystem` | sim | Applies `SelectCell`: moves a unit's `InCell` to the selected cell and sends `UnitMoved`. |
 | `PointerSystem` | view | Hit-tests against texture alpha, Rive and float rects. Rebuilds its hover set from `HoverTarget.hovering` on start. |
@@ -291,7 +293,7 @@ Racers' systems:
 | `UnitViewSystem` | view | Animates units on `UnitMoved`. When not animating, derives each unit's `Position` from its `InCell` cell. |
 | `SpriteAnimationSystem` | view | Follows `Time.Game`. |
 | `CoroutineSystem` | view | Each coroutine follows its own `Time` type. Coroutines end on `StopSystem`. |
-| `RenderSystem` | view + draw | Rive instances are rebuilt from `DrawRive` on start; their state machines reset after a load. |
+| `RenderSystem` | view + draw | Fills in a `Rect`'s zero sizes from its sprite or artboard as the entity appears, so start it before anything that reads sizes. Rive instances are rebuilt from `DrawRive` on start; their state machines reset after a load. |
 
 ## Sim and view
 

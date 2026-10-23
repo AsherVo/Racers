@@ -4,7 +4,7 @@ using MintECS;
 namespace Racers.Tests;
 
 /// <summary>
-/// A sim-only match for tests: the real sim systems on a grid with two units, built without content or graphics.
+/// A sim-only match for tests: the game's own sim systems and setup, run headless on a grid with two units.
 /// </summary>
 static class Match
 {
@@ -29,26 +29,18 @@ static class Match
         ( 118, 7, 0 ),
     ];
 
+    public static string CONTENT_ROOT => Path.Combine( AppContext.BaseDirectory, "Content" );
+
+    static Match ()
+        => HeadlessRunner.Setup( CONTENT_ROOT );
+
     public static World Create ()
-    {
-        var world = StartSystems( new World( TICKS_PER_SECOND ) );
-
-        var grid = world.Get< GridSystem >();
-        grid.SpawnGrid( RACE.width, RACE.height );
-        foreach ( var unit in RACE.units )
-        {
-            var entity = world.Create( unit.id, new Unit() );
-            world.SetRelation< InCell >( entity, grid.GetCell( new Vector2Int( unit.x, unit.y ) ) );
-        }
-
-        return world;
-    }
+        => HeadlessRunner.CreateMatch( RACE, TICKS_PER_SECOND );
 
     /// <summary>Starts the sim systems on a world, fresh or loaded.</summary>
     public static World StartSystems ( World world )
     {
-        world.Start( new GridSystem() );
-        world.Start( new RaceSystem() );
+        SimSystems.Start( world );
         return world;
     }
 

@@ -243,10 +243,17 @@ These are what the worklist enforces. Check new code against them.
       needs the RNG state once it exists.)* Use a fixed hash such as FNV-1a or xxHash64, not
       `HashCode` (which is randomized per process).
 - [ ] Replay file: moved to `docs/worklists/replays.md` Phase 1.
-- [ ] Headless runner: build the world with only sim and utility systems (no SDL,
+- [x] Headless runner: build the world with only sim and utility systems (no SDL,
       graphics or content textures) and play back a replay. It must create the same sim-range
       entities as a full run. Either it runs the same `Load` with stubbed graphics, or `Load`
       creates view-only entities (canvases, UI, cell visuals) in the view phase.
+      *(`HeadlessRunner` in the game assembly. `Load` already made view entities in the view
+      phase, so there's no stubbing. What changed: `PrefabSystem` no longer loads textures or Rive
+      files to size `Rect`; it adds `Rect` with 0 for "from the asset", and `RenderSystem` fills
+      that in when the entity appears. `ContentManager( root )` reads files with no graphics.
+      `SimSystems.Start` is the one list of sim systems, used by `RacersGame` and the runner.
+      The SDL library is still loaded, for `Log` and file reads, but never initialized.
+      Checked: replays recorded headless match every checksum in the desktop build.)*
 - [ ] `ENGINE_REPLAY=path`: moved to `docs/worklists/replays.md` Phase 2.
 - [x] Test: play the same replay twice in-process and compare checksums.
       *(`ReplayTests` in `tests/Racers.Tests`, on a sim-only match built without content: the

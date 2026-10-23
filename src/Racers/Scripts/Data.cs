@@ -32,7 +32,7 @@ public partial class Data
         if ( !data.ContainsKey( id ) )
         {
             var usePath = $"{ DATA_PATH }{ GetGroup( id ) }/{ id }{ DATA_SUFFIX }";
-            data[ id ] = ( YamlMap )Yaml.Parse( Toolbox.I.game.content.LoadText( usePath ), usePath );
+            data[ id ] = ( YamlMap )Yaml.Parse( Toolbox.I.content.LoadText( usePath ), usePath );
         }
 
         return data[ id ];

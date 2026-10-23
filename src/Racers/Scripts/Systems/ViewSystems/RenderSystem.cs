@@ -12,6 +12,8 @@ public class RenderSystem : WorldManipulator, IViewSystem, IDrawSystem
 	Filter canvases;
 	Dictionary< uint, Filter > canvasFilters;
 
+	Filter sprites;
+
 	Filter rives;
 	Dictionary< uint, RiveInstance > riveInstances;
 
@@ -29,6 +31,14 @@ public class RenderSystem : WorldManipulator, IViewSystem, IDrawSystem
 		canvases.onAdd += OnAddCanvas;
 		canvases.onRemove += OnRemoveCanvas;
 		Start( canvases );
+
+		sprites = new FilterBuilder()
+			.Include< DrawSprite >()
+			.Include< Rect >()
+			.ToFilter();
+
+		sprites.onAdd += OnAddSprite;
+		Start( sprites );
 
 		riveInstances = new();
 
@@ -49,6 +59,9 @@ public class RenderSystem : WorldManipulator, IViewSystem, IDrawSystem
 		rives.onRemove -= OnRemoveRive;
 
 		riveInstances = null;
+
+		Stop( sprites );
+		sprites.onAdd -= OnAddSprite;
 
 		Stop( canvases );
 		canvases.onAdd -= OnAddCanvas;
@@ -143,6 +156,20 @@ public class RenderSystem : WorldManipulator, IViewSystem, IDrawSystem
 		canvasFilters.Remove( entity );
 	}
 
+	void OnAddSprite ( uint entity )
+	{
+		var rect = Get< Rect >( entity );
+		if ( rect.width != 0f && rect.height != 0f )
+			return;
+
+		var texture = Toolbox.I.load.Texture( Get< DrawSprite >( entity ).path );
+		if ( rect.width == 0f )
+			rect.width = texture.width;
+
+		if ( rect.height == 0f )
+			rect.height = texture.height;
+	}
+
 	void OnAddRive ( uint entity )
 	{
 		var drawRive = Get< DrawRive >( entity );
@@ -150,6 +177,12 @@ public class RenderSystem : WorldManipulator, IViewSystem, IDrawSystem
 		var riveFile = Toolbox.I.load.Rive( drawRive.path );
 
 		var artboardSize = riveFile.ArtboardSize( drawRive.artboard );
+		if ( rect.width == 0f )
+			rect.width = artboardSize.x;
+
+		if ( rect.height == 0f )
+			rect.height = artboardSize.y;
+
 		float fit = MathF.Max( rect.width / artboardSize.x, rect.height / artboardSize.y );
 
 		float resolution = fit * Toolbox.I.game.graphics.pixelScale;

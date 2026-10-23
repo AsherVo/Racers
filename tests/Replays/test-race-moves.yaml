@@ -1,0 +1,55 @@
+header:
+  version: 1
+  ticksPerSecond: 60
+  seed: 0
+  startTick: 0
+  endTick: 300
+  race:
+    width: 9
+    height: 3
+    units:
+    - id: Car
+      x: 2
+      y: 2
+    background: CloudyRoad
+  platform: osx-arm64
+  runtime: .NET 10.0.1
+  recordedAt: 2026-10-23T00:00:00Z
+commands:
+- type: SelectCell
+  tick: 30
+  x: 4
+  y: 1
+- type: SelectCell
+  tick: 95
+  x: 7
+  y: 0
+- type: SelectCell
+  tick: 160
+  x: 8
+  y: 2
+- type: SelectCell
+  tick: 161
+  x: 1
+  y: 1
+- type: SelectCell
+  tick: 240
+  x: 0
+  y: 2
+- type: SelectCell
+  tick: 255
+  x: 99
+  y: 0
+checksums:
+- tick: 0
+  checksum: 2423094935105891561
+- tick: 60
+  checksum: 16910562738666960980
+- tick: 120
+  checksum: 15102119307968037078
+- tick: 180
+  checksum: 1349632510467041031
+- tick: 240
+  checksum: 11225240633090214923
+- tick: 300
+  checksum: 2218953581788534198

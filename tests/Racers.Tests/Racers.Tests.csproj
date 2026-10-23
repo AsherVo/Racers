@@ -16,4 +16,10 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <!-- The headless runner reads the game's data, and plays every checked-in replay. -->
+  <ItemGroup>
+    <None Include="$(GameContentDir)**" LinkBase="Content" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\Replays\**" LinkBase="Replays" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

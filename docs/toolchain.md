@@ -64,6 +64,23 @@ instead of live input, checking checksums as it goes. It pauses at the end, or a
 match, and writes the sim state at that tick next to the replay (`<replay>.desync-<tick>.yaml`) for diffing. See
 [worklists/replays.md](worklists/replays.md).
 
+**Headless replays:** the CLI plays replays with the game's own sim setup and no window, using the
+content built next to it (or `--content <dir>`):
+```sh
+tools/cli.sh replay info tests/Replays                 # header, length and command counts
+tools/cli.sh replay verify tests/Replays               # exit 1 on any checksum mismatch
+tools/cli.sh replay verify bug.yaml --dump /tmp/dumps  # also write the sim state at the desync
+tools/cli.sh replay rerecord tests/Replays             # after an intended sim change, rewrite checksums
+```
+`dotnet test` plays every replay in `tests/Replays` the same way. To find the commit that changed a
+replay's outcome, keep the replay outside the repo (so checkouts don't change it) and bisect:
+```sh
+git bisect start <bad> <good>
+git bisect run tools/cli.sh replay verify /path/to/replay.yaml --quiet
+```
+Any nonzero exit marks a commit bad, including a build failure or a commit older than `replay verify`
+itself, so keep `<good>` recent enough to have it.
+
 **Inspector:** set `ENGINE_INSPECTOR=/path/to.sock` and the game connects to a tool listening there, which
 can then browse its ECS worlds. Compee sets it when it runs the game (see [architecture.md](architecture.md#inspector)).
 

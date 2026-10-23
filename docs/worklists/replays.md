@@ -179,12 +179,17 @@ Everything in `determinism.md`'s Rules applies here too.
 
 ### Phase 6: Regression and tooling
 
-- [ ] `tests/Replays/`: checked-in replays from fixed bug reports, each with its expected checksum
+- [x] `tests/Replays/`: checked-in replays from fixed bug reports, each with its expected checksum
       log, played by the headless runner in `dotnet test`.
-- [ ] CLI (`tools/Cli`): `replay info <path>` prints the header and stats. `replay verify <path>` plays
+      *(`CheckedInReplayTests` plays every file. The first, `test-race-moves.yaml`, is a baseline
+      of the `test` race rather than a bug report. After an intended sim change, update the
+      checksums with `tools/cli.sh replay rerecord tests/Replays`.)*
+- [x] CLI (`tools/Cli`): `replay info <path>` prints the header and stats. `replay verify <path>` plays
       it headless and exits nonzero on the first checksum mismatch.
-- [ ] Document bisecting: `git bisect run` with `replay verify` finds the commit that changed a
-      replay's outcome.
+      *(Both take files or directories. `verify --dump <dir>` writes the sim state at a desync.
+      Also `replay rerecord`.)*
+- [x] Document bisecting: `git bisect run` with `replay verify` finds the commit that changed a
+      replay's outcome. *(In `docs/toolchain.md`.)*
 
 ---
 

@@ -34,13 +34,8 @@ public sealed class RacersGame : Game
         var replay = ReadReplayFromEnvironment();
         world = new World( replay?.header.ticksPerSecond ?? ticksPerSecond );
 
-        // Utilities
         world.Start( new TimeSystem() );
-        world.Start( new PrefabSystem() );
-        
-        // Sim
-        world.Start( new GridSystem() );
-        world.Start( new RaceSystem() );
+        SimSystems.Start( world );
 
         // Input
         world.Start( new PointerSystem() );

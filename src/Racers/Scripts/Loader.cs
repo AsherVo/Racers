@@ -61,9 +61,8 @@ public class Loader
         
         if ( !fonts[ path ].ContainsKey( fontSize ) )
         {
-            var game = Toolbox.I.game;
             var usePath = $"{ FONTS_PATH }/{ path }{ FONT_SUFFIX }";
-            fonts[ path ][ fontSize ] = game.content.LoadFont( usePath, fontSize, game.graphics.pixelScale );
+            fonts[ path ][ fontSize ] = Toolbox.I.content.LoadFont( usePath, fontSize, Toolbox.I.game.graphics.pixelScale );
         }
 
         return fonts[ path ][ fontSize ];
@@ -74,7 +73,7 @@ public class Loader
         if ( !rives.ContainsKey( path ) )
         {
             var usePath = $"{ RIVES_PATH }/{ path }{ RIVE_SUFFIX }";
-            rives[ path ] = Toolbox.I.game.content.LoadRive( usePath );
+            rives[ path ] = Toolbox.I.content.LoadRive( usePath );
         }
 
         return rives[ path ];
@@ -85,7 +84,7 @@ public class Loader
         if ( !textures.ContainsKey( path ) )
         {
             var usePath = $"{ SPRITE_PATH }/{ path }{ SPRITE_SUFFIX }";
-            textures[ path ] = Toolbox.I.game.content.LoadTexture( usePath, TextureFilter.PixelArt );
+            textures[ path ] = Toolbox.I.content.LoadTexture( usePath, TextureFilter.PixelArt );
         }
 
         return textures[ path ];
@@ -112,7 +111,7 @@ public class Loader
         var name = prefix[ ( slash + 1 ).. ];
 
         var frames = new List< ( string suffix, string number, int value ) >();
-        foreach ( var file in Toolbox.I.game.content.FindFiles( directory, $"{ name }*{ SPRITE_SUFFIX }" ) )
+        foreach ( var file in Toolbox.I.content.FindFiles( directory, $"{ name }*{ SPRITE_SUFFIX }" ) )
         {
             var suffix = file[ name.Length..^SPRITE_SUFFIX.Length ];
             var number = suffix.StartsWith( '_' ) ? suffix[ 1.. ] : suffix;
@@ -128,5 +127,5 @@ public class Loader
     }
 
     public RaceConfig Race ( string path )
-        => Toolbox.I.game.content.LoadYaml< RaceConfig >( $"{ RACES_PATH }{ path }{ RACE_SUFFIX }" );
+        => Toolbox.I.content.LoadYaml< RaceConfig >( $"{ RACES_PATH }{ path }{ RACE_SUFFIX }" );
 }
