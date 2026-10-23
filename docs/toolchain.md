@@ -62,7 +62,7 @@ Problems print as `file:line:column: key.path: message`. The exit code is 1 if a
 directory. Set `ENGINE_REPLAY=/path/replay.yaml` and the game builds the replay's race and plays its commands
 instead of live input, checking checksums as it goes. It pauses at the end, or at the first checksum that doesn't
 match, and writes the sim state at that tick next to the replay (`<replay>.desync-<tick>.yaml`) for diffing. See
-[worklists/replays.md](worklists/replays.md).
+[replays.md](replays.md) for the details a tool needs to launch, record and check replays.
 
 **Headless replays:** the CLI plays replays with the game's own sim setup and no window, using the
 content built next to it (or `--content <dir>`):

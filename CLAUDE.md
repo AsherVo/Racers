@@ -33,4 +33,5 @@ if ( condition )
 # Docs
 - Engine architecture is documented at `docs/architecture.md`
 - ECS design/standards is documented at `docs/ECS.md`
+- Viewing, recording and checking replays (for tools that launch them) is documented at `docs/replays.md`
 - Worklists should be contained to the `docs/worklists` folder

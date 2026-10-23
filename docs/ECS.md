@@ -194,8 +194,8 @@ checksums, and on the first mismatch it sets `desync` and fires `onDesync`. Whoe
 stops ticking at `isFinished` or a desync.
 
 Both live outside the world (`RacersGame` owns them), so they keep going while systems stop and
-start. After loading a world, `Attach` them to the new one. Racers' replay file (`Replay`) is
-covered in [worklists/replays.md](worklists/replays.md).
+start. After loading a world, `Attach` them to the new one. Viewing, recording and checking
+replays, and the replay file (`Replay`), are covered in [replays.md](replays.md).
 
 ### Saving
 

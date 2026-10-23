@@ -24,9 +24,11 @@ hosts/Browser/         .NET WebAssembly + SDL3 compiled with Emscripten
 hosts/iOS/             net10.0-ios, SDL linked statically; NativeAOT in Release
 hosts/Android/         net10.0-android, SDL's Java SDLActivity calls MainActivity.Main()
 tools/                 Native builds (SDL wasm, EngineNative), macOS bundling, browser smoke test
-tools/Cli/             Developer CLI (tools/cli.sh): `yaml validate`, `yaml aot-directives`
+tools/Cli/             Developer CLI (tools/cli.sh): `yaml validate`, `yaml aot-directives`, `replay info|verify|rerecord`
 tests/Engine.Tests/    xUnit tests: dotnet test --project tests/Engine.Tests
-docs/                  architecture.md: how the engine works and why
+tests/Racers.Tests/    Game and determinism tests, run headless: dotnet test --project tests/Racers.Tests
+tests/Replays/         Checked-in replays that Racers.Tests plays
+docs/                  architecture.md: how the engine works and why; ECS.md; replays.md: viewing replays
 ```
 
 Games subclass `Engine.Game` and never see SDL or the platform. Hosts are a few lines each.
