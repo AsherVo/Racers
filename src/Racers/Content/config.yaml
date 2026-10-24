@@ -5,3 +5,4 @@ pixelPerfect: false
 dynamicSize: false
 dynamicPixelScale: 4
 ticksPerSecond: 60
+runsInBackground: false

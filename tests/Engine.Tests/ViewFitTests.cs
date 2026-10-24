@@ -24,6 +24,7 @@ public class ViewFitTests
             dynamicSize: true
             dynamicPixelScale: 4
             ticksPerSecond: 30
+            runsInBackground: true
             """ );
 
         Assert.Equal( "Resource Racers", config.title );
@@ -33,6 +34,7 @@ public class ViewFitTests
         Assert.True( config.dynamicSize );
         Assert.Equal( 4f, config.dynamicPixelScale );
         Assert.Equal( 30, config.ticksPerSecond );
+        Assert.True( config.runsInBackground );
     }
 
     [Theory]

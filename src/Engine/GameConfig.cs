@@ -26,6 +26,13 @@ public sealed class GameConfig
     /// <summary>How many fixed simulation ticks run per second of app time (<see cref="Game.FixedUpdate"/>).</summary>
     public int ticksPerSecond = 60;
 
+    /// <summary>
+    /// Keeps app and game time running while the window is unfocused. When false, only real time passes
+    /// until focus returns: no fixed ticks run, <see cref="FrameTime.appDt"/> is zero, and <see cref="Game.Draw"/>
+    /// is skipped so the last frame stays on screen (except to repaint after the window is resized or exposed).
+    /// </summary>
+    public bool runsInBackground;
+
     /// <exception cref="InvalidDataException">A setting is out of range.</exception>
     public void Validate ( string source )
     {

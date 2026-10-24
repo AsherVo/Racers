@@ -67,7 +67,10 @@ calls `Init()`, then calls `Frame()` from `requestAnimationFrame`.
 1. Measures the time since the last frame in integer nanoseconds (`SDL_GetTicksNS`):
    - **real** time is unclamped, and includes time spent in the background.
    - **app** time is clamped to `MAX_FRAME_NS` (0.1 s), so a debugger break or a backgrounded tab
-     doesn't produce a huge step.
+     doesn't produce a huge step. Unless `runsInBackground` is set, it is zero while the window is
+     unfocused, so only real time passes and no ticks run. Such a frame also stops after step 5: it
+     skips drawing and presenting, so the last frame stays on screen, and sleeps one 60 Hz frame in
+     place of the vsync wait (not in the browser). A resize or expose event forces one redraw.
 2. Runs fixed ticks: `FixedTimestep` adds the app time to an integer accumulator and calls
    `Game.FixedUpdate()` once per whole tick it holds (`ticksPerSecond` in `config.yaml`). That's 0..N
    times per frame. Past `MAX_TICKS_PER_FRAME` (8), the extra time is dropped instead of being owed as
@@ -103,6 +106,7 @@ pixelPerfect: false     # true: scale only by whole numbers (1x, 2x, ...)
 dynamicSize: false      # true: the resolution follows the window
 dynamicPixelScale: 4    # with dynamicSize: window points per game pixel
 ticksPerSecond: 60      # fixed simulation ticks per second of app time (1-1000)
+runsInBackground: false # false: app and game time and drawing stop while the window is unfocused
 ```
 
 `ViewFit` turns the config and the window's size into the game's resolution (`Graphics.width/height`) and an
