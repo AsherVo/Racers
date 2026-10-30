@@ -2,16 +2,121 @@
 
 #include "rive/animation/state_machine_input_instance.hpp"
 #include "rive/text/text_value_run.hpp"
+#include "rive/viewmodel/runtime/viewmodel_instance_boolean_runtime.hpp"
+#include "rive/viewmodel/runtime/viewmodel_instance_color_runtime.hpp"
+#include "rive/viewmodel/runtime/viewmodel_instance_enum_runtime.hpp"
+#include "rive/viewmodel/runtime/viewmodel_instance_list_runtime.hpp"
+#include "rive/viewmodel/runtime/viewmodel_instance_number_runtime.hpp"
+#include "rive/viewmodel/runtime/viewmodel_instance_string_runtime.hpp"
+#include "rive/viewmodel/runtime/viewmodel_instance_trigger_runtime.hpp"
 #include "rive/viewmodel/viewmodel_instance_enum.hpp"
+#include "rive/viewmodel/viewmodel_instance_trigger.hpp"
+#include "utils/no_op_factory.hpp"
+
+#include <cstring>
+#include <string>
+#include <vector>
 
 using namespace rive;
+
+namespace
+{
+
+Factory* headlessFactory()
+{
+    static NoOpFactory factory;
+    return &factory;
+}
+
+bool parseRowIndex(const std::string& segment, int* index)
+{
+    if (segment.empty() || segment.size() > 9)
+        return false;
+
+    int value = 0;
+    for (char c : segment)
+    {
+        if (c < '0' || c > '9')
+            return false;
+        value = value * 10 + (c - '0');
+    }
+    *index = value;
+    return true;
+}
+
+/*
+ * Walks every segment of `path` but the last through nested view models and list rows, and returns
+ * the view model instance that holds the property named by the last segment, or null. Runtime
+ * wrappers are cached by their parents (nested view models) and lists (rows), so the result stays
+ * valid while the property it was resolved through exists.
+ */
+ViewModelInstanceRuntime* resolveOwner(EnRiveInstance* inst, const char* path, std::string* name)
+{
+    if (!inst->viewModelRuntime || !path || !*path)
+        return nullptr;
+
+    std::vector<std::string> segments;
+    const char* start = path;
+    for (const char* c = path;; c++)
+    {
+        if (*c == '/' || *c == '\0')
+        {
+            segments.emplace_back(start, c - start);
+            if (*c == '\0')
+                break;
+            start = c + 1;
+        }
+    }
+
+    rcp<ViewModelInstanceRuntime> owner = inst->viewModelRuntime;
+    size_t last = segments.size() - 1;
+    for (size_t i = 0; i < last; i++)
+    {
+        int row;
+        if (i + 1 < last && parseRowIndex(segments[i + 1], &row))
+        {
+            ViewModelInstanceListRuntime* list = owner->propertyList(segments[i]);
+            owner = list ? list->instanceAt(row) : nullptr;
+            i++;
+        }
+        else
+        {
+            owner = owner->propertyViewModel(segments[i]);
+        }
+
+        if (!owner)
+            return nullptr;
+    }
+
+    if (segments[last].empty())
+        return nullptr;
+
+    *name = segments[last];
+    return owner.get();
+}
+
+template <typename T, typename Lookup>
+T* resolveProperty(EnRiveInstance* inst, const char* path, Lookup lookup)
+{
+    std::string name;
+    ViewModelInstanceRuntime* owner = resolveOwner(inst, path, &name);
+    return owner ? (owner->*lookup)(name) : nullptr;
+}
+
+ViewModelInstanceListRuntime* resolveList(EnRiveInstance* inst, const char* path)
+{
+    return resolveProperty<ViewModelInstanceListRuntime>(inst, path, &ViewModelInstanceRuntime::propertyList);
+}
+
+} // namespace
 
 extern "C" {
 
 EnRiveFile* en_rive_file_load(EnRiveContext* ctx, const uint8_t* bytes, int length)
 {
     // The default asset loader decodes in-band images and fonts through the render context.
-    auto file = File::import(Span<const uint8_t>(bytes, (size_t)length), en_rive_factory(ctx));
+    Factory* factory = ctx ? en_rive_factory(ctx) : headlessFactory();
+    auto file = File::import(Span<const uint8_t>(bytes, (size_t)length), factory);
     return file ? new EnRiveFile{std::move(file)} : nullptr;
 }
 
@@ -55,17 +160,15 @@ EnRiveInstance* en_rive_instance_create(EnRiveFile* file, const char* artboardNa
             inst->animation = artboard->animationAt(0);
     }
 
-    if (file->file->defaultArtboardViewModel(artboard.get()) != nullptr)
+    // Null when the artboard has no view model.
+    inst->viewModel = file->file->createDefaultViewModelInstance(artboard.get());
+    if (inst->viewModel)
     {
-        inst->viewModel = file->file->createDefaultViewModelInstance(artboard.get());
-        if (inst->viewModel)
-        {
-            inst->viewModelRuntime = make_rcp<ViewModelInstanceRuntime>(inst->viewModel);
-            if (inst->stateMachine)
-                inst->stateMachine->bindViewModelInstance(inst->viewModel);
-            else
-                artboard->bindViewModelInstance(inst->viewModel);
-        }
+        inst->viewModelRuntime = make_rcp<ViewModelInstanceRuntime>(inst->viewModel);
+        if (inst->stateMachine)
+            inst->stateMachine->bindViewModelInstance(inst->viewModel);
+        else
+            artboard->bindViewModelInstance(inst->viewModel);
     }
 
     *width = artboard->width();
@@ -81,6 +184,12 @@ int en_rive_instance_advance(EnRiveInstance* inst, float seconds)
     if (Scene* scene = inst->scene())
         return scene->advanceAndApply(seconds) ? 1 : 0;
     return inst->artboard->advance(seconds) ? 1 : 0;
+}
+
+void en_rive_instance_resize(EnRiveInstance* inst, float width, float height)
+{
+    inst->artboard->width(width);
+    inst->artboard->height(height);
 }
 
 int en_rive_instance_set_number(EnRiveInstance* inst, const char* name, float value)
@@ -117,7 +226,7 @@ int en_rive_instance_set_text(EnRiveInstance* inst, const char* run, const char*
 
 int en_rive_instance_set_vm_number(EnRiveInstance* inst, const char* path, float value)
 {
-    auto* property = inst->viewModelRuntime ? inst->viewModelRuntime->propertyNumber(path) : nullptr;
+    auto* property = resolveProperty<ViewModelInstanceNumberRuntime>(inst, path, &ViewModelInstanceRuntime::propertyNumber);
     if (property)
         property->value(value);
     return property != nullptr;
@@ -125,7 +234,7 @@ int en_rive_instance_set_vm_number(EnRiveInstance* inst, const char* path, float
 
 int en_rive_instance_set_vm_string(EnRiveInstance* inst, const char* path, const char* value)
 {
-    auto* property = inst->viewModelRuntime ? inst->viewModelRuntime->propertyString(path) : nullptr;
+    auto* property = resolveProperty<ViewModelInstanceStringRuntime>(inst, path, &ViewModelInstanceRuntime::propertyString);
     if (property)
         property->value(value);
     return property != nullptr;
@@ -133,7 +242,7 @@ int en_rive_instance_set_vm_string(EnRiveInstance* inst, const char* path, const
 
 int en_rive_instance_set_vm_bool(EnRiveInstance* inst, const char* path, int value)
 {
-    auto* property = inst->viewModelRuntime ? inst->viewModelRuntime->propertyBoolean(path) : nullptr;
+    auto* property = resolveProperty<ViewModelInstanceBooleanRuntime>(inst, path, &ViewModelInstanceRuntime::propertyBoolean);
     if (property)
         property->value(value != 0);
     return property != nullptr;
@@ -141,7 +250,7 @@ int en_rive_instance_set_vm_bool(EnRiveInstance* inst, const char* path, int val
 
 int en_rive_instance_set_vm_color(EnRiveInstance* inst, const char* path, uint32_t argb)
 {
-    auto* property = inst->viewModelRuntime ? inst->viewModelRuntime->propertyColor(path) : nullptr;
+    auto* property = resolveProperty<ViewModelInstanceColorRuntime>(inst, path, &ViewModelInstanceRuntime::propertyColor);
     if (property)
         property->value((int)argb);
     return property != nullptr;
@@ -149,16 +258,111 @@ int en_rive_instance_set_vm_color(EnRiveInstance* inst, const char* path, uint32
 
 int en_rive_instance_set_vm_enum(EnRiveInstance* inst, const char* path, const char* value)
 {
-    auto* property = inst->viewModelRuntime ? inst->viewModelRuntime->propertyEnum(path) : nullptr;
+    auto* property = resolveProperty<ViewModelInstanceEnumRuntime>(inst, path, &ViewModelInstanceRuntime::propertyEnum);
     return property && property->viewModelInstanceValue()->as<ViewModelInstanceEnum>()->value(value);
 }
 
 int en_rive_instance_fire_vm_trigger(EnRiveInstance* inst, const char* path)
 {
-    auto* property = inst->viewModelRuntime ? inst->viewModelRuntime->propertyTrigger(path) : nullptr;
+    auto* property = resolveProperty<ViewModelInstanceTriggerRuntime>(inst, path, &ViewModelInstanceRuntime::propertyTrigger);
     if (property)
         property->trigger();
     return property != nullptr;
+}
+
+int en_rive_instance_get_vm_number(EnRiveInstance* inst, const char* path, float* value)
+{
+    auto* property = resolveProperty<ViewModelInstanceNumberRuntime>(inst, path, &ViewModelInstanceRuntime::propertyNumber);
+    if (property)
+        *value = property->value();
+    return property != nullptr;
+}
+
+int en_rive_instance_get_vm_bool(EnRiveInstance* inst, const char* path, int* value)
+{
+    auto* property = resolveProperty<ViewModelInstanceBooleanRuntime>(inst, path, &ViewModelInstanceRuntime::propertyBoolean);
+    if (property)
+        *value = property->value() ? 1 : 0;
+    return property != nullptr;
+}
+
+int en_rive_instance_get_vm_string(EnRiveInstance* inst, const char* path, char* buffer, int capacity)
+{
+    auto* property = resolveProperty<ViewModelInstanceStringRuntime>(inst, path, &ViewModelInstanceRuntime::propertyString);
+    if (!property)
+        return -1;
+
+    const std::string& value = property->value();
+    if (capacity > 0)
+    {
+        size_t copied = value.size() < (size_t)capacity ? value.size() : (size_t)capacity - 1;
+        memcpy(buffer, value.data(), copied);
+        buffer[copied] = '\0';
+    }
+    return (int)value.size();
+}
+
+int en_rive_instance_get_vm_trigger(EnRiveInstance* inst, const char* path, uint32_t* count)
+{
+    auto* property = resolveProperty<ViewModelInstanceTriggerRuntime>(inst, path, &ViewModelInstanceRuntime::propertyTrigger);
+    if (property)
+        *count = property->viewModelInstanceValue()->as<ViewModelInstanceTrigger>()->propertyValue();
+    return property != nullptr;
+}
+
+int en_rive_instance_vm_list_count(EnRiveInstance* inst, const char* path)
+{
+    ViewModelInstanceListRuntime* list = resolveList(inst, path);
+    return list ? (int)list->size() : -1;
+}
+
+int en_rive_instance_vm_list_insert(EnRiveInstance* inst, const char* path, int index, const char* viewModel)
+{
+    ViewModelInstanceListRuntime* list = resolveList(inst, path);
+    if (!list || !viewModel || index < 0 || (size_t)index > list->size())
+        return 0;
+
+    // File::viewModelByName would keep a new runtime wrapper alive in the file on every call.
+    ViewModel* model = inst->file->viewModel(viewModel);
+    if (!model)
+        return 0;
+
+    rcp<ViewModelInstance> instance = inst->file->createDefaultViewModelInstance(model);
+    if (!instance)
+        return 0;
+
+    auto row = make_rcp<ViewModelInstanceRuntime>(instance);
+    return list->addInstanceAt(row.get(), index) ? 1 : 0;
+}
+
+int en_rive_instance_vm_list_remove(EnRiveInstance* inst, const char* path, int index)
+{
+    ViewModelInstanceListRuntime* list = resolveList(inst, path);
+    if (!list || index < 0 || (size_t)index >= list->size())
+        return 0;
+
+    list->removeInstanceAt(index);
+    return 1;
+}
+
+int en_rive_instance_vm_list_swap(EnRiveInstance* inst, const char* path, int a, int b)
+{
+    ViewModelInstanceListRuntime* list = resolveList(inst, path);
+    if (!list || a < 0 || b < 0 || (size_t)a >= list->size() || (size_t)b >= list->size())
+        return 0;
+
+    list->swap((uint32_t)a, (uint32_t)b);
+    return 1;
+}
+
+int en_rive_instance_vm_list_clear(EnRiveInstance* inst, const char* path)
+{
+    ViewModelInstanceListRuntime* list = resolveList(inst, path);
+    if (!list)
+        return 0;
+
+    list->removeAllInstances();
+    return 1;
 }
 
 int en_rive_instance_pointer(EnRiveInstance* inst, int action, float x, float y)
@@ -168,9 +372,24 @@ int en_rive_instance_pointer(EnRiveInstance* inst, int action, float x, float y)
         return 0;
 
     Vec2D position(x, y);
-    HitResult result = action == 0   ? scene->pointerDown(position)
-                       : action == 1 ? scene->pointerMove(position)
-                                     : scene->pointerUp(position);
+    HitResult result;
+    switch (action)
+    {
+        case EN_RIVE_POINTER_DOWN:
+            result = scene->pointerDown(position);
+            break;
+        case EN_RIVE_POINTER_MOVE:
+            result = scene->pointerMove(position);
+            break;
+        case EN_RIVE_POINTER_UP:
+            result = scene->pointerUp(position);
+            break;
+        case EN_RIVE_POINTER_EXIT:
+            result = scene->pointerExit(position);
+            break;
+        default:
+            return 0;
+    }
     return result != HitResult::none;
 }
 

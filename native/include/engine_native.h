@@ -73,6 +73,10 @@ EN_API int en_rive_backend(void);
 EN_API EnRiveContext* en_rive_context_create(void* metalLayer);
 EN_API void en_rive_context_destroy(EnRiveContext*);
 
+/*
+ * A null context loads headless: images aren't decoded and nothing can be rendered, but instances,
+ * view models, lists, pointer events and resizing all work. For tests.
+ */
 EN_API EnRiveFile* en_rive_file_load(EnRiveContext*, const uint8_t* bytes, int length);
 EN_API void en_rive_file_destroy(EnRiveFile*);
 
@@ -91,6 +95,12 @@ EN_API void en_rive_instance_destroy(EnRiveInstance*);
 /* Advances the scene. Returns 1 if it changed and should be redrawn. */
 EN_API int en_rive_instance_advance(EnRiveInstance*, float seconds);
 
+/*
+ * Resizes the artboard to width x height artboard units; its layout reflows on the next advance.
+ * The instance then draws at the new size, so give it render targets with the new aspect ratio.
+ */
+EN_API void en_rive_instance_resize(EnRiveInstance*, float width, float height);
+
 /* State machine inputs and text runs. Each returns 0 if nothing has that name. */
 EN_API int en_rive_instance_set_number(EnRiveInstance*, const char* name, float value);
 EN_API int en_rive_instance_set_bool(EnRiveInstance*, const char* name, int value);
@@ -98,10 +108,11 @@ EN_API int en_rive_instance_fire(EnRiveInstance*, const char* name);
 EN_API int en_rive_instance_set_text(EnRiveInstance*, const char* run, const char* text);
 
 /*
- * Properties of the instance's view model. `path` is a property name, or view model property
- * names and then a property name joined by '/' to reach into nested view models. Each returns 0 if
- * the instance has no view model or nothing of that type is at `path`; the enum setter also
- * returns 0 if `value` isn't one of the enum's values. Changes show on the next advance.
+ * Properties of the instance's view model. `path` is a property name, or names joined by '/' that
+ * walk into nested view models; a name followed by a row index walks into that row of a list, so
+ * "buttons/2/label" is the label of the third row of the `buttons` list. Each returns 0 if the
+ * instance has no view model or nothing of that type is at `path`; the enum setter also returns 0
+ * if `value` isn't one of the enum's values. Changes show on the next advance.
  */
 EN_API int en_rive_instance_set_vm_number(EnRiveInstance*, const char* path, float value);
 EN_API int en_rive_instance_set_vm_string(EnRiveInstance*, const char* path, const char* value);
@@ -110,7 +121,45 @@ EN_API int en_rive_instance_set_vm_color(EnRiveInstance*, const char* path, uint
 EN_API int en_rive_instance_set_vm_enum(EnRiveInstance*, const char* path, const char* value);
 EN_API int en_rive_instance_fire_vm_trigger(EnRiveInstance*, const char* path);
 
-/* Pointer events in artboard coordinates. action: 0 = down, 1 = move, 2 = up. Returns 1 on a hit. */
+/* Reads view model properties at the same paths. Each returns 0 and leaves `value` alone if there's nothing of that type at `path`. */
+EN_API int en_rive_instance_get_vm_number(EnRiveInstance*, const char* path, float* value);
+EN_API int en_rive_instance_get_vm_bool(EnRiveInstance*, const char* path, int* value);
+
+/*
+ * Copies a string property into `buffer` as UTF-8, truncated to `capacity` - 1 bytes and
+ * null-terminated (nothing is written when `capacity` is 0). Returns the full length in bytes, so a
+ * result >= `capacity` means call again with a bigger buffer, or -1 if there's no string at `path`.
+ */
+EN_API int en_rive_instance_get_vm_string(EnRiveInstance*, const char* path, char* buffer, int capacity);
+
+/*
+ * A trigger's fire count. It goes up by one per fire, whoever fires it, and never resets, so
+ * comparing two reads tells how many fires happened between them.
+ */
+EN_API int en_rive_instance_get_vm_trigger(EnRiveInstance*, const char* path, uint32_t* count);
+
+/*
+ * List properties, at a path that names the list itself ("buttons", "menu/buttons").
+ * Count returns -1 if there's no list at `path`. Insert adds a new instance of the view model named
+ * `viewModel`, with its default instance's values, at `index` (0 to count). The others return 0 if
+ * there's no list or an index is out of range.
+ */
+EN_API int en_rive_instance_vm_list_count(EnRiveInstance*, const char* path);
+EN_API int en_rive_instance_vm_list_insert(EnRiveInstance*, const char* path, int index, const char* viewModel);
+EN_API int en_rive_instance_vm_list_remove(EnRiveInstance*, const char* path, int index);
+EN_API int en_rive_instance_vm_list_swap(EnRiveInstance*, const char* path, int a, int b);
+EN_API int en_rive_instance_vm_list_clear(EnRiveInstance*, const char* path);
+
+enum
+{
+    EN_RIVE_POINTER_DOWN = 0,
+    EN_RIVE_POINTER_MOVE = 1,
+    EN_RIVE_POINTER_UP = 2,
+    /* The pointer left the artboard: listeners waiting for it to leave their shapes fire. */
+    EN_RIVE_POINTER_EXIT = 3,
+};
+
+/* A pointer event (EN_RIVE_POINTER_*) in artboard coordinates. Returns 1 if it hit a listener. */
 EN_API int en_rive_instance_pointer(EnRiveInstance*, int action, float x, float y);
 
 /*

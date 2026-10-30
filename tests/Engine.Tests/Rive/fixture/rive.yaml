@@ -1,0 +1,7 @@
+name: fixture
+main: Screen
+output:
+  dir: ..
+logs:
+  file: build/rive.log
+  problems: build/problems.log

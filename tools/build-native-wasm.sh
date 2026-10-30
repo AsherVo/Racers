@@ -53,8 +53,13 @@ for src in rive_common.cpp rive_webgl.cpp; do
     -c "$ROOT/native/src/$src" -o "$BUILD/${src%.*}.o"
 done
 
+# Rive's no-op factory isn't in its libraries; headless file loading (tests) uses it.
+# shellcheck disable=SC2086
+em++ $FLAGS -std=c++17 -fno-exceptions -fno-rtti $DEFINES \
+  -I"$RIVE/include" -c "$RIVE/utils/no_op_factory.cpp" -o "$BUILD/no_op_factory.o"
+
 rm -f "$OUT"/*.a
-emar rcs "$OUT/EngineNative.a" "$BUILD/font.o" "$BUILD/rive_common.o" "$BUILD/rive_webgl.o"
+emar rcs "$OUT/EngineNative.a" "$BUILD/font.o" "$BUILD/rive_common.o" "$BUILD/rive_webgl.o" "$BUILD/no_op_factory.o"
 for lib in $RIVE_LIBS; do
   cp "$LIBS/$lib" "$OUT/"
 done

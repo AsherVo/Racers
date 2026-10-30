@@ -1,0 +1,120 @@
+<Rive version="1" kind="fragment">
+    <ComponentAsset artboardId="0:30" name="Row"/>
+
+    <ViewModel defaultInstanceId="0:51" name="Row" id="0:50">
+        <ViewModelPropertyString name="label" id="0:52"/>
+        <ViewModelPropertyTrigger name="clicked" id="0:53"/>
+        <ViewModelInstance exports="true" name="Default" id="0:51">
+            <ViewModelInstanceString propertyValue="Row" viewModelPropertyId="0:52"/>
+            <ViewModelInstanceTrigger viewModelPropertyId="0:53"/>
+        </ViewModelInstance>
+        <ViewModelInstance exports="true" name="Authored" id="0:54">
+            <ViewModelInstanceString propertyValue="Authored" viewModelPropertyId="0:52"/>
+            <ViewModelInstanceTrigger viewModelPropertyId="0:53"/>
+        </ViewModelInstance>
+    </ViewModel>
+
+    <ViewModel defaultInstanceId="0:61" name="Panel" id="0:60">
+        <ViewModelPropertyString name="caption" id="0:62"/>
+        <ViewModelInstance exports="true" name="Default" id="0:61">
+            <ViewModelInstanceString propertyValue="Panel" viewModelPropertyId="0:62"/>
+        </ViewModelInstance>
+    </ViewModel>
+
+    <ViewModel defaultInstanceId="0:41" name="Screen" id="0:40">
+        <ViewModelPropertyString name="title" id="0:42"/>
+        <ViewModelPropertyNumber name="score" id="0:43"/>
+        <ViewModelPropertyBoolean name="flag" id="0:44"/>
+        <ViewModelPropertyTrigger name="ping" id="0:45"/>
+        <ViewModelPropertyList name="rows" id="0:46"/>
+        <ViewModelPropertyViewModel viewModelReferenceId="0:60" name="panel" id="0:47"/>
+        <ViewModelInstance exports="true" name="Default" id="0:41">
+            <ViewModelInstanceString propertyValue="Title" viewModelPropertyId="0:42"/>
+            <ViewModelInstanceNumber propertyValue="7" viewModelPropertyId="0:43"/>
+            <ViewModelInstanceBoolean propertyValue="true" viewModelPropertyId="0:44"/>
+            <ViewModelInstanceTrigger viewModelPropertyId="0:45"/>
+            <ViewModelInstanceList viewModelPropertyId="0:46">
+                <ViewModelInstanceListItem viewModelId="0:50" viewModelInstanceId="0:54"/>
+            </ViewModelInstanceList>
+            <ViewModelInstanceViewModel propertyValue="0:61" viewModelPropertyId="0:47"/>
+        </ViewModelInstance>
+    </ViewModel>
+
+    <Artboard defaultStateMachineId="0:20" viewModelId="0:40" viewModelInstanceId="0:41" styleId="0:3"
+              width="200" height="100" name="Screen" id="0:2">
+        <LayoutComponentStyle flexDirectionValue="column" layoutAlignmentType="spaceBetweenStart"
+                              name="Screen Style" id="0:3"/>
+
+        <LayoutComponent styleId="0:11" name="Rows" id="0:10">
+            <LayoutComponentStyle flexDirectionValue="column"
+                                  layoutWidthScaleType="hug" layoutHeightScaleType="hug"
+                                  name="Rows Style" id="0:11"/>
+            <ArtboardComponentList name="Row List" id="0:12">
+                <DataBindContext sourcePathIds="0:40-0:46" propertyKey="800"/>
+            </ArtboardComponentList>
+        </LayoutComponent>
+
+        <LayoutComponent width="20" height="20" styleId="0:14" name="Hit" id="0:13">
+            <LayoutComponentStyle name="Hit Style" id="0:14"/>
+            <Fill name="Hit Fill">
+                <SolidColor colorValue="FFFF0000" name="Hit Color"/>
+            </Fill>
+        </LayoutComponent>
+
+        <StateMachine name="Screen" id="0:20">
+            <StateMachineLayer name="Layer" id="0:21">
+                <AnyState x="360" y="-120"/>
+                <ExitState x="560" y="-120"/>
+                <EntryState>
+                    <StateTransition stateToId="0:22"/>
+                </EntryState>
+                <AnimationState x="160" animationId="0:25" id="0:22"/>
+            </StateMachineLayer>
+
+            <StateMachineListenerSingle targetId="0:13" listenerTypeValue="up" name="Ping" id="0:23">
+                <ListenerViewModelChange>
+                    <BindablePropertyTrigger propertyValue="1">
+                        <DataBindContext sourcePathIds="0:40-0:45" propertyKey="686" direction="true"/>
+                    </BindablePropertyTrigger>
+                </ListenerViewModelChange>
+            </StateMachineListenerSingle>
+        </StateMachine>
+
+        <LinearAnimation duration="1" name="Idle" id="0:25"/>
+    </Artboard>
+
+    <Artboard isComponent="true" defaultStateMachineId="0:35" viewModelId="0:50" viewModelInstanceId="0:51"
+              styleId="0:31" width="100" height="20" x="300" name="Row" id="0:30">
+        <LayoutComponentStyle layoutWidthScaleType="fixed" layoutHeightScaleType="fixed"
+                              name="Row Style" id="0:31"/>
+
+        <LayoutComponent styleId="0:33" name="Body" id="0:32">
+            <LayoutComponentStyle layoutWidthScaleType="fill" layoutHeightScaleType="fill"
+                                  name="Body Style" id="0:33"/>
+            <Fill name="Body Fill">
+                <SolidColor colorValue="FF0000FF" name="Body Color"/>
+            </Fill>
+        </LayoutComponent>
+
+        <StateMachine name="Row" id="0:35">
+            <StateMachineLayer name="Layer" id="0:36">
+                <AnyState x="360" y="-120"/>
+                <ExitState x="560" y="-120"/>
+                <EntryState>
+                    <StateTransition stateToId="0:37"/>
+                </EntryState>
+                <AnimationState x="160" animationId="0:39" id="0:37"/>
+            </StateMachineLayer>
+
+            <StateMachineListenerSingle targetId="0:32" listenerTypeValue="up" name="Clicked" id="0:38">
+                <ListenerViewModelChange>
+                    <BindablePropertyTrigger propertyValue="1">
+                        <DataBindContext sourcePathIds="0:50-0:53" propertyKey="686" direction="true"/>
+                    </BindablePropertyTrigger>
+                </ListenerViewModelChange>
+            </StateMachineListenerSingle>
+        </StateMachine>
+
+        <LinearAnimation duration="1" name="Idle" id="0:39"/>
+    </Artboard>
+</Rive>

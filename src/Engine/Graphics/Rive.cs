@@ -67,13 +67,14 @@ public sealed class RiveInstance : IDisposable
     readonly RiveRuntime runtime;
     readonly nint[] targets;
     readonly Texture[] textures;
+    readonly float resolution;
     nint handle;
     int current;
     bool dirty = true;
 
     /// <summary>Artboard size, in artboard units.</summary>
-    public float width { get; }
-    public float height { get; }
+    public float width { get; private set; }
+    public float height { get; private set; }
     public Vector2 size => new( width, height );
 
     /// <summary>The most recently rendered frame (premultiplied alpha).</summary>
@@ -88,15 +89,56 @@ public sealed class RiveInstance : IDisposable
         this.handle = handle;
         this.width = width;
         this.height = height;
+        this.resolution = resolution;
 
-        int w = Math.Max( 1, ( int )MathF.Ceiling( width * resolution ) );
-        int h = Math.Max( 1, ( int )MathF.Ceiling( height * resolution ) );
         targets = new nint[runtime.buffersPerInstance];
         textures = new Texture[runtime.buffersPerInstance];
+        CreateTargets();
+        RenderNow();
+    }
+
+    /// <summary>
+    /// Resizes the artboard, in artboard units, so its layout reflows to the new size, and rebuilds
+    /// the textures at the same resolution (texture pixels per artboard unit).
+    /// </summary>
+    public void Resize ( float width, float height )
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero( width );
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero( height );
+
+        if ( width == this.width && height == this.height )
+            return;
+
+        EngineNative.en_rive_instance_resize( live, width, height );
+        this.width = width;
+        this.height = height;
+
+        DestroyTargets();
+        CreateTargets();
+        dirty = true;
+        RenderNow();
+    }
+
+    void CreateTargets ()
+    {
+        int w = Math.Max( 1, ( int )MathF.Ceiling( width * resolution ) );
+        int h = Math.Max( 1, ( int )MathF.Ceiling( height * resolution ) );
         for ( int i = 0; i < targets.Length; i++ )
             ( targets[i], textures[i] ) = runtime.CreateTarget( w, h );
+    }
 
-        // Draw the first frame now so the texture is valid even before the next engine update.
+    void DestroyTargets ()
+    {
+        for ( int i = 0; i < targets.Length; i++ )
+        {
+            textures[i].Dispose();
+            EngineNative.en_rive_target_destroy( targets[i] );
+        }
+    }
+
+    // Draws a frame now, so the texture is valid even before the next engine update.
+    void RenderNow ()
+    {
         Advance( 0f );
         runtime.BeginRender();
         Render();
@@ -119,9 +161,10 @@ public sealed class RiveInstance : IDisposable
         return EngineNative.en_rive_instance_set_text( live, run, text ) != 0;
     }
 
-    // View model properties. A path is a property name, or nested view model property names and
-    // then a property name joined by '/' (e.g. "dashboard/speed"). Each returns false if the
-    // artboard has no view model or nothing of that type is at the path.
+    // View model properties. A path is a property name, or names joined by '/' that walk into nested
+    // view models ("dashboard/speed"). A list's name followed by a row index walks into that row
+    // ("buttons/2/label" is the third row's label). Each returns false if the artboard has no view
+    // model or nothing of that type is at the path.
 
     /// <summary>Sets a number property on the view model.</summary>
     public bool SetViewModelNumber ( string path, float value ) =>
@@ -146,6 +189,74 @@ public sealed class RiveInstance : IDisposable
     /// <summary>Fires a trigger property on the view model.</summary>
     public bool FireViewModelTrigger ( string path ) =>
         Changed( EngineNative.en_rive_instance_fire_vm_trigger( live, path ) );
+
+    public bool TryGetViewModelNumber ( string path, out float value ) =>
+        EngineNative.en_rive_instance_get_vm_number( live, path, out value ) != 0;
+
+    public bool TryGetViewModelBool ( string path, out bool value )
+    {
+        bool found = EngineNative.en_rive_instance_get_vm_bool( live, path, out int raw ) != 0;
+        value = raw != 0;
+        return found;
+    }
+
+    public unsafe bool TryGetViewModelString ( string path, out string value )
+    {
+        const int INLINE_CAPACITY = 256;
+        byte* stackBuffer = stackalloc byte[INLINE_CAPACITY];
+
+        int length = EngineNative.en_rive_instance_get_vm_string( live, path, stackBuffer, INLINE_CAPACITY );
+        if ( length < 0 )
+        {
+            value = "";
+            return false;
+        }
+
+        if ( length < INLINE_CAPACITY )
+        {
+            value = System.Text.Encoding.UTF8.GetString( stackBuffer, length );
+            return true;
+        }
+
+        var buffer = new byte[length + 1];
+        fixed ( byte* p = buffer )
+            EngineNative.en_rive_instance_get_vm_string( live, path, p, buffer.Length );
+
+        value = System.Text.Encoding.UTF8.GetString( buffer, 0, length );
+        return true;
+    }
+
+    /// <summary>
+    /// How many times a trigger property has fired. It counts up by one per fire, whether the game or
+    /// the artboard fired it, and never resets, so compare two reads to see how many fires happened
+    /// between them.
+    /// </summary>
+    public bool TryGetViewModelTriggerCount ( string path, out uint count ) =>
+        EngineNative.en_rive_instance_get_vm_trigger( live, path, out count ) != 0;
+
+    // View model lists. The path names the list itself ("buttons"). Rows are view model instances,
+    // read and written through paths like "buttons/2/label".
+
+    /// <summary>Number of rows in a list property, or -1 if there's no list at the path.</summary>
+    public int GetViewModelListCount ( string path ) => EngineNative.en_rive_instance_vm_list_count( live, path );
+
+    /// <summary>
+    /// Inserts a row at <paramref name="index"/> (0 to the row count): a new instance of the view model
+    /// named <paramref name="viewModel"/>, holding its default instance's values. Returns false if
+    /// there's no such list or view model, or the index is out of range.
+    /// </summary>
+    public bool InsertViewModelListRow ( string path, int index, string viewModel ) =>
+        Changed( EngineNative.en_rive_instance_vm_list_insert( live, path, index, viewModel ) );
+
+    public bool RemoveViewModelListRow ( string path, int index ) =>
+        Changed( EngineNative.en_rive_instance_vm_list_remove( live, path, index ) );
+
+    /// <summary>Swaps two rows, which keep their own view model instances.</summary>
+    public bool SwapViewModelListRows ( string path, int a, int b ) =>
+        Changed( EngineNative.en_rive_instance_vm_list_swap( live, path, a, b ) );
+
+    public bool ClearViewModelList ( string path ) =>
+        Changed( EngineNative.en_rive_instance_vm_list_clear( live, path ) );
 
     bool Changed ( int found )
     {
@@ -180,9 +291,12 @@ public sealed class RiveInstance : IDisposable
     }
 
     /// <summary>Pointer events for the state machine's listeners, in artboard coordinates. Return true on a hit.</summary>
-    public bool PointerDown ( Vector2 position ) => Pointer( 0, position );
-    public bool PointerMove ( Vector2 position ) => Pointer( 1, position );
-    public bool PointerUp ( Vector2 position ) => Pointer( 2, position );
+    public bool PointerDown ( Vector2 position ) => Pointer( EngineNative.RIVE_POINTER_DOWN, position );
+    public bool PointerMove ( Vector2 position ) => Pointer( EngineNative.RIVE_POINTER_MOVE, position );
+    public bool PointerUp ( Vector2 position ) => Pointer( EngineNative.RIVE_POINTER_UP, position );
+
+    /// <summary>The pointer left the artboard, at <paramref name="position"/>: hovered listeners see it leave.</summary>
+    public bool PointerExit ( Vector2 position ) => Pointer( EngineNative.RIVE_POINTER_EXIT, position );
 
     bool Pointer ( int action, Vector2 position ) =>
         EngineNative.en_rive_instance_pointer( live, action, position.x, position.y ) != 0;
@@ -219,12 +333,7 @@ public sealed class RiveInstance : IDisposable
             return;
 
         runtime.Remove( this );
-        for ( int i = 0; i < targets.Length; i++ )
-        {
-            textures[i].Dispose();
-            EngineNative.en_rive_target_destroy( targets[i] );
-        }
-
+        DestroyTargets();
         EngineNative.en_rive_instance_destroy( handle );
         handle = 0;
     }

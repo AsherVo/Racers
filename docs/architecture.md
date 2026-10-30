@@ -362,7 +362,9 @@ ContentManager.LoadRive ──► RiveFile ──CreateInstance(artboard, stateM
   view model, it's bound. The instance exposes:
   - inputs (`SetNumber`, `SetBool`, `Fire`)
   - text runs (`SetText`)
-  - pointer events, in artboard units
+  - view model properties, read and written by path (see below)
+  - pointer events (down, move, up, exit), in artboard units
+  - `Resize`, which changes the artboard's size so its layout reflows, and rebuilds the textures
   - `paused`
   - `texture`, its most recent frame
 
@@ -375,6 +377,35 @@ ContentManager.LoadRive ──► RiveFile ──CreateInstance(artboard, stateM
 
 `SpriteBatch.Draw(RiveInstance, …)` overloads take positions, origins and scales in artboard units,
 and convert them to the texture's pixels. Drawing an artboard works the same as drawing a sprite.
+
+### View models
+
+A view model path is property names joined by `/`. A name followed by a row index walks into that
+row of a list, so `buttons/2/label` is the label of the third row of `buttons`. The bridge resolves
+paths itself (`resolveOwner` in `rive_common.cpp`), because the runtime's own resolver doesn't know
+list rows.
+
+| | |
+|---|---|
+| Set | number, string, bool, color, enum; fire a trigger |
+| Get | number, string, bool; a trigger's fire count |
+| Lists | count, insert a row, remove, swap, clear |
+
+Two runtime behaviors shape the API:
+
+- **A trigger is a counter.** Its value goes up by one per fire, whether the game or a listener in the
+  artboard fired it, and never resets. So the game learns about fires by comparing counts between
+  frames (`TryGetViewModelTriggerCount`), and can't miss one or see one twice.
+- **Inserting a row creates an instance of a view model named in the file**, holding its default
+  instance's values. The row's artboard is whichever artboard is bound to that view model. The
+  bridge looks view models up with `File::viewModel`, not `viewModelByName`, which keeps a new
+  wrapper alive in the file on every call.
+
+`en_rive_file_load` with a null context loads headless, through Rive's `NoOpFactory`: nothing
+renders, but instances, view models, lists, pointer events and resizing all work. `Engine.Tests`
+tests the bridge that way (`RiveViewModelTests`) against `tests/Engine.Tests/Rive/fixture.riv`,
+which the Rive CLI builds from `tests/Engine.Tests/Rive/fixture`. The tests skip where
+`libEngineNative` isn't built.
 
 ### Rendering into SDL textures
 

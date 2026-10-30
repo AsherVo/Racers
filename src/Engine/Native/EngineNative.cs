@@ -84,6 +84,38 @@ internal static unsafe partial class EngineNative
     [LibraryImport( LIB, StringMarshalling = StringMarshalling.Utf8 )]
     public static partial int en_rive_instance_fire_vm_trigger ( nint instance, string path );
 
+    [LibraryImport( LIB, StringMarshalling = StringMarshalling.Utf8 )]
+    public static partial int en_rive_instance_get_vm_number ( nint instance, string path, out float value );
+
+    [LibraryImport( LIB, StringMarshalling = StringMarshalling.Utf8 )]
+    public static partial int en_rive_instance_get_vm_bool ( nint instance, string path, out int value );
+
+    [LibraryImport( LIB, StringMarshalling = StringMarshalling.Utf8 )]
+    public static partial int en_rive_instance_get_vm_string ( nint instance, string path, byte* buffer, int capacity );
+
+    [LibraryImport( LIB, StringMarshalling = StringMarshalling.Utf8 )]
+    public static partial int en_rive_instance_get_vm_trigger ( nint instance, string path, out uint count );
+
+    [LibraryImport( LIB, StringMarshalling = StringMarshalling.Utf8 )]
+    public static partial int en_rive_instance_vm_list_count ( nint instance, string path );
+
+    [LibraryImport( LIB, StringMarshalling = StringMarshalling.Utf8 )]
+    public static partial int en_rive_instance_vm_list_insert ( nint instance, string path, int index, string viewModel );
+
+    [LibraryImport( LIB, StringMarshalling = StringMarshalling.Utf8 )]
+    public static partial int en_rive_instance_vm_list_remove ( nint instance, string path, int index );
+
+    [LibraryImport( LIB, StringMarshalling = StringMarshalling.Utf8 )]
+    public static partial int en_rive_instance_vm_list_swap ( nint instance, string path, int a, int b );
+
+    [LibraryImport( LIB, StringMarshalling = StringMarshalling.Utf8 )]
+    public static partial int en_rive_instance_vm_list_clear ( nint instance, string path );
+
+    [LibraryImport( LIB )]
+    public static partial void en_rive_instance_resize ( nint instance, float width, float height );
+
+    public const int RIVE_POINTER_DOWN = 0, RIVE_POINTER_MOVE = 1, RIVE_POINTER_UP = 2, RIVE_POINTER_EXIT = 3;
+
     [LibraryImport( LIB )]
     public static partial int en_rive_instance_pointer ( nint instance, int action, float x, float y );
 

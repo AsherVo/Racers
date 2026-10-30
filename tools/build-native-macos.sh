@@ -37,10 +37,15 @@ for src in rive_common.cpp rive_metal.mm; do
     -c "$ROOT/native/src/$src" -o "$BUILD/${src%.*}.o"
 done
 
+# Rive's no-op factory isn't in its libraries; headless file loading (tests) uses it.
+# shellcheck disable=SC2086
+clang++ $FLAGS -std=c++17 -fno-exceptions -fno-rtti $DEFINES \
+  -I"$RIVE/include" -c "$RIVE/utils/no_op_factory.cpp" -o "$BUILD/no_op_factory.o"
+
 # Rive's archives are LTO bitcode, so clang does the final optimization here.
 clang++ $FLAGS -dynamiclib -flto=full -dead_strip \
   -install_name @rpath/libEngineNative.dylib \
-  "$BUILD/font.o" "$BUILD/rive_common.o" "$BUILD/rive_metal.o" \
+  "$BUILD/font.o" "$BUILD/rive_common.o" "$BUILD/rive_metal.o" "$BUILD/no_op_factory.o" \
   $(for lib in $RIVE_LIBS; do echo "$LIBS/$lib"; done) \
   -framework Metal -framework QuartzCore -framework CoreVideo -framework IOSurface \
   -framework Foundation -framework CoreGraphics -framework CoreText -framework ImageIO \

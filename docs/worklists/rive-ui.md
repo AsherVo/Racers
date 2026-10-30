@@ -49,20 +49,27 @@ for single-artboard buttons like `Cell`. This worklist adds the second path.
 
 ### Phase 1: Engine Rive API
 
-- [ ] Headless file loading: `en_rive_file_load` with a null context imports through Rive's
+- [x] Headless file loading: `en_rive_file_load` with a null context imports through Rive's
       `NoOpFactory`, so the view model, list, pointer and resize calls can be tested without a GPU.
-- [ ] View model paths can index into lists: `buttons/2/label` resolves the third row of the
+      *(`no_op_factory.cpp` isn't in Rive's libraries, so both native build scripts compile it.)*
+- [x] View model paths can index into lists: `buttons/2/label` resolves the third row of the
       `buttons` list. Applies to every getter and setter.
-- [ ] Getters: number, string, bool, and a trigger's fire count.
-- [ ] Lists: count, insert a new instance of a named view model at an index, remove at an index,
+      *(`resolveOwner` in `rive_common.cpp`; the runtime's resolver doesn't know list rows.)*
+- [x] Getters: number, string, bool, and a trigger's fire count.
+- [x] Lists: count, insert a new instance of a named view model at an index, remove at an index,
       swap two rows, clear.
-- [ ] Pointer exit, so hover clears when the pointer leaves an artboard.
-- [ ] Resize: the artboard takes a new size and its layout reflows; `RiveInstance.Resize` rebuilds
+      *(Insert uses `File::viewModel`: `viewModelByName` keeps a new wrapper in the file per call.
+      Instance creation no longer calls `defaultArtboardViewModel` for the same reason.)*
+- [x] Pointer exit, so hover clears when the pointer leaves an artboard.
+- [x] Resize: the artboard takes a new size and its layout reflows; `RiveInstance.Resize` rebuilds
       its render targets at the new size.
-- [ ] C# wrappers on `RiveInstance`, and `architecture.md`'s Rive section updated.
-- [ ] Tests in `Engine.Tests` against a fixture `.riv` built by the Rive CLI (macOS, where
+- [x] C# wrappers on `RiveInstance`, and `architecture.md`'s Rive section updated.
+- [x] Tests in `Engine.Tests` against a fixture `.riv` built by the Rive CLI (macOS, where
       `libEngineNative` is built; skipped elsewhere).
-- [ ] The wasm build compiles the new bridge code.
+      *(`RiveViewModelTests`, 25 tests, including clicking a row inserted at runtime and a layout
+      reflowing after a resize.)*
+- [x] The wasm build compiles the new bridge code.
+      *(`build-native-wasm.sh`, then `dotnet publish hosts/Browser` links it.)*
 
 ### Phase 2: Pointer routing
 

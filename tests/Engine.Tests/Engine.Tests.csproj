@@ -4,13 +4,22 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
     <IsPackable>false</IsPackable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="xunit.v3" />
     <ProjectReference Include="..\..\src\Engine\Engine.csproj" />
     <None Include="Yaml\Corpus\**" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Built from Rive/fixture by the Rive CLI (rive tests/Engine.Tests/Rive/fixture with the once flag). -->
+    <None Include="Rive\fixture.riv" CopyToOutputDirectory="PreserveNewest" />
     <Using Include="Xunit" />
+  </ItemGroup>
+
+  <!-- Rive tests load files headless through libEngineNative (tools/build-native-macos.sh); they skip without it. -->
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('OSX')) And Exists('$(MSBuildThisFileDirectory)../../artifacts/native/osx/libEngineNative.dylib')">
+    <None Include="$(MSBuildThisFileDirectory)../../artifacts/native/osx/libEngineNative.dylib"
+          Link="libEngineNative.dylib" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>
