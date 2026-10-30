@@ -160,6 +160,8 @@ public sealed class RacersGame : Game
 
         if ( e.action == PointerAction.Down )
         {
+            world.Send( new PointerDown { position = e.position } );
+
             // int lane = Math.Clamp( ( int )MathF.Round( ( 0.58f - e.position.y / graphics.height ) / 0.09f ), 0, LANES - 1 );
             // Spawn( lane, e.position.x );
         }

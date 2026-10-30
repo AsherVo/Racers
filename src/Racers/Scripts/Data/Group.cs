@@ -7,5 +7,6 @@ public enum Group
 	None,
 	Groups,
 	Buttons,
+	Screens,
 	Misc
 }

@@ -73,15 +73,17 @@ for single-artboard buttons like `Cell`. This worklist adds the second path.
 
 ### Phase 2: Pointer routing
 
-- [ ] A `PointerDown` view message, so Rive sees presses (today only moves and releases reach the
+- [x] A `PointerDown` view message, so Rive sees presses (today only moves and releases reach the
       world).
-- [ ] `PointerSystem` finds the topmost target under the pointer, front to back: canvas
+- [x] `PointerSystem` finds the topmost target under the pointer, front to back: canvas
       `SortOrder`, then entity `SortOrder`, then id, skipping `Hidden`. Hover and clicks go to that
       target only (Rule 6).
+      *(Targets must be on a visible canvas, since only those are drawn. Testing stops at the first
+      hit, so it reads back fewer alpha pixels than testing every target did.)*
 - [ ] `RiveInput` component: the entity's Rive instance gets pointer moves, presses and releases in
       artboard coordinates. A press captures the pointer until the release, so dragging off a button
       doesn't strand it pressed. Leaving the artboard sends a pointer exit.
-- [ ] A `Screens` data group: `PrefabSystem` gives its entities `Interactable` and `RiveInput`, the
+- [x] A `Screens` data group: `PrefabSystem` gives its entities `Interactable` and `RiveInput`, the
       way `Buttons` gives click and hover targets.
 
 ### Phase 3: `RiveListSystem`

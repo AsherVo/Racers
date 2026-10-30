@@ -87,6 +87,11 @@ public class PrefabSystem : WorldManipulator, ISystem
                 Add( actor, new ClickTarget() );
                 Add( actor, new HoverTarget() );
                 break;
+
+            case Group.Screens:
+                Add( actor, new Interactable() );
+                Add( actor, new RiveInput() );
+                break;
         }
     }
 
