@@ -12,10 +12,9 @@ public class ButtonSystem : WorldManipulator, IViewSystem
 
     Filter labels = new FilterBuilder()
         .Include< ButtonLabel >()
-        .Include< DrawRive >()
         .ToFilter();
 
-    Dictionary< uint, ( RiveInstance rive, string text ) > shownLabels = new();
+    Dictionary< uint, ( RiveInstance rive, string path, string text ) > shownLabels = new();
 
     public void StartSystem ( World world )
     {
@@ -75,20 +74,32 @@ public class ButtonSystem : WorldManipulator, IViewSystem
 
     void UpdateLabels ()
     {
-        var renderSystem = world.Get< RenderSystem >();
         foreach ( var entity in labels.entities )
         {
-            var rive = renderSystem.GetRive( entity );
-            if ( rive == null )
+            if ( !TryGetLabelTarget( entity, out var rive, out var path ) )
                 continue;
 
             var text = Get< ButtonLabel >( entity ).text ?? "";
-            if ( shownLabels.TryGetValue( entity, out var shown ) && shown.rive == rive && shown.text == text )
+            if ( shownLabels.TryGetValue( entity, out var shown ) && shown.rive == rive && shown.path == path && shown.text == text )
                 continue;
 
-            rive.SetViewModelString( RIVE_LABEL, text );
-            shownLabels[ entity ] = ( rive, text );
+            rive.SetViewModelString( path, text );
+            shownLabels[ entity ] = ( rive, path, text );
         }
+    }
+
+    bool TryGetLabelTarget ( uint entity, out RiveInstance rive, out string path )
+    {
+        path = RIVE_LABEL;
+        rive = Has< DrawRive >( entity ) ? world.Get< RenderSystem >().GetRive( entity ) : null;
+        if ( rive != null )
+            return true;
+
+        if ( !world.Get< RiveListSystem >().TryGetRow( entity, out rive, out var row ) )
+            return false;
+
+        path = $"{ row }/{ RIVE_LABEL }";
+        return true;
     }
 
     void OnRemoveLabel ( uint entity )

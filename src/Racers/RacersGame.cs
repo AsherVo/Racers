@@ -39,6 +39,7 @@ public sealed class RacersGame : Game
 
         // Input
         world.Start( new PointerSystem() );
+        world.Start( new RiveListSystem() );
         world.Start( new ButtonSystem() );
 
         // Views

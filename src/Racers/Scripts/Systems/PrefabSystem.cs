@@ -56,7 +56,8 @@ public class PrefabSystem : WorldManipulator, ISystem
         {
             AddRive( actor,
                 data.GetString( riveBlock, "Path" ),
-                data.GetString( riveBlock, "Artboard" )
+                data.GetString( riveBlock, "Artboard" ),
+                layout: data.GetBool( riveBlock, "Layout" )
             );
         }
 
@@ -182,12 +183,13 @@ public class PrefabSystem : WorldManipulator, ISystem
         );
     }
 
-    void AddRive ( uint actor, string path, string artboard = null, float width = 0f, float height = 0f )
+    void AddRive ( uint actor, string path, string artboard = null, float width = 0f, float height = 0f, bool layout = false )
     {
-        AddBatch( actor, 
+        AddBatch( actor,
             new DrawRive {
                 path = path,
-                artboard = artboard
+                artboard = artboard,
+                layout = layout
             },
             new Rect {
                 width = width,

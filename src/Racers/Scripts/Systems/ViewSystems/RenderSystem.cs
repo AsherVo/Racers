@@ -74,7 +74,15 @@ public class RenderSystem : WorldManipulator, IViewSystem, IDrawSystem
 
 	public void Update ( World world, FrameTime time )
 	{
-		
+		foreach ( var entity in rives.entities )
+		{
+			if ( !Get< DrawRive >( entity ).layout || !riveInstances.TryGetValue( entity, out var rive ) )
+				continue;
+
+			var rect = Get< Rect >( entity );
+			if ( rect.width > 0f && rect.height > 0f )
+				rive.Resize( rect.width, rect.height );
+		}
 	}
 
 	public void DrawSystem ( World world, SpriteBatch batch )
@@ -183,10 +191,14 @@ public class RenderSystem : WorldManipulator, IViewSystem, IDrawSystem
 		if ( rect.height == 0f )
 			rect.height = artboardSize.y;
 
-		float fit = MathF.Max( rect.width / artboardSize.x, rect.height / artboardSize.y );
+		float fit = drawRive.layout ? 1f : MathF.Max( rect.width / artboardSize.x, rect.height / artboardSize.y );
 
 		float resolution = fit * Toolbox.I.game.graphics.pixelScale;
-		riveInstances[ entity ] = riveFile.CreateInstance( drawRive.artboard, drawRive.stateMachine, resolution );
+		var rive = riveFile.CreateInstance( drawRive.artboard, drawRive.stateMachine, resolution );
+		if ( drawRive.layout )
+			rive.Resize( rect.width, rect.height );
+
+		riveInstances[ entity ] = rive;
 	}
 
 	void OnRemoveRive ( uint entity )
