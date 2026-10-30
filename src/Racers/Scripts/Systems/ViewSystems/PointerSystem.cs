@@ -19,6 +19,7 @@ public class PointerSystem : WorldManipulator, IViewSystem
     HashSet< uint > activeHovers = new();
     Vector2? hoverPosition;
 
+    uint pressedTarget;
     uint riveOwner;
     bool riveCaptured;
 
@@ -30,6 +31,7 @@ public class PointerSystem : WorldManipulator, IViewSystem
 
         activeHovers.Clear();
         hoverPosition = null;
+        pressedTarget = 0;
         riveOwner = 0;
         riveCaptured = false;
         foreach ( var entity in targets.entities )
@@ -46,6 +48,7 @@ public class PointerSystem : WorldManipulator, IViewSystem
         frontToBack.Clear();
         activeHovers.Clear();
         hoverPosition = null;
+        pressedTarget = 0;
         riveOwner = 0;
         riveCaptured = false;
         renderSystem = null;
@@ -71,16 +74,20 @@ public class PointerSystem : WorldManipulator, IViewSystem
         }
 
         foreach ( var down in Read< PointerDown >() )
+        {
             PressRive( down.position );
+            pressedTarget = riveCaptured ? 0 : GetTopTarget( down.position );
+        }
 
         foreach ( var up in Read< PointerClick >() )
         {
-            bool releasedByRive = riveCaptured;
             ReleaseRive( up.position );
 
             var top = GetTopTarget( up.position );
-            if ( !releasedByRive && top != 0 && Has< ClickTarget >( top ) )
+            if ( top != 0 && top == pressedTarget && Has< ClickTarget >( top ) )
                 Send( new Click { target = top } );
+
+            pressedTarget = 0;
         }
 
         UpdateHovers();

@@ -111,7 +111,8 @@ for single-artboard buttons like `Cell`. This worklist adds the second path.
 
 - [x] `menu_ui.riv`: a `Menu` screen artboard (a layout column holding an `ArtboardComponentList`
       bound to a `buttons` list) and a `MenuItem` row artboard whose own listeners drive hover and
-      press, and fire `clicked` on release. Verified with Rive CLI captures.
+      press, and fire `clicked` on a click (press and release both on the row). Verified with Rive CLI
+      captures.
       *(The row's listeners write `hover` and `down` booleans that its states read. The file's own
       list holds two preview rows for the CLI viewer; the game clears them.)*
 - [x] `MenuViewSystem` creates one screen entity plus a row entity per label, and adds or removes

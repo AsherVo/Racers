@@ -203,6 +203,9 @@
                         <DataBindContext sourcePathIds="0:40-0:45" propertyKey="634" direction="true"/>
                     </BindablePropertyBoolean>
                 </ListenerViewModelChange>
+            </StateMachineListenerSingle>
+
+            <StateMachineListenerSingle targetId="0:210" listenerTypeValue="click" name="Click" id="0:334">
                 <ListenerViewModelChange>
                     <BindablePropertyTrigger propertyValue="1">
                         <DataBindContext sourcePathIds="0:40-0:43" propertyKey="686" direction="true"/>
