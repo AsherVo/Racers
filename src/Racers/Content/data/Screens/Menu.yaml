@@ -3,4 +3,5 @@ Meta:
 
 Rive:
   Path: menu_ui
-  Artboard: Button
+  Artboard: Menu
+  Layout: true

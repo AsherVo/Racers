@@ -54,4 +54,4 @@ blocks:
         type: boolean
         width: 56
 hiddenGroups: [Groups]
-rows: [Groups, Buttons, Screens, Misc, Cell, MenuButton, Car, CloudyRoad, UI_TopSpeed]
+rows: [Groups, Buttons, Screens, Misc, Cell, Menu, Car, CloudyRoad, UI_TopSpeed]

@@ -287,14 +287,15 @@ the outcome.
 | `PrefabSystem` | utility | Called from `Load` or a sim system, it creates sim ids; from the view, view ids. `AddFromData` dresses an existing entity. It reads data but never loads an asset, so the sim runs headless: a `Rect` it adds has 0 for any size that comes from the sprite or artboard. |
 | `GridSystem` | sim | Owns the `Grid` entity and `cells[]` (a cache rebuilt from `Cell` relations). Grid position is the `InCell` relation from an entity to its cell; `GetContents`/`GetAll< T >` query it. |
 | `RaceSystem` | sim | Applies `SelectCell`: moves a unit's `InCell` to the selected cell and sends `UnitMoved`. |
-| `PointerSystem` | view | Hit-tests against texture alpha, Rive and float rects. Rebuilds its hover set from `HoverTarget.hovering` on start. |
-| `ButtonSystem` | view | Fires Rive view model triggers: `highlight` and `idle` on hover, `click` on click. Copies each `ButtonLabel.text` into its artboard's `label` string whenever the text or the Rive instance changes, so labels survive a restart. |
+| `PointerSystem` | view | Finds the topmost `Interactable` under the pointer, front to back (canvas `SortOrder`, then entity `SortOrder`, then id), by texture alpha, Rive alpha or float rect. Hover and clicks go to that target only, so UI blocks what's under it. A `RiveInput` target gets the pointer's moves, presses and releases in artboard coordinates; a press captures the pointer until the release. Rebuilds its hover set from `HoverTarget.hovering` on start. |
+| `RiveListSystem` | view | Keeps each Rive screen's view model lists in step with the `RiveListItem` rows that point at it, ordered by `SortOrder` then id, and turns a row's `clicked` trigger into `Click { target = row }`. The lists are a cache: a new Rive instance has its authored rows cleared and rebuilt. See [worklists/rive-ui.md](worklists/rive-ui.md). |
+| `ButtonSystem` | view | Fires view model triggers on single-artboard buttons: `highlight` and `idle` on hover, `click` on click. Copies each `ButtonLabel.text` into its `label`, on the entity's own artboard or its row in a screen's list, whenever the text, row or Rive instance changes, so labels survive a restart. Start it after `RiveListSystem`, so a new row's label lands the frame it appears. |
 | `GridViewSystem` | view | Turns clicks on cells into `SelectCell` commands. Cell layout and visuals (`DressGrid`) and highlights (a cache rebuilt from `CellHighlight` relations). |
-| `MenuViewSystem` | view | `Setup` creates a `MenuButton` (`menu_ui.riv`) per label on the UI canvas, stacked top-down, and returns them. Logs clicks on them. |
+| `MenuViewSystem` | view | `Setup` creates the `Menu` screen (`menu_ui.riv`, one artboard laid out by Rive) on the UI canvas with a `MenuButton` row per label. `AddButton` and `RemoveButton` create and destroy rows at runtime. Logs clicks on them. |
 | `UnitViewSystem` | view | Animates units on `UnitMoved`. When not animating, derives each unit's `Position` from its `InCell` cell. |
 | `SpriteAnimationSystem` | view | Follows `Time.Game`. |
 | `CoroutineSystem` | view | Each coroutine follows its own `Time` type. Coroutines end on `StopSystem`. |
-| `RenderSystem` | view + draw | Fills in a `Rect`'s zero sizes from its sprite or artboard as the entity appears, so start it before anything that reads sizes. Rive instances are rebuilt from `DrawRive` on start; their state machines reset after a load. |
+| `RenderSystem` | view + draw | Fills in a `Rect`'s zero sizes from its sprite or artboard as the entity appears, so start it before anything that reads sizes. Rive instances are rebuilt from `DrawRive` on start; their state machines reset after a load. A `DrawRive` with `layout` resizes its artboard to its `Rect` so the layout reflows, instead of scaling it. |
 
 ## Sim and view
 

@@ -1,5 +1,5 @@
 name: menu_ui
-main: Button
+main: Menu
 output:
   dir: ../../Content/rives
 logs:

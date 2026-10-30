@@ -5,9 +5,11 @@ namespace Racers;
 
 public class MenuViewSystem : WorldManipulator, IViewSystem
 {
+    const string BUTTON_LIST = "buttons";
+    const string BUTTON_VIEW_MODEL = "MenuItem";
+
     const float MENU_X = 6f;
     const float MENU_TOP_MARGIN = 16f;
-    const float BUTTON_GAP = 4f;
 
     public void StartSystem ( World world )
     {
@@ -28,26 +30,29 @@ public class MenuViewSystem : WorldManipulator, IViewSystem
         }
     }
 
-    public List< uint > Setup ( uint canvas, int screenHeight, params string[] labels )
+    public uint Setup ( uint canvas, int screenHeight, params string[] labels )
     {
-        var prefab = Get< PrefabSystem >();
-        var top = screenHeight - MENU_TOP_MARGIN;
-        var buttons = new List< uint >();
+        var menu = Get< PrefabSystem >().CreateFromData( "Menu", canvas );
+        Get< Rect >( menu ).pivot = new Vector2( 0, 1 );
+        Get< Position >( menu ).value = new Vector2( MENU_X, screenHeight - MENU_TOP_MARGIN );
 
         foreach ( var label in labels )
-        {
-            var button = prefab.CreateFromData( "MenuButton", canvas, $"Menu Button { label }" );
-            Add( button, new MenuButton() );
-            Add( button, new ButtonLabel { text = label } );
+            AddButton( menu, label );
 
-            var rect = Get< Rect >( button );
-            rect.pivot = new Vector2( 0, 1 );
-            Get< Position >( button ).value = new Vector2( MENU_X, top );
-            top -= rect.height + BUTTON_GAP;
-
-            buttons.Add( button );
-        }
-
-        return buttons;
+        return menu;
     }
+
+    public uint AddButton ( uint menu, string label )
+    {
+        var button = Create( $"Menu Button { label }",
+            new MenuButton(),
+            new ButtonLabel { text = label }
+        );
+
+        SetRelation( button, menu, new RiveListItem { list = BUTTON_LIST, viewModel = BUTTON_VIEW_MODEL } );
+        return button;
+    }
+
+    public void RemoveButton ( uint button )
+        => Destroy( button );
 }

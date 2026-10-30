@@ -80,33 +80,44 @@ for single-artboard buttons like `Cell`. This worklist adds the second path.
       target only (Rule 6).
       *(Targets must be on a visible canvas, since only those are drawn. Testing stops at the first
       hit, so it reads back fewer alpha pixels than testing every target did.)*
-- [ ] `RiveInput` component: the entity's Rive instance gets pointer moves, presses and releases in
+- [x] `RiveInput` component: the entity's Rive instance gets pointer moves, presses and releases in
       artboard coordinates. A press captures the pointer until the release, so dragging off a button
       doesn't strand it pressed. Leaving the artboard sends a pointer exit.
+      *(Verified in game with the Phase 4 menu: hover and press come from the row's own listeners.)*
 - [x] A `Screens` data group: `PrefabSystem` gives its entities `Interactable` and `RiveInput`, the
       way `Buttons` gives click and hover targets.
 
 ### Phase 3: `RiveListSystem`
 
-- [ ] `RiveListItem` relation from a row entity to its screen, naming the list property and the
+- [x] `RiveListItem` relation from a row entity to its screen, naming the list property and the
       row's view model.
-- [ ] Each frame, sync each screen's lists to its row entities, ordered by `SortOrder` then id:
+- [x] Each frame, sync each screen's lists to its row entities, ordered by `SortOrder` then id:
       remove, then swap or insert, so rows that stay keep their Rive state. The diff is a pure
       function with unit tests.
-- [ ] A new Rive instance for a screen (first sync, or `RenderSystem` restarted) clears the list and
+      *(`RiveListDiff`, tested in `RiveListDiffTests`, including 500 randomized runs.)*
+- [x] A new Rive instance for a screen (first sync, or `RenderSystem` restarted) clears the list and
       rebuilds it (Rule 1).
-- [ ] Poll each row's `clicked` count; each new fire sends `Click { target = row }`.
-- [ ] `ButtonLabel` works on rows too: it's written to the row's `label` in the screen's view model.
-- [ ] `DrawRive.layout`: the artboard follows the entity's `Rect` instead of being scaled to it, so
+      *(A list the screen doesn't have, or a row view model the file doesn't have, logs a warning
+      once and leaves those rows out.)*
+- [x] Poll each row's `clicked` count; each new fire sends `Click { target = row }`.
+      *(A fire changes the count on the frame after the pointer event, when Rive has advanced, so a
+      row's click reaches the world one frame later than a single-artboard button's.)*
+- [x] `ButtonLabel` works on rows too: it's written to the row's `label` in the screen's view model.
+- [x] `DrawRive.layout`: the artboard follows the entity's `Rect` instead of being scaled to it, so
       its layout reflows.
+      *(`Layout` in a data file's Rive block; a Compee column too.)*
 
 ### Phase 4: The menu as one Rive screen
 
-- [ ] `menu_ui.riv`: a `Menu` screen artboard (a layout column holding an `ArtboardComponentList`
+- [x] `menu_ui.riv`: a `Menu` screen artboard (a layout column holding an `ArtboardComponentList`
       bound to a `buttons` list) and a `MenuItem` row artboard whose own listeners drive hover and
       press, and fire `clicked` on release. Verified with Rive CLI captures.
-- [ ] `MenuViewSystem` creates one screen entity plus a row entity per label, and adds or removes
+      *(The row's listeners write `hover` and `down` booleans that its states read. The file's own
+      list holds two preview rows for the CLI viewer; the game clears them.)*
+- [x] `MenuViewSystem` creates one screen entity plus a row entity per label, and adds or removes
       rows at runtime by creating and destroying entities.
-- [ ] Checked in game: hover, press, click, labels, adding and removing rows, and clicks not
+- [x] Checked in game: hover, press, click, labels, adding and removing rows, and clicks not
       reaching the grid under the menu.
-- [ ] The single-artboard `Button` and `MenuButton.yaml` are removed.
+      *(Desktop, with injected pointer events through `PointerSystem`; the browser build renders
+      the screen too.)*
+- [x] The single-artboard `Button` and `MenuButton.yaml` are removed.
