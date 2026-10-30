@@ -1,0 +1,153 @@
+<Rive version="1" kind="fragment">
+    <FontAsset file="../../Content/fonts/Crates.ttf" name="Crates" id="0:30"/>
+
+    <ViewModel defaultInstanceId="0:41" name="Button" id="0:40">
+        <ViewModelPropertyString name="label" id="0:42"/>
+        <ViewModelPropertyTrigger name="idle" id="0:43"/>
+        <ViewModelPropertyTrigger name="highlight" id="0:44"/>
+        <ViewModelPropertyTrigger name="click" id="0:45"/>
+        <ViewModelInstance exports="true" name="Default" id="0:41">
+            <ViewModelInstanceString propertyValue="Button" viewModelPropertyId="0:42"/>
+            <ViewModelInstanceTrigger viewModelPropertyId="0:43"/>
+            <ViewModelInstanceTrigger viewModelPropertyId="0:44"/>
+            <ViewModelInstanceTrigger viewModelPropertyId="0:45"/>
+        </ViewModelInstance>
+    </ViewModel>
+
+    <Artboard defaultStateMachineId="0:100" viewModelId="0:40" viewModelInstanceId="0:41" styleId="0:3"
+              width="84" height="18" name="Button" id="0:2">
+        <LayoutComponentStyle layoutAlignmentType="center" name="Button Artboard Style" id="0:3"/>
+
+        <LayoutComponent clip="true" styleId="0:11" name="Body" id="0:10">
+            <LayoutComponentStyle layoutWidthScaleType="fill" layoutHeightScaleType="fill"
+                                  layoutAlignmentType="center"
+                                  cornerRadiusTL="3" cornerRadiusTR="3" cornerRadiusBL="3" cornerRadiusBR="3"
+                                  name="Body Style" id="0:11"/>
+            <Fill name="Body Fill">
+                <SolidColor colorValue="FF2B2D42" name="Body Color" id="0:12"/>
+            </Fill>
+            <Fill name="Flash Fill">
+                <SolidColor colorValue="00FFFFFF" name="Flash Color" id="0:14"/>
+            </Fill>
+            <Stroke thickness="1" position="inside" name="Body Stroke">
+                <SolidColor colorValue="FF8D99AE" name="Stroke Color" id="0:13"/>
+            </Stroke>
+
+            <Text name="Label" id="0:20">
+                <LayoutParticipant layoutWidthScaleType="hug" layoutHeightScaleType="hug" name="Label Layout"/>
+                <TextStylePaint fontSize="8" fontAssetId="0:30" name="Label Style" id="0:21">
+                    <Fill name="Label Fill">
+                        <SolidColor colorValue="FFEDF2F4" name="Label Color" id="0:22"/>
+                    </Fill>
+                </TextStylePaint>
+                <TextValueRun styleId="0:21" text="Button" name="Label Run">
+                    <DataBindContext sourcePathIds="0:40-0:42" propertyKey="268"/>
+                </TextValueRun>
+            </Text>
+        </LayoutComponent>
+
+        <StateMachine name="Button" id="0:100">
+            <StateMachineLayer name="Hover" id="0:101">
+                <AnyState x="560" y="-120"/>
+                <ExitState x="760" y="-120"/>
+                <EntryState>
+                    <StateTransition stateToId="0:110"/>
+                </EntryState>
+
+                <AnimationState x="160" animationId="0:60" id="0:110">
+                    <StateTransition stateToId="0:111" duration="80">
+                        <TransitionViewModelCondition>
+                            <TransitionPropertyViewModelComparator>
+                                <BindablePropertyTrigger>
+                                    <DataBindContext sourcePathIds="0:40-0:44" propertyKey="686"/>
+                                </BindablePropertyTrigger>
+                            </TransitionPropertyViewModelComparator>
+                            <TransitionValueTriggerComparator/>
+                        </TransitionViewModelCondition>
+                    </StateTransition>
+                </AnimationState>
+
+                <AnimationState x="360" animationId="0:61" id="0:111">
+                    <StateTransition stateToId="0:110" duration="80">
+                        <TransitionViewModelCondition>
+                            <TransitionPropertyViewModelComparator>
+                                <BindablePropertyTrigger>
+                                    <DataBindContext sourcePathIds="0:40-0:43" propertyKey="686"/>
+                                </BindablePropertyTrigger>
+                            </TransitionPropertyViewModelComparator>
+                            <TransitionValueTriggerComparator/>
+                        </TransitionViewModelCondition>
+                    </StateTransition>
+                </AnimationState>
+            </StateMachineLayer>
+
+            <StateMachineLayer name="Press" id="0:102">
+                <AnyState x="560" y="-120">
+                    <StateTransition stateToId="0:121">
+                        <TransitionViewModelCondition>
+                            <TransitionPropertyViewModelComparator>
+                                <BindablePropertyTrigger>
+                                    <DataBindContext sourcePathIds="0:40-0:45" propertyKey="686"/>
+                                </BindablePropertyTrigger>
+                            </TransitionPropertyViewModelComparator>
+                            <TransitionValueTriggerComparator/>
+                        </TransitionViewModelCondition>
+                    </StateTransition>
+                </AnyState>
+                <ExitState x="760" y="-120"/>
+                <EntryState>
+                    <StateTransition stateToId="0:120"/>
+                </EntryState>
+
+                <AnimationState x="160" animationId="0:62" id="0:120"/>
+
+                <AnimationState x="360" animationId="0:63" reset="true" id="0:121">
+                    <StateTransition stateToId="0:120" enableExitTime="true" exitTimeIsPercetange="true" exitTime="100"/>
+                </AnimationState>
+            </StateMachineLayer>
+        </StateMachine>
+
+        <LinearAnimation duration="1" name="Idle" id="0:60">
+            <KeyedObject objectId="0:12">
+                <KeyedProperty propertyKey="37">
+                    <KeyFrameColor value="FF2B2D42" frame="0"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:13">
+                <KeyedProperty propertyKey="37">
+                    <KeyFrameColor value="FF8D99AE" frame="0"/>
+                </KeyedProperty>
+            </KeyedObject>
+        </LinearAnimation>
+
+        <LinearAnimation duration="1" name="Hover" id="0:61">
+            <KeyedObject objectId="0:12">
+                <KeyedProperty propertyKey="37">
+                    <KeyFrameColor value="FFEF8354" frame="0"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:13">
+                <KeyedProperty propertyKey="37">
+                    <KeyFrameColor value="FFFFD166" frame="0"/>
+                </KeyedProperty>
+            </KeyedObject>
+        </LinearAnimation>
+
+        <LinearAnimation duration="1" name="Rest" id="0:62">
+            <KeyedObject objectId="0:14">
+                <KeyedProperty propertyKey="37">
+                    <KeyFrameColor value="00FFFFFF" frame="0"/>
+                </KeyedProperty>
+            </KeyedObject>
+        </LinearAnimation>
+
+        <LinearAnimation duration="15" name="Press" id="0:63">
+            <KeyedObject objectId="0:14">
+                <KeyedProperty propertyKey="37">
+                    <KeyFrameColor value="CCFFFFFF" frame="0" interpolationType="linear"/>
+                    <KeyFrameColor value="00FFFFFF" frame="15" interpolationType="linear"/>
+                </KeyedProperty>
+            </KeyedObject>
+        </LinearAnimation>
+    </Artboard>
+</Rive>

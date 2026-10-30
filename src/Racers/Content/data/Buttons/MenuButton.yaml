@@ -1,0 +1,6 @@
+Meta:
+  Enabled: true
+
+Rive:
+  Path: menu_ui
+  Artboard: Button

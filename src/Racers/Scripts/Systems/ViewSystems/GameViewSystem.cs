@@ -70,6 +70,8 @@ public class GameViewSystem : WorldManipulator, IViewSystem
         var speedometer = Get< RenderSystem >().GetRive( topSpeed );
         speedometer.SetViewModelString( "speedText", 5.ToString() );
 
+        Get< MenuViewSystem >().Setup( uiCanvas, height, "Race", "Garage", "Options", "Quit" );
+
         // Wiring
         Get< UnitViewSystem >().Refresh();
     }

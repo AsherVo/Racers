@@ -288,8 +288,9 @@ the outcome.
 | `GridSystem` | sim | Owns the `Grid` entity and `cells[]` (a cache rebuilt from `Cell` relations). Grid position is the `InCell` relation from an entity to its cell; `GetContents`/`GetAll< T >` query it. |
 | `RaceSystem` | sim | Applies `SelectCell`: moves a unit's `InCell` to the selected cell and sends `UnitMoved`. |
 | `PointerSystem` | view | Hit-tests against texture alpha, Rive and float rects. Rebuilds its hover set from `HoverTarget.hovering` on start. |
-| `ButtonSystem` | view | Fires Rive hover triggers. |
+| `ButtonSystem` | view | Fires Rive view model triggers: `highlight` and `idle` on hover, `click` on click. Copies each `ButtonLabel.text` into its artboard's `label` string whenever the text or the Rive instance changes, so labels survive a restart. |
 | `GridViewSystem` | view | Turns clicks on cells into `SelectCell` commands. Cell layout and visuals (`DressGrid`) and highlights (a cache rebuilt from `CellHighlight` relations). |
+| `MenuViewSystem` | view | `Setup` creates a `MenuButton` (`menu_ui.riv`) per label on the UI canvas, stacked top-down, and returns them. Logs clicks on them. |
 | `UnitViewSystem` | view | Animates units on `UnitMoved`. When not animating, derives each unit's `Position` from its `InCell` cell. |
 | `SpriteAnimationSystem` | view | Follows `Time.Game`. |
 | `CoroutineSystem` | view | Each coroutine follows its own `Time` type. Coroutines end on `StopSystem`. |
