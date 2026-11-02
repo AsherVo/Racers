@@ -57,13 +57,13 @@ public class GameViewSystem : WorldManipulator, IViewSystem
 
         // Race
         var prefab = Get< PrefabSystem >();
-        var rive = prefab.CreateFromData( race.background, raceCanvas );
+        var rive = prefab.CreateFromData( race.background, canvas: raceCanvas );
         GetOrAdd< SortOrder >( rive ).value = -100;
 
         Get< GridViewSystem >().Setup( raceCanvas );        
 
         // UI
-        var topSpeed = prefab.CreateFromData( "UI_TopSpeed", uiCanvas );
+        var topSpeed = prefab.CreateFromData( "UI_TopSpeed", canvas: uiCanvas );
         Get< Position >( topSpeed ).value = new Vector2( width, height );
         Get< Rect >( topSpeed ).pivot = Vector2.One;
 

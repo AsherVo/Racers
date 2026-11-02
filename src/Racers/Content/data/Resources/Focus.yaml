@@ -1,0 +1,7 @@
+Meta:
+  Enabled: true
+
+Display:
+  Name: Focus
+  Description: Use this to perform complex actions.
+  Icon: resources/focus

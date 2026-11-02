@@ -31,7 +31,7 @@ public class CoroutineSystem : WorldManipulator, IViewSystem
             if ( dt == 0f )
                 continue;
 
-            if ( !coroutines[i].MoveNext( dt ) )
+            if ( !coroutines[ i ].MoveNext( dt ) )
             {
                 coroutines.RemoveAt( i );
                 i--;

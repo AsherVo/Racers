@@ -1,0 +1,7 @@
+Meta:
+  Enabled: true
+
+Display:
+  Name: Speed
+  Description: How fast this vehicle is going. Outrun your opponents!
+  Icon: resources/speed

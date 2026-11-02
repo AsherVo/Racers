@@ -20,6 +20,19 @@ blocks:
       - name: Enabled
         type: boolean
         width: 56
+  - name: Display
+    properties:
+      - name: Name
+        type: text
+        width: 98
+      - name: Description
+        type: text
+        width: 215
+      - name: Icon
+        type: asset
+        width: 155
+        root: src/Racers/Content/sprites
+        extensions: false
   - name: Unit
     properties:
       - name: IsUnit
@@ -29,7 +42,7 @@ blocks:
     properties:
       - name: Path
         type: asset
-        width: 181
+        width: 134
         root: src/Racers/Content/sprites
         extensions: false
       - name: Color
@@ -53,5 +66,9 @@ blocks:
       - name: Layout
         type: boolean
         width: 56
+  - name: Stats
+    properties:
+      - name: Health
+hiddenBlocks: [Rive, Sprite]
 hiddenGroups: [Groups]
-rows: [Groups, Buttons, Screens, Misc, Cell, Menu, Car, CloudyRoad, UI_TopSpeed]
+rows: [Groups, Resources, Buttons, Screens, Misc, Health, Speed, Focus, Cell, Menu, Car, CloudyRoad, UI_TopSpeed]

@@ -1,0 +1,7 @@
+Meta:
+  Enabled: true
+
+Display:
+  Name: Health
+  Description: If this drops to zero, the vehicle is destroyed.
+  Icon: resources/health

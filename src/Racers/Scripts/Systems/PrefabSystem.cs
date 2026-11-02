@@ -18,7 +18,7 @@ public class PrefabSystem : WorldManipulator, ISystem
         this.world = null;    
     }
 
-    public uint CreateFromData ( string id, uint canvas = 0, string name = null )
+    public uint CreateFromData ( string id, string name = null, uint canvas = 0 )
     {
         var data = Toolbox.I.data;
 
@@ -33,28 +33,46 @@ public class PrefabSystem : WorldManipulator, ISystem
         return actor;
     }
 
-    public void AddFromData ( uint actor, string id, uint canvas = 0 )
+    public void AddFromData ( uint entity, string id, uint canvas = 0 )
     {
         var data = Toolbox.I.data;
 
         if ( !data.Exists( id ) )
         {
-            Log.Warning( $"Trying to add data to { GetName( actor ) }, but '{ id }` does not exist! Aborting." );
+            Log.Warning( $"Trying to add data to { GetName( entity ) }, but '{ id }` does not exist! Aborting." );
             return;
         }
 
-        AddActor( actor, canvas );
-        Add( actor, new DataId { id = id } );
+        if ( canvas != 0 )
+            SetRelation< OnCanvas >( entity, canvas );
+
+        Add( entity, new DataId { id = id } );
+
+        if ( data.TryGetBlock( id, "Display", out var displayBlock ) )
+        {
+            var name = data.GetString( displayBlock, "Name" );
+            var description = data.GetString( displayBlock, "Description" );
+            var iconPath = data.GetString( displayBlock, "Icon" );
+
+            if ( !string.IsNullOrEmpty( name ) )
+                Add( entity, new DisplayName { value = name } );
+
+            if ( !string.IsNullOrEmpty( description ) )
+                Add( entity, new DisplayDescription { value = description } );
+
+            if ( !string.IsNullOrEmpty( iconPath ) )
+                Add( entity, new DisplayIcon { path = iconPath } );
+        }
 
         if ( data.TryGetBlock( id, "Unit", out var unitBlock ) )
         {
             if ( data.GetBool( unitBlock, "IsUnit" ) )
-                Add( actor, new Unit {} );
+                Add( entity, new Unit {} );
         }
 
         if ( data.TryGetBlock( id, "Rive", out var riveBlock ) )
         {
-            AddRive( actor,
+            AddRive( entity,
                 data.GetString( riveBlock, "Path" ),
                 data.GetString( riveBlock, "Artboard" ),
                 layout: data.GetBool( riveBlock, "Layout" )
@@ -63,17 +81,17 @@ public class PrefabSystem : WorldManipulator, ISystem
 
         if ( data.TryGetBlock( id, "Sprite", out var spriteBlock ) )
         {
-            AddSprite( actor,
+            AddSprite( entity,
                 data.GetString( spriteBlock, "Path" )
             );
 
             var colorHex = data.GetString( spriteBlock, "Color" );
             if ( colorHex != null )
-                Add( actor, new DrawColor { value = Utils.HexToColor( colorHex ) } );
+                Add( entity, new DrawColor { value = Utils.HexToColor( colorHex ) } );
 
             if ( data.GetBool( spriteBlock, "Animated" ) )
             {
-                Add( actor, new SpriteAnimation {
+                Add( entity, new SpriteAnimation {
                     animation = Loader.GetAnimationPrefix( data.GetString( spriteBlock, "Path" ) ),
                     fps = data.GetInt( spriteBlock, "FPS" )
                 });
@@ -83,15 +101,21 @@ public class PrefabSystem : WorldManipulator, ISystem
         var group = data.GetGroup( id );
         switch ( group )
         {
+            case Group.Misc:
+                Add( entity, new Position() );
+                break;
+
             case Group.Buttons:
-                Add( actor, new Interactable() );
-                Add( actor, new ClickTarget() );
-                Add( actor, new HoverTarget() );
+                Add( entity, new Interactable() );
+                Add( entity, new ClickTarget() );
+                Add( entity, new HoverTarget() );
+                Add( entity, new Position() );
                 break;
 
             case Group.Screens:
-                Add( actor, new Interactable() );
-                Add( actor, new RiveInput() );
+                Add( entity, new Interactable() );
+                Add( entity, new RiveInput() );
+                Add( entity, new Position() );
                 break;
         }
     }
@@ -99,16 +123,12 @@ public class PrefabSystem : WorldManipulator, ISystem
     public uint CreateActor ( string name, uint canvas = 0 )
     {
         var result = Create( name );
-        AddActor( result, canvas );
-        return result;
-    }
-
-    void AddActor ( uint actor, uint canvas )
-    {
-        Add( actor, new Position() );
+        Add( result, new Position() );
 
         if ( canvas != 0 )
-            SetRelation< OnCanvas >( actor, canvas );
+            SetRelation< OnCanvas >( result, canvas );
+
+        return result;
     }
 
     public uint CreateSprite ( string name, string path, uint canvas = 0, float width = 0f, float height = 0f )
