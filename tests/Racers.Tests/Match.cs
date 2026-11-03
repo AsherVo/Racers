@@ -9,12 +9,13 @@ namespace Racers.Tests;
 static class Match
 {
     public const int TICKS_PER_SECOND = 60;
+    public const string CAR_ID = "TestCar";
 
     public static readonly RaceConfig RACE = new()
     {
         width = 9,
         height = 3,
-        units = [ new RaceConfig.UnitDef { id = "Car", x = 2, y = 2 }, new RaceConfig.UnitDef { id = "Car", x = 0, y = 0 } ],
+        units = [ new RaceConfig.UnitDef { id = CAR_ID, x = 2, y = 2 }, new RaceConfig.UnitDef { id = CAR_ID, x = 0, y = 0 } ],
     };
 
     /// <summary>Commands by the tick they apply on. Two land on tick 40 to check that order within a tick holds.</summary>
@@ -29,10 +30,12 @@ static class Match
         ( 118, 7, 0 ),
     ];
 
-    public static string CONTENT_ROOT => Path.Combine( AppContext.BaseDirectory, "Content" );
+    /// <summary>Loads the tests' own content from tests/TestContent. Safe to call repeatedly.</summary>
+    public static void SetupContent ()
+        => HeadlessRunner.Setup( Path.Combine( AppContext.BaseDirectory, "TestContent" ), findDataGroups: true );
 
     static Match ()
-        => HeadlessRunner.Setup( CONTENT_ROOT );
+        => SetupContent();
 
     public static World Create ()
         => HeadlessRunner.CreateMatch( RACE, TICKS_PER_SECOND );

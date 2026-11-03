@@ -95,8 +95,17 @@ FAIL  bug.yaml: desync at tick 120: expected D195817F0300C0D6, got D973F3D3C336E
 1 replay verified: 1 failed.
 ```
 
-`--content <dir>` builds matches from a different content folder. The default is the copy built next to the CLI.
-Replays in `tests/Replays/` also run in `dotnet test`.
+`--content <dir>` builds matches from a different content folder, and reads its data IDs from that folder. The
+default is the game's content, built next to the CLI.
+
+Replays in `tests/Replays/` also run in `dotnet test`. They're built from the fixture data in `tests/TestContent/`
+rather than the game's data, so changing `Content/data` never breaks them. Only a change to the sim's code can, so
+pass the fixture to the CLI when working with them:
+
+```sh
+tools/cli.sh replay verify tests/Replays --content tests/TestContent
+tools/cli.sh replay rerecord tests/Replays --content tests/TestContent
+```
 
 ## The replay file
 

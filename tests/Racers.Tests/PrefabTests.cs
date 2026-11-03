@@ -41,9 +41,9 @@ public class PrefabTests
         var world = Match.Create();
         world.Start( new PrefabViewSystem() );
 
-        var car = world.Get< PrefabSystem >().CreateFromData( "Car" );
+        var car = world.Get< PrefabSystem >().CreateFromData( Match.CAR_ID );
 
-        Assert.Equal( "Car", world.Get< ViewDataId >( car ).id );
+        Assert.Equal( Match.CAR_ID, world.Get< ViewDataId >( car ).id );
         Assert.True( world.Has< DrawSprite >( car ) );
         Assert.True( world.Has< Unit >( car ) );
     }
@@ -72,10 +72,10 @@ public class PrefabTests
 
         uint car;
         using ( world.EnterViewPhase() )
-            car = world.Get< PrefabViewSystem >().CreateFromData( "Car" );
+            car = world.Get< PrefabViewSystem >().CreateFromData( Match.CAR_ID );
 
         Assert.True( World.IsViewEntity( car ) );
-        Assert.Equal( "Car", world.Get< ViewDataId >( car ).id );
+        Assert.Equal( Match.CAR_ID, world.Get< ViewDataId >( car ).id );
         Assert.False( world.Has< DataId >( car ) );
         Assert.False( world.Has< Unit >( car ) );
     }

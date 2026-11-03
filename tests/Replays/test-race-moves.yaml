@@ -8,14 +8,14 @@ header:
     width: 9
     height: 3
     units:
-    - id: Car
+    - id: TestCar
       x: 2
       y: 2
-    background: CloudyRoad
+    background: null
     startSpeed: 5
   platform: osx-arm64
   runtime: .NET 10.0.1
-  recordedAt: 2026-11-03T01:14:15Z
+  recordedAt: 2026-11-03T03:33:45Z
 commands:
 - type: SelectCell
   tick: 30
@@ -43,14 +43,14 @@ commands:
   y: 0
 checksums:
 - tick: 0
-  checksum: 14211665740886736943
+  checksum: 291725968222304501
 - tick: 60
-  checksum: 13893677771980896042
+  checksum: 3663979933175593200
 - tick: 120
-  checksum: 9538624867101700032
+  checksum: 9797415454720734602
 - tick: 180
-  checksum: 14027746349635858441
+  checksum: 3083249953481147235
 - tick: 240
-  checksum: 1965850331899511133
+  checksum: 4808468122030207431
 - tick: 300
-  checksum: 6037254760120641964
+  checksum: 12071037217976262534

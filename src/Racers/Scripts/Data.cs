@@ -12,10 +12,32 @@ public partial class Data
     const string META_BLOCK = "Meta";
     const string ENABLED_KEY = "Enabled";
 
+    readonly Dictionary< string, Group > groups;
     Dictionary< string, YamlMap > data;
 
-    public Data ()
-        => Setup();
+    public Data ( Dictionary< string, Group >? groups = null )
+    {
+        this.groups = groups ?? GroupsById;
+        Setup();
+    }
+
+    public static Dictionary< string, Group > FindGroups ( ContentManager content )
+    {
+        var groups = new Dictionary< string, Group >();
+
+        foreach ( var file in content.FindFiles( DATA_PATH, $"*/*{ DATA_SUFFIX }" ).Order( StringComparer.Ordinal ) )
+        {
+            var folder = file[ ..file.IndexOfAny( [ '/', '\\' ] ) ];
+            if ( !Enum.TryParse< Group >( folder, out var group ) )
+                throw new InvalidDataException( $"'{ folder }' in { content.root }{ DATA_PATH } isn't a data group." );
+
+            var id = Path.GetFileNameWithoutExtension( file );
+            if ( !groups.TryAdd( id, group ) )
+                throw new InvalidDataException( $"Data ID '{ id }' is in more than one group in { content.root }{ DATA_PATH }." );
+        }
+
+        return groups;
+    }
 
     public void Setup ()
     {
@@ -40,14 +62,14 @@ public partial class Data
 
     public Group GetGroup ( string id )
     {
-        if ( !GroupsById.TryGetValue( id, out var group ) )
+        if ( !groups.TryGetValue( id, out var group ) )
             throw new KeyNotFoundException( $"No data file with ID '{ id }'." );
 
         return group;
     }
 
     public bool Exists ( string id )
-        => GroupsById.ContainsKey( id );
+        => groups.ContainsKey( id );
 
     public bool IsEnabled ( string id )
     {
@@ -63,7 +85,7 @@ public partial class Data
     {
         var result = new List< string >();
 
-        foreach ( var ( id, idGroup ) in GroupsById )
+        foreach ( var ( id, idGroup ) in groups )
         {
             if ( idGroup == group && Exists( id ) && IsEnabled( id ) )
                 result.Add( id );

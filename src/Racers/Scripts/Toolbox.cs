@@ -16,13 +16,13 @@ public class Toolbox
     public static void Setup ( RacersGame game )
         => Setup( game.content, game );
 
-    public static void Setup ( ContentManager content, RacersGame game = null )
+    public static void Setup ( ContentManager content, RacersGame game = null, Dictionary< string, Group >? dataGroups = null )
     {
         I = new Toolbox();
         I.game = game;
         I.content = content;
         I.load = new Loader();
-        I.data = new Data();
+        I.data = new Data( dataGroups );
     }
 
     public void Cleanup ()

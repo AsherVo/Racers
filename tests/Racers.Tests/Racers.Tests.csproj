@@ -16,9 +16,9 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
-  <!-- The headless runner reads the game's data, and plays every checked-in replay. -->
+  <!-- The tests build matches from their own content, never the game's, so game data can change freely. -->
   <ItemGroup>
-    <None Include="$(GameContentDir)**" LinkBase="Content" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\TestContent\**" LinkBase="TestContent" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\Replays\**" LinkBase="Replays" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 

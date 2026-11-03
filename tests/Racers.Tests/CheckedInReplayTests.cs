@@ -1,8 +1,9 @@
 namespace Racers.Tests;
 
 /// <summary>
-/// Plays every replay in tests/Replays headless and checks every recorded checksum. A failure means the sim's
-/// outcome changed. If that was intended, re-record the replay (see docs/worklists/replays.md).
+/// Plays every replay in tests/Replays headless against tests/TestContent and checks every recorded checksum. A
+/// failure means the sim's code changed its outcome; game data can't cause one. If that was intended, re-record the
+/// replay (see docs/replays.md).
 /// </summary>
 public class CheckedInReplayTests
 {
@@ -25,7 +26,7 @@ public class CheckedInReplayTests
     [MemberData( nameof( ReplayFiles ) )]
     public void ReplayMatchesEveryChecksum ( string file )
     {
-        HeadlessRunner.Setup( Match.CONTENT_ROOT );
+        Match.SetupContent();
         var replay = Replay.Read( Path.Combine( REPLAY_DIRECTORY, file ) );
 
         var result = HeadlessRunner.Play( replay );

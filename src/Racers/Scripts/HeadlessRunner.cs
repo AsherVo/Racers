@@ -17,13 +17,14 @@ public class ReplayResult
 
 public static class HeadlessRunner
 {
-    public static void Setup ( string contentRoot = null )
+    public static void Setup ( string contentRoot = null, bool findDataGroups = false )
     {
         var root = Path.TrimEndingDirectorySeparator( Path.GetFullPath( contentRoot ?? ContentManager.DefaultRoot() ) ) + Path.DirectorySeparatorChar;
         if ( Toolbox.I != null && Toolbox.I.content.root == root )
             return;
 
-        Toolbox.Setup( new ContentManager( root ) );
+        var content = new ContentManager( root );
+        Toolbox.Setup( content, dataGroups: findDataGroups ? Data.FindGroups( content ) : null );
     }
 
     public static World CreateMatch ( RaceConfig race, int ticksPerSecond )

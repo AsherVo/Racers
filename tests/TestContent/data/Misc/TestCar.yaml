@@ -1,0 +1,11 @@
+Meta:
+  Enabled: true
+
+Unit:
+  IsUnit: true
+
+Stats:
+  Health: 10
+
+Sprite:
+  Path: test_car

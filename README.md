@@ -28,6 +28,7 @@ tools/Cli/             Developer CLI (tools/cli.sh): `yaml validate`, `yaml aot-
 tests/Engine.Tests/    xUnit tests: dotnet test --project tests/Engine.Tests
 tests/Racers.Tests/    Game and determinism tests, run headless: dotnet test --project tests/Racers.Tests
 tests/Replays/         Checked-in replays that Racers.Tests plays
+tests/TestContent/     Fixture data Racers.Tests runs on, so it doesn't depend on the game's data
 docs/                  architecture.md: how the engine works and why; ECS.md; replays.md: viewing replays
 ```
 

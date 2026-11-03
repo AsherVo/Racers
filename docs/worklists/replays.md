@@ -182,8 +182,8 @@ Everything in `determinism.md`'s Rules applies here too.
 - [x] `tests/Replays/`: checked-in replays from fixed bug reports, each with its expected checksum
       log, played by the headless runner in `dotnet test`.
       *(`CheckedInReplayTests` plays every file. The first, `test-race-moves.yaml`, is a baseline
-      of the `test` race rather than a bug report. After an intended sim change, update the
-      checksums with `tools/cli.sh replay rerecord tests/Replays`.)*
+      on the fixture data in `tests/TestContent` rather than a bug report. After an intended sim change,
+      update the checksums with `tools/cli.sh replay rerecord tests/Replays --content tests/TestContent`.)*
 - [x] CLI (`tools/Cli`): `replay info <path>` prints the header and stats. `replay verify <path>` plays
       it headless and exits nonzero on the first checksum mismatch.
       *(Both take files or directories. `verify --dump <dir>` writes the sim state at a desync.

@@ -65,7 +65,7 @@ sealed class ReplayVerifyCommand : ICommand
         var files = ReplayFiles.Find( arguments.positional );
         string? dumpDirectory = arguments.Value( "dump" );
         bool quiet = arguments.Flag( "quiet" );
-        HeadlessRunner.Setup( ReplayFiles.ContentRoot( arguments.Value( "content" ) ) );
+        ReplayFiles.SetupContent( arguments.Value( "content" ) );
 
         int failed = 0;
         foreach ( string file in files )
@@ -131,7 +131,7 @@ sealed class ReplayRerecordCommand : ICommand
     {
         var arguments = new Arguments( args, valueOptions: ["content"], flags: [] );
         var files = ReplayFiles.Find( arguments.positional );
-        HeadlessRunner.Setup( ReplayFiles.ContentRoot( arguments.Value( "content" ) ) );
+        ReplayFiles.SetupContent( arguments.Value( "content" ) );
 
         int failed = 0;
         foreach ( string file in files )
@@ -196,7 +196,11 @@ static class ReplayFiles
         }
     }
 
-    public static string ContentRoot ( string? option )
+    /// <summary>The game's own content uses the ID table built into it. Any other folder's IDs are read from that folder.</summary>
+    public static void SetupContent ( string? option )
+        => HeadlessRunner.Setup( ContentRoot( option ), findDataGroups: option != null );
+
+    static string ContentRoot ( string? option )
     {
         string root = option ?? Path.Combine( AppContext.BaseDirectory, "Content" );
         if ( !Directory.Exists( root ) )

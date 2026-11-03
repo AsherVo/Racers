@@ -68,11 +68,14 @@ match, and writes the sim state at that tick next to the replay (`<replay>.desyn
 content built next to it (or `--content <dir>`):
 ```sh
 tools/cli.sh replay info tests/Replays                 # header, length and command counts
-tools/cli.sh replay verify tests/Replays               # exit 1 on any checksum mismatch
+tools/cli.sh replay verify bug.yaml                    # exit 1 on any checksum mismatch
 tools/cli.sh replay verify bug.yaml --dump /tmp/dumps  # also write the sim state at the desync
-tools/cli.sh replay rerecord tests/Replays             # after an intended sim change, rewrite checksums
+tools/cli.sh replay rerecord bug.yaml                  # after an intended sim change, rewrite checksums
+tools/cli.sh replay verify tests/Replays --content tests/TestContent    # the checked-in replays use fixture data
+tools/cli.sh replay rerecord tests/Replays --content tests/TestContent
 ```
-`dotnet test` plays every replay in `tests/Replays` the same way. To find the commit that changed a
+`dotnet test` plays every replay in `tests/Replays` the same way, against `tests/TestContent`, so changes to the
+game's data don't affect it. To find the commit that changed a
 replay's outcome, keep the replay outside the repo (so checkouts don't change it) and bisect:
 ```sh
 git bisect start <bad> <good>
