@@ -294,6 +294,7 @@ the outcome.
 | `GridViewSystem` | view | Turns clicks on cells into `SelectCell` commands. Puts cells on their canvas and lays them out; `PrefabViewSystem` adds their visuals. Highlights are a cache rebuilt from `CellHighlight` relations. |
 | `MenuViewSystem` | view | `Setup` creates the `Menu` screen (`menu_ui.riv`, one artboard laid out by Rive) on the UI canvas with a `MenuButton` row per label. `AddButton` and `RemoveButton` create and destroy rows at runtime. Logs clicks on them. |
 | `UnitViewSystem` | view | Animates units on `UnitMoved`. When not animating, derives each unit's `Position` from its `InCell` cell. |
+| `UnitInfoViewSystem` | view | Gives each unit on a canvas a `UnitInfo` entity (`unit_info.riv`) that follows it and shows its Health and Speed resources, and destroys that entity once the unit is gone. Writes to Rive only when a value or the Rive instance changes. Start it after `CoroutineSystem`, so it follows a unit's move on the same frame. |
 | `SpriteAnimationSystem` | view | Follows `Time.Game`. |
 | `CoroutineSystem` | view | Each coroutine follows its own `Time` type. Coroutines end on `StopSystem`. |
 | `RenderSystem` | view + draw | Fills in a `Rect`'s zero sizes from its sprite or artboard as the entity appears, so start it before anything that reads sizes. Rive instances are rebuilt from `DrawRive` on start; their state machines reset after a load. A `DrawRive` with `layout` resizes its artboard to its `Rect` so the layout reflows, instead of scaling it. |

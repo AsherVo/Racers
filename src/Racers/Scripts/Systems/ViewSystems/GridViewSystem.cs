@@ -6,7 +6,7 @@ namespace Racers;
 public class GridViewSystem : WorldManipulator, IViewSystem
 {
     const int gridStartX = 10;
-    const int gridStartY = 2;
+    const int gridStartY = 4;
     const int yOffset = 6;
     const int gridIncrementX = 40;
     const int gridIncrementY = 34;

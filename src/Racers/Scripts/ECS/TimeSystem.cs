@@ -7,7 +7,7 @@ namespace MintECS;
 /// entity per <see cref="Time"/> type, which it creates lazily in the view phase, so clocks never take sim ids. The sim
 /// never reads it; sim time is <see cref="World.tick"/>.
 /// </summary>
-public class TimeSystem : WorldManipulator, ISystem
+public class TimeSystem : WorldManipulator, IViewSystem
 {
     static readonly Time[] ClockTypes = { Time.Realtime, Time.App, Time.Game };
 
@@ -32,6 +32,9 @@ public class TimeSystem : WorldManipulator, ISystem
             else
                 clocks[ ( int )type ] = entity;
         }
+
+        foreach ( var type in ClockTypes )
+            GetOrCreateClock( type );
     }
 
     public void StopSystem ( World world )
@@ -41,7 +44,7 @@ public class TimeSystem : WorldManipulator, ISystem
     }
 
     /// <summary>Called by <see cref="World.Update"/> before the view systems run.</summary>
-    public void AdvanceFrame ( FrameTime time )
+    public void Update ( World world, FrameTime time )
     {
         foreach ( var type in ClockTypes )
         {

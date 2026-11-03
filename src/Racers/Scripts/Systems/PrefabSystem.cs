@@ -41,6 +41,10 @@ public class PrefabSystem : WorldManipulator, ISystem
             var health = data.GetInt( statsBlock, "Health" );
             if ( health > 0 )
                 resources.Add( entity, "Health", startValue: health );
+
+            var focus = data.GetInt( statsBlock, "Focus" );
+            if ( focus > 0 )
+                resources.Add( entity, "Focus", startValue: focus );
         }
 
         return entity;

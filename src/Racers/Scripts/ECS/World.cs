@@ -1088,8 +1088,7 @@ public partial class World
     }
 
     /// <summary>
-    /// Runs one frame of the view: advances the clocks (if a <see cref="TimeSystem"/> is running), then runs view
-    /// systems in start order. This frame's view messages and the sim messages in the inbox are then cleared.
+    /// Runs view systems in start order. This frame's view messages and the sim messages in the inbox are then cleared.
     /// </summary>
     /// <exception cref="InvalidOperationException">Called from inside a tick, a frame or a view scope.</exception>
     public void Update ( FrameTime time )
@@ -1101,9 +1100,6 @@ public partial class World
     	{
     		using ( EnterViewPhase() )
     		{
-    			if ( TryGet< TimeSystem >( out var timeSystem ) )
-    				timeSystem.AdvanceFrame( time );
-
     			viewSystemSnapshot ??= viewSystemOrder.ToArray();
     			foreach ( var system in viewSystemSnapshot )
     				system.Update( this, time );

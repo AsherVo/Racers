@@ -55,6 +55,7 @@ public sealed class RacersGame : Game
         world.Start( new SpriteAnimationSystem() );
 
         world.Start( new CoroutineSystem() );
+        world.Start( new UnitInfoViewSystem() );
         world.Start( new RenderSystem() );
 
 

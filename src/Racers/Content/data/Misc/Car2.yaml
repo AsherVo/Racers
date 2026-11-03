@@ -2,15 +2,17 @@ Meta:
   Enabled: true
 
 Display:
-  Name: Cool Car
+  Name: Mean Car
 
 Unit:
   IsUnit: true
 
 Stats:
-  Health: 10
+  Health: 20
+  Focus: 3
 
 Sprite:
   Path: car_1
+  Color: FF2000
   Animated: true
   FPS: 16

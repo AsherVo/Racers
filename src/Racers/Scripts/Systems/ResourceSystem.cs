@@ -55,6 +55,12 @@ public class ResourceSystem : WorldManipulator, ISimSystem
         return resources.TryGetValue( id, out var resource ) ? resource : 0;
     }
 
+    public int GetValue ( uint entity, string id )
+    {
+        var resourceEntity = Get( entity, id );
+        return resourceEntity == 0 ? 0 : Get< Resource >( resourceEntity ).value;
+    }
+
     public uint Add ( uint entity, string id, int startValue = 0 )
     {
         if ( Toolbox.I.data.GetGroup( id ) != Group.Resources )

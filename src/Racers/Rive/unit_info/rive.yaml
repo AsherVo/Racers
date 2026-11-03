@@ -1,0 +1,7 @@
+name: unit_info
+main: UnitInfo
+output:
+  dir: ../../Content/rives
+logs:
+  file: build/rive.log
+  problems: build/problems.log

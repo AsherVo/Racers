@@ -1,9 +1,12 @@
 width: 9
 height: 3
 units:
-- id: Car
+- id: Car1
   x: 2
   y: 2
+- id: Car2
+  x: 1
+  y: 1
 
 background: CloudyRoad
 

@@ -1,0 +1,78 @@
+<Rive version="1" kind="fragment">
+    <FontAsset file="../../Content/fonts/Crates.ttf" name="Crates" id="0:30"/>
+    <ImageAsset file="../../Content/sprites/resources/health.png" name="health" id="0:31"/>
+    <ImageAsset file="../../Content/sprites/resources/speed.png" name="speed" id="0:32"/>
+
+    <ViewModel defaultInstanceId="0:41" name="UnitInfo" id="0:40">
+        <ViewModelPropertyString name="health" id="0:42"/>
+        <ViewModelPropertyString name="speed" id="0:43"/>
+        <ViewModelInstance exports="true" name="Default" id="0:41">
+            <ViewModelInstanceString propertyValue="3" viewModelPropertyId="0:42"/>
+            <ViewModelInstanceString propertyValue="8" viewModelPropertyId="0:43"/>
+        </ViewModelInstance>
+    </ViewModel>
+
+    <Artboard defaultStateMachineId="0:100" viewModelId="0:40" viewModelInstanceId="0:41" styleId="0:3"
+              width="50" height="7" name="UnitInfo" id="0:2">
+        <LayoutComponentStyle layoutAlignmentType="center" name="UnitInfo Style" id="0:3"/>
+
+        <LayoutComponent styleId="0:11" name="Chip" id="0:10">
+            <LayoutComponentStyle flexDirectionValue="row" layoutAlignmentType="center"
+                                  layoutWidthScaleType="hug" layoutHeightScaleType="fill"
+                                  paddingLeft="1" paddingRight="1"
+                                  paddingLeftUnitsValue="points" paddingRightUnitsValue="points"
+                                  gapHorizontal="0.5" gapHorizontalUnitsValue="points"
+                                  name="Chip Style" id="0:11"/>
+            <Fill name="Chip Fill">
+                <SolidColor colorValue="D9141418" name="Chip Color"/>
+            </Fill>
+
+            <Text name="Health" id="0:20">
+                <LayoutParticipant layoutWidthScaleType="hug" layoutHeightScaleType="hug" name="Health Layout"/>
+                <TextStylePaint fontSize="6" fontAssetId="0:30" name="Value Style" id="0:21">
+                    <Fill name="Value Fill">
+                        <SolidColor colorValue="FFFFFFFF" name="Value Color"/>
+                    </Fill>
+                </TextStylePaint>
+                <TextValueRun styleId="0:21" text="LITERAL" name="Health Run">
+                    <DataBindContext sourcePathIds="0:40-0:42" propertyKey="268"/>
+                </TextValueRun>
+            </Text>
+            <Image assetId="0:31" samplerFilter="nearest" fit="contain" name="Health Icon" id="0:22">
+                <LayoutParticipant layoutWidthScaleType="fixed" layoutHeightScaleType="fixed" width="8" height="8" name="Health Icon Layout"/>
+            </Image>
+
+            <LayoutComponent width="2" styleId="0:27" name="Spacer" id="0:26">
+                <LayoutComponentStyle layoutWidthScaleType="fixed" layoutHeightScaleType="fill" name="Spacer Style" id="0:27"/>
+            </LayoutComponent>
+
+            <Text name="Speed" id="0:23">
+                <LayoutParticipant layoutWidthScaleType="hug" layoutHeightScaleType="hug" name="Speed Layout"/>
+                <TextStylePaint fontSize="6" fontAssetId="0:30" name="Speed Value Style" id="0:24">
+                    <Fill name="Speed Value Fill">
+                        <SolidColor colorValue="FFFFFFFF" name="Speed Value Color"/>
+                    </Fill>
+                </TextStylePaint>
+                <TextValueRun styleId="0:24" text="LITERAL" name="Speed Run">
+                    <DataBindContext sourcePathIds="0:40-0:43" propertyKey="268"/>
+                </TextValueRun>
+            </Text>
+            <Image assetId="0:32" samplerFilter="nearest" fit="contain" name="Speed Icon" id="0:25">
+                <LayoutParticipant layoutWidthScaleType="fixed" layoutHeightScaleType="fixed" width="8" height="8" name="Speed Icon Layout"/>
+            </Image>
+        </LayoutComponent>
+
+        <StateMachine name="UnitInfo" id="0:100">
+            <StateMachineLayer name="Layer" id="0:101">
+                <AnyState x="360" y="-120"/>
+                <ExitState x="560" y="-120"/>
+                <EntryState>
+                    <StateTransition stateToId="0:102"/>
+                </EntryState>
+                <AnimationState x="160" animationId="0:103" id="0:102"/>
+            </StateMachineLayer>
+        </StateMachine>
+
+        <LinearAnimation duration="1" name="Idle" id="0:103"/>
+    </Artboard>
+</Rive>
