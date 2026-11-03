@@ -19,4 +19,6 @@ public class RaceConfig
     public UnitDef[] units;
 
     public string background;
+
+    public int startSpeed;
 }

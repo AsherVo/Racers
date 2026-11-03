@@ -7,10 +7,10 @@ Display:
 Unit:
   IsUnit: true
 
+Stats:
+  Health: 10
+
 Sprite:
   Path: car_1
   Animated: true
   FPS: 16
-
-Stats:
-  Health: 10

@@ -43,10 +43,14 @@ public class PrefabSystem : WorldManipulator, ISystem
             return;
         }
 
+        if ( world.phase == WorldPhase.View )
+            Add( entity, new ViewDataId { id = id } );
+        else
+            AddSimComponents( entity, id );
+
+        // VIEW COMPONENTS
         if ( canvas != 0 )
             SetRelation< OnCanvas >( entity, canvas );
-
-        Add( entity, new DataId { id = id } );
 
         if ( data.TryGetBlock( id, "Display", out var displayBlock ) )
         {
@@ -62,12 +66,6 @@ public class PrefabSystem : WorldManipulator, ISystem
 
             if ( !string.IsNullOrEmpty( iconPath ) )
                 Add( entity, new DisplayIcon { path = iconPath } );
-        }
-
-        if ( data.TryGetBlock( id, "Unit", out var unitBlock ) )
-        {
-            if ( data.GetBool( unitBlock, "IsUnit" ) )
-                Add( entity, new Unit {} );
         }
 
         if ( data.TryGetBlock( id, "Rive", out var riveBlock ) )
@@ -117,6 +115,28 @@ public class PrefabSystem : WorldManipulator, ISystem
                 Add( entity, new RiveInput() );
                 Add( entity, new Position() );
                 break;
+        }
+    }
+
+    void AddSimComponents ( uint entity, string id )
+    {
+        var data = Toolbox.I.data;
+
+        Add( entity, new DataId { id = id } );
+
+        if ( data.TryGetBlock( id, "Unit", out var unitBlock ) )
+        {
+            if ( data.GetBool( unitBlock, "IsUnit" ) )
+                Add( entity, new Unit {} );
+        }
+
+        if ( data.TryGetBlock( id, "Stats", out var statsBlock ) )
+        {
+            var resources = Get< ResourceSystem >();
+
+            var health = data.GetInt( statsBlock, "Health" );
+            if ( health > 0 )
+                resources.Add( entity, "Health", startValue: health );
         }
     }
 

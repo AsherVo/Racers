@@ -3,7 +3,7 @@ using MintECS;
 
 namespace Racers;
 
-public class DataId : Component
+public class DataId : Component, ISimComponent
 {
 	public string id;
 

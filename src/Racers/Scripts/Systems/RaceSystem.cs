@@ -31,6 +31,8 @@ public class RaceSystem : WorldManipulator, ISimSystem
     public void Setup ( RaceConfig race )
     {
         var grid = Get< GridSystem >();
+        var resources = Get< ResourceSystem >();
+
         grid.SpawnGrid( race.width, race.height );
 
         foreach ( var unit in race.units )
@@ -38,6 +40,8 @@ public class RaceSystem : WorldManipulator, ISimSystem
             var entity = Get< PrefabSystem >().CreateFromData( unit.id );
             var coords = new Vector2Int( unit.x, unit.y );
             world.SetRelation< InCell >( entity, grid.GetCell( coords ) );    
+
+            resources.Set( entity, "Speed", race.startSpeed );
         }
     }
 

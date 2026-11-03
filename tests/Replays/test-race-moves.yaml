@@ -12,6 +12,7 @@ header:
       x: 2
       y: 2
     background: CloudyRoad
+    startSpeed: 5
   platform: osx-arm64
   runtime: .NET 10.0.1
   recordedAt: 2026-10-23T00:00:00Z

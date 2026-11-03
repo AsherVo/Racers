@@ -38,6 +38,9 @@ blocks:
       - name: IsUnit
         type: boolean
         width: 71
+  - name: Stats
+    properties:
+      - name: Health
   - name: Sprite
     properties:
       - name: Path
@@ -66,9 +69,6 @@ blocks:
       - name: Layout
         type: boolean
         width: 56
-  - name: Stats
-    properties:
-      - name: Health
 hiddenBlocks: [Rive, Sprite]
 hiddenGroups: [Groups]
 rows: [Groups, Resources, Buttons, Screens, Misc, Health, Speed, Focus, Cell, Menu, Car, CloudyRoad, UI_TopSpeed]

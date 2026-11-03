@@ -6,3 +6,5 @@ units:
   y: 2
 
 background: CloudyRoad
+
+startSpeed: 5
