@@ -56,7 +56,7 @@ public class GameViewSystem : WorldManipulator, IViewSystem
         );
 
         // Race
-        var prefab = Get< PrefabSystem >();
+        var prefab = Get< PrefabViewSystem >();
         var rive = prefab.CreateFromData( race.background, canvas: raceCanvas );
         GetOrAdd< SortOrder >( rive ).value = -100;
 
@@ -83,11 +83,11 @@ public class GameViewSystem : WorldManipulator, IViewSystem
             new SortOrder { value = 9999 }
         ); 
 
-        statsShadow = Get< PrefabSystem >().CreateText( "Stats Shadow", "", "Crates", 8, Color.Black.WithAlpha( 0.6f ), debugCanvas );
+        statsShadow = Get< PrefabViewSystem >().CreateText( "Stats Shadow", "", "Crates", 8, Color.Black.WithAlpha( 0.6f ), debugCanvas );
         Get< Position >( statsShadow ).value = new Vector2( 6, height - 5 );
         Get< Rect >( statsShadow ).pivot = new Vector2( 0, 1 );
 
-        statsText = Get< PrefabSystem >().CreateText( "Stats", "", "Crates", 8, Color.White, debugCanvas );
+        statsText = Get< PrefabViewSystem >().CreateText( "Stats", "", "Crates", 8, Color.White, debugCanvas );
         Get< Position >( statsText ).value = new Vector2( 5, height - 4 );
         Get< Rect >( statsText ).pivot = new Vector2( 0, 1 );
         Add( statsText, new SortOrder { value = 1 } );

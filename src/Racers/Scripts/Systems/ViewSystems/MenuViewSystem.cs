@@ -32,7 +32,7 @@ public class MenuViewSystem : WorldManipulator, IViewSystem
 
     public uint Setup ( uint canvas, int screenHeight, params string[] labels )
     {
-        var menu = Get< PrefabSystem >().CreateFromData( "Menu", canvas: canvas );
+        var menu = Get< PrefabViewSystem >().CreateFromData( "Menu", canvas: canvas );
         Get< Rect >( menu ).pivot = new Vector2( 0, 1 );
         Get< Position >( menu ).value = new Vector2( MENU_X, screenHeight - MENU_TOP_MARGIN );
 

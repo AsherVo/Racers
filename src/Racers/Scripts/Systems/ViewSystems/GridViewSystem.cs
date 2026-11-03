@@ -45,13 +45,11 @@ public class GridViewSystem : WorldManipulator, IViewSystem
 
     public void Setup ( uint canvas )
     {
-        var prefab = Get< PrefabSystem >();
-
         foreach ( var cell in Get< GridSystem >().GetAll() )
         {
             var coords = Get< Cell >( cell ).coords;
 
-            prefab.AddFromData( cell, "Cell", canvas );
+            SetRelation< OnCanvas >( cell, canvas );
             Get< Position >( cell ).value = GetCellPosition( coords );
             Add( cell, new SortOrder { value = -1 } );
 

@@ -33,12 +33,17 @@ public class GridSystem : WorldManipulator, ISimSystem
 
     public uint SpawnGrid ( int width, int height )
     {
+        var prefab = Get< PrefabSystem >();
+
         grid = Create( "Grid", new Grid { width = width, height = height } );
 
         for ( int y = 0; y < height; y++ )
         {
             for ( int x = 0; x < width; x++ )
-                Create( $"Cell ({ x }, { y })", new Cell { relation = grid, coords = new Vector2Int( x, y ) } );
+            {
+                var cell = prefab.CreateFromData( "Cell", $"Cell ({ x }, { y })" );
+                Add( cell, new Cell { relation = grid, coords = new Vector2Int( x, y ) } );
+            }
         }
 
         RebuildCells();

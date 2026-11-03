@@ -37,6 +37,8 @@ public sealed class RacersGame : Game
         world.Start( new TimeSystem() );
         SimSystems.Start( world );
 
+        world.Start( new PrefabViewSystem() );
+
         // Input
         world.Start( new PointerSystem() );
         world.Start( new RiveListSystem() );
