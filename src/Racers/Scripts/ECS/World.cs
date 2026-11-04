@@ -229,7 +229,7 @@ public partial class World
 	public bool Exists ( uint entity )
 		=> entities.TryGetValue( entity, out var exists ) && exists;
 
-    public string GetName ( uint entity )
+    public string GetName ( uint entity, bool showId = true )
     {
     	if ( entity == 0 )
     		return "NULL";
@@ -240,8 +240,10 @@ public partial class World
     	var name = Peek( entity, typeof( Name ) ) as Name;
     	if ( name == null )
     		return $"Unnamed Entity-{entity}";
-    	else
+    	else if ( showId )
     		return $"{ name.name }-{entity}";
+        else
+            return name.name;
     }
 
     public string GetBasicName ( uint entity )

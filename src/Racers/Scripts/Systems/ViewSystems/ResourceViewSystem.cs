@@ -74,7 +74,7 @@ public class ResourceViewSystem : WorldManipulator, IViewSystem
     public uint Connect ( uint view, uint unit, string resourceId )
     {
         return Create( 
-            $"{ GetName( view ) } - { resourceId }", 
+            $"{ GetBasicName( view ) } - { resourceId }", 
             new ResourceView { 
                 relation = view, 
                 unit = unit, 

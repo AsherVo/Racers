@@ -70,7 +70,7 @@ public class UnitInfoViewSystem : WorldManipulator, IViewSystem
 
     void CreateInfo ( uint unit )
     {
-        var info = Get< PrefabViewSystem >().CreateFromData( UNIT_INFO_DATA, $"{ GetName( unit ) } Info", GetRelated< OnCanvas >( unit ) );
+        var info = Get< PrefabViewSystem >().CreateFromData( UNIT_INFO_DATA, $"{ GetBasicName( unit ) } Info", GetRelated< OnCanvas >( unit ) );
         Get< Rect >( info ).pivot = new Vector2( 0.5f, 0f );
         Add( info, new SortOrder { value = INFO_SORT_ORDER } );
         SetRelation< UnitInfo >( info, unit );
