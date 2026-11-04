@@ -4,8 +4,8 @@
     <ImageAsset file="../../Content/sprites/resources/speed.png" name="speed" id="0:32"/>
 
     <ViewModel defaultInstanceId="0:41" name="UnitInfo" id="0:40">
-        <ViewModelPropertyString name="health" id="0:42"/>
-        <ViewModelPropertyString name="speed" id="0:43"/>
+        <ViewModelPropertyString name="Health" id="0:42"/>
+        <ViewModelPropertyString name="Speed" id="0:43"/>
         <ViewModelInstance exports="true" name="Default" id="0:41">
             <ViewModelInstanceString propertyValue="3" viewModelPropertyId="0:42"/>
             <ViewModelInstanceString propertyValue="8" viewModelPropertyId="0:43"/>

@@ -8,8 +8,6 @@ public class UnitInfoViewSystem : WorldManipulator, IViewSystem
     const string UNIT_INFO_DATA = "UI_UnitInfo";
     const string HEALTH_RESOURCE = "Health";
     const string SPEED_RESOURCE = "Speed";
-    const string RIVE_HEALTH = "health";
-    const string RIVE_SPEED = "speed";
 
     const int INFO_SORT_ORDER = 100;
     const float INFO_Y_OFFSET = -6f;
@@ -27,14 +25,12 @@ public class UnitInfoViewSystem : WorldManipulator, IViewSystem
         .ToFilter();
 
     Dictionary< uint, uint > infoByUnit = new();
-    Dictionary< uint, ( RiveInstance rive, int health, int speed ) > shownValues = new();
 
     public void StartSystem ( World world )
     {
         this.world = world;
 
         infoByUnit.Clear();
-        shownValues.Clear();
 
         Start( units );
 
@@ -52,7 +48,6 @@ public class UnitInfoViewSystem : WorldManipulator, IViewSystem
         Stop( units );
 
         infoByUnit.Clear();
-        shownValues.Clear();
 
         this.world = null;
     }
@@ -69,12 +64,7 @@ public class UnitInfoViewSystem : WorldManipulator, IViewSystem
         {
             var unit = Get< UnitInfo >( info ).relation;
             if ( !IsLiveUnit( unit ) )
-            {
-                Destroy( info );
-                continue;
-            }
-
-            ShowValues( info, unit );
+                DestroyInfo( info );
         }
     }
 
@@ -93,36 +83,30 @@ public class UnitInfoViewSystem : WorldManipulator, IViewSystem
         );
 
         Get< TransformSystem >().SetParent( info, unit );
+
+        var viewSystem = Get< ResourceViewSystem >();
+        viewSystem.Connect( info, unit, HEALTH_RESOURCE );
+        viewSystem.Connect( info, unit, SPEED_RESOURCE );
+    }
+
+    
+
+    void DestroyInfo ( uint info )
+    {
+        foreach ( var resourceView in GetEntities< ResourceView >( info ) )
+            Destroy( resourceView );
+
+        Destroy( info );
     }
 
     bool IsLiveUnit ( uint unit )
         => Exists( unit ) && Has< Unit >( unit ) && Has< Position >( unit ) && Has< Rect >( unit ) && Has< OnCanvas >( unit );
-
-    void ShowValues ( uint info, uint unit )
-    {
-        var rive = Get< RenderSystem >().GetRive( info );
-        if ( rive == null )
-            return;
-
-        var resources = Get< ResourceSystem >();
-        var health = resources.GetValue( unit, HEALTH_RESOURCE );
-        var speed = resources.GetValue( unit, SPEED_RESOURCE );
-
-        if ( shownValues.TryGetValue( info, out var shown ) && shown.rive == rive && shown.health == health && shown.speed == speed )
-            return;
-
-        rive.SetViewModelString( RIVE_HEALTH, health.ToString() );
-        rive.SetViewModelString( RIVE_SPEED, speed.ToString() );
-        shownValues[ info ] = ( rive, health, speed );
-    }
 
     void OnAddInfo ( uint info )
         => infoByUnit[ Get< UnitInfo >( info ).relation ] = info;
 
     void OnRemoveInfo ( uint info )
     {
-        shownValues.Remove( info );
-
         foreach ( var ( unit, shownInfo ) in infoByUnit )
         {
             if ( shownInfo == info )
