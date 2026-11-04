@@ -74,7 +74,6 @@ public class UnitInfoViewSystem : WorldManipulator, IViewSystem
                 continue;
             }
 
-            FollowUnit( info, unit );
             ShowValues( info, unit );
         }
     }
@@ -85,21 +84,19 @@ public class UnitInfoViewSystem : WorldManipulator, IViewSystem
         Get< Rect >( info ).pivot = new Vector2( 0.5f, 0f );
         Add( info, new SortOrder { value = INFO_SORT_ORDER } );
         SetRelation< UnitInfo >( info, unit );
-    }
 
-    bool IsLiveUnit ( uint unit )
-        => Exists( unit ) && Has< Unit >( unit ) && Has< Position >( unit ) && Has< Rect >( unit ) && Has< OnCanvas >( unit );
-
-    void FollowUnit ( uint info, uint unit )
-    {
         var unitRect = Get< Rect >( unit );
         var unitPosition = Get< Position >( unit ).value;
-
         Get< Position >( info ).value = new Vector2(
             unitPosition.x + ( unitRect.width * ( 0.5f - unitRect.pivot.x ) ),
             unitPosition.y - ( unitRect.height * unitRect.pivot.y ) + INFO_Y_OFFSET
         );
+
+        Get< TransformSystem >().SetParent( info, unit );
     }
+
+    bool IsLiveUnit ( uint unit )
+        => Exists( unit ) && Has< Unit >( unit ) && Has< Position >( unit ) && Has< Rect >( unit ) && Has< OnCanvas >( unit );
 
     void ShowValues ( uint info, uint unit )
     {

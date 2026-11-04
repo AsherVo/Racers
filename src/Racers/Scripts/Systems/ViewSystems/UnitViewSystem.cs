@@ -39,6 +39,12 @@ public class UnitViewSystem : WorldManipulator, IViewSystem
     {
         var grid = Get< GridViewSystem >();
 
+        // foreach ( var unit in visibleUnits )
+        // {
+        //     world.Get< Position >( unit ).offset.y += Mathf.Lerp( -.2f, .2f, VoHelp.SinWave( t * 50f ) );    
+        // }
+        
+
         var moveMessages = Read< UnitMoved >();
         foreach ( var moveMessage in moveMessages )
         {
