@@ -122,6 +122,24 @@ public class InspectorTests
         Assert.Equal( "#3", hero.GetProperty( "n" ).GetString() );
         Assert.False( hero.TryGetProperty( "v", out _ ) );
         Assert.False( hero.TryGetProperty( "x", out _ ) );
+        Assert.False( world.TryGetProperty( "sys", out _ ) );
+    }
+
+    [Fact]
+    public void SystemsAreWrittenApartFromTheTree ()
+    {
+        var root = new InspectorNode( "world-0", "World 0" )
+        {
+            systems = [new InspectorNode( "sim", "Sim" ) { children = [new InspectorNode( "0", "GridSystem" )] }],
+        };
+        string text = Encoding.UTF8.GetString( Inspector.WriteResponse( 9, [root] ) );
+
+        using var document = JsonDocument.Parse( text );
+        var world = document.RootElement.GetProperty( "roots" )[0];
+        Assert.False( world.TryGetProperty( "c", out _ ) );
+        var phase = world.GetProperty( "sys" )[0];
+        Assert.Equal( "Sim", phase.GetProperty( "l" ).GetString() );
+        Assert.Equal( "GridSystem", phase.GetProperty( "c" )[0].GetProperty( "l" ).GetString() );
     }
 
     [Fact]

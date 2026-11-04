@@ -278,11 +278,15 @@ The protocol is one JSON object per line in each direction:
 ```
 game → tool   {"hello":"engine","protocol":1,"pid":4242}
 tool → game   {"id":7,"expanded":["world-0","world-0/3","world-0/3/Sprite"]}
-game → tool   {"id":7,"frame":512,"roots":[{"k":"world-0","l":"World 0","v":"3 entities","s":true,"x":true,"c":[…]}]}
+game → tool   {"id":7,"frame":512,"roots":[{"k":"world-0","l":"World 0","v":"3 entities","s":true,"x":true,"c":[…],"sys":[…]}]}
 ```
 
-Node fields: `k` key, `l` label, `n` note, `v` value, `s` the value is a summary, `x` expandable, `c` children.
-Fields that are absent or false are omitted.
+Node fields: `k` key, `l` label, `n` note, `v` value, `s` the value is a summary, `x` expandable, `c` children,
+`sys` systems. Fields that are absent or false are omitted.
+
+`sys` lists what a source runs, apart from its tree and whether or not it's expanded: a node per phase in the order
+the phases run, whose `c` is a node per system in the order they run. A world sends `Sim` then `View`. Utility systems
+never run, so they aren't listed.
 
 Requests are read on a background thread and replies written on another, so a slow tool can't stall a
 frame. The game thread only takes the latest request, at most once per frame, and builds the reply between

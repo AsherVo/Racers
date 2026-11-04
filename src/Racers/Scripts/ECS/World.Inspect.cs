@@ -28,6 +28,11 @@ public partial class World : IInspectable
             value = $"{alive.Count} entit{( alive.Count == 1 ? "y" : "ies" )}",
             valueIsSummary = true,
             expandable = alive.Count > 0,
+            systems =
+            [
+                DescribeSystemPhase( "sim", "Sim", simSystemOrder ),
+                DescribeSystemPhase( "view", "View", viewSystemOrder.Concat< object >( drawSystemOrder.Where( system => system is not IViewSystem ) ) ),
+            ],
         };
 
         if ( !query.IsExpanded( worldKey ) )
@@ -74,5 +79,11 @@ public partial class World : IInspectable
         }
 
         return root;
+    }
+
+    static InspectorNode DescribeSystemPhase ( string key, string label, IEnumerable< object > systemsInOrder )
+    {
+        var systemNodes = systemsInOrder.Select( ( system, index ) => new InspectorNode( index.ToString(), system.GetType().Name ) ).ToList();
+        return new InspectorNode( key, label ) { expandable = systemNodes.Count > 0, children = systemNodes };
     }
 }

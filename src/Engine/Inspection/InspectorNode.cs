@@ -35,6 +35,12 @@ public sealed class InspectorNode ( string key, string label )
     public List< InspectorNode >? children { get; set; }
 
     /// <summary>
+    /// What a source runs, kept apart from the tree of its <see cref="children"/>: a row per phase in the order the
+    /// phases run, each with a row per system in the order they run. Sent whether or not the row is expanded.
+    /// </summary>
+    public List< InspectorNode >? systems { get; set; }
+
+    /// <summary>
     /// A row for <paramref name="data"/> as its YAML would have it: a scalar is a value, and a map or list is
     /// expandable, summarized while collapsed and broken into child rows once <paramref name="path"/> is expanded.
     /// An object that can't be written as YAML is shown with the reason instead of failing the whole tree.

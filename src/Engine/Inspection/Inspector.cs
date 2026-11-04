@@ -16,8 +16,8 @@ namespace Engine;
 /// The protocol is one JSON object per line, both ways. On connecting the game sends
 /// <c>{"hello":"engine","protocol":1,"pid":…}</c>. The tool sends <c>{"id":7,"expanded":["world-0","world-0/12"]}</c>
 /// and the game replies <c>{"id":7,"frame":…,"roots":[node…]}</c>, where a node is
-/// <c>{"k":key,"l":label,"n":note,"v":value,"s":valueIsSummary,"x":expandable,"c":[children]}</c> with absent
-/// fields omitted. Only the latest pending request is answered, once per frame at most.
+/// <c>{"k":key,"l":label,"n":note,"v":value,"s":valueIsSummary,"x":expandable,"c":[children],"sys":[systems]}</c>
+/// with absent fields omitted. Only the latest pending request is answered, once per frame at most.
 /// </remarks>
 public static class Inspector
 {
@@ -157,6 +157,15 @@ public static class Inspector
             writer.WriteStartArray( "c" );
             foreach ( var child in node.children )
                 WriteNode( writer, child );
+
+            writer.WriteEndArray();
+        }
+
+        if ( node.systems != null )
+        {
+            writer.WriteStartArray( "sys" );
+            foreach ( var phase in node.systems )
+                WriteNode( writer, phase );
 
             writer.WriteEndArray();
         }
